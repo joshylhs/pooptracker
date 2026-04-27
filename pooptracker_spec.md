@@ -14,6 +14,8 @@ A social poop tracking app for iOS and Android. Users log their bowel movements,
 | Language | TypeScript | Type safety, catches bugs early, industry standard |
 | Auth | Firebase Auth | Handles signup, login, Apple sign-in (App Store requirement) |
 | Database | Firestore | Real-time, scalable, works well with React Native |
+| Local storage | expo-sqlite | Local-first log storage, privacy by design |
+| Encryption | libsodium-wrappers | Client-side encryption of all Firestore documents |
 | State management | Zustand | Lightweight, beginner-friendly, scales well |
 | Navigation | React Navigation v7 | Standard for React Native, flexible |
 | Notifications | Notifee | Best-in-class local notifications for React Native |
@@ -61,10 +63,14 @@ src/
 │   ├── AuthStack.tsx                  # Welcome, Signup, Login, Onboarding
 │   └── AppTabs.tsx                    # Home, Friends, Profile bottom tabs
 │
+├── database/
+│   ├── schema.ts                      # SQLite table definitions
+│   └── logRepository.ts               # CRUD operations for local log entries
+│
 ├── services/
 │   ├── firebase.ts                    # Firebase app initialisation
 │   ├── auth.ts                        # signup, login, logout, Apple sign-in
-│   ├── logs.ts                        # Firestore CRUD for log entries
+│   ├── logs.ts                        # coordinates local SQLite reads/writes with Firestore summary updates (no direct Firestore log storage)
 │   ├── friends.ts                     # friend requests, friendships, queries
 │   ├── users.ts                       # user profile reads and writes
 │   └── notifications.ts              # Notifee scheduling and cancellation
@@ -84,7 +90,8 @@ src/
 │   ├── heatmapUtils.ts               # compute intensity per day from log counts
 │   ├── streakUtils.ts                 # calculate current streak and personal best
 │   ├── dateUtils.ts                   # date formatting helpers
-│   └── statsUtils.ts                  # weekly avg, monthly avg, all-time stats
+│   ├── statsUtils.ts                  # weekly avg, monthly avg, all-time stats
+│   └── encryption.ts                  # encrypt/decrypt for all Firestore reads/writes; per-recipient encrypt/decrypt that accept a recipient's public key
 │
 └── constants/
     ├── colours.ts                     # app colour palette
@@ -96,15 +103,18 @@ src/
 
 ## Firestore Data Model
 
+> All Firestore documents are client-side encrypted before being written. The shapes documented below describe the **plaintext** data the app handles in memory; on the wire and at rest in Firestore, every document is an opaque encrypted blob (per-recipient ciphertext for any field shared with friends — see Privacy Design). The developer cannot read any Firestore data even with direct database access.
+>
+> Email and display name are **never** written to Firestore. They live in Firebase Auth only. Firestore references users by anonymous UID exclusively.
+
 ### `users/{userId}`
 ```typescript
 {
   uid: string,
-  username: string,                    // unique, used for friend search
-  displayName: string,
+  username: string,                    // unique; held inside the encrypted blob so the user can see their own username. Friend search does NOT query this field — see usernameIndex below.
+  // displayName is held in Firebase Auth only — not duplicated to Firestore
   avatarInitials: string,              // e.g. "JL"
   avatarColour: string,                // hex, assigned on signup
-  privacyLevel: "friends_only",        // v1 only option, public added later
   createdAt: Timestamp,
 
   // notification preferences (set during onboarding)
@@ -124,23 +134,11 @@ src/
 }
 ```
 
-### `logs/{logId}`
-```typescript
-{
-  logId: string,
-  userId: string,                      // owner
-  timestamp: Timestamp,
-  bristolType: number | null,          // 1-7, null if quick log with no detail added
-  duration: number | null,             // minutes, optional
-  notes: string | null,               // optional free text
-  isQuickLog: boolean,                 // true = logged with no details
-  date: string,                        // "YYYY-MM-DD" for efficient daily queries
-  createdAt: Timestamp,
-  updatedAt: Timestamp,
-}
-```
+> Raw log entries are **not** stored in Firestore. They live exclusively in the on-device SQLite database (see `src/database/schema.ts` and `src/database/logRepository.ts`) and are never transmitted to any server.
 
 ### `userDailySummaries/{userId}/days/{date}`
+
+**Plaintext shape** (what the app handles in memory after decryption):
 ```typescript
 // "YYYY-MM-DD" as document ID
 // written/updated on each log save
@@ -151,6 +149,58 @@ src/
   userId: string,
 }
 ```
+
+**Stored shape** (what actually lives in Firestore — encrypted, per-recipient):
+```typescript
+// One Firestore doc per (userId, date). The doc holds a map of recipient → ciphertext.
+// On write, the app encrypts the plaintext shape above once per recipient (self + each
+// friend) using each recipient's public key from publicKeys/{userId}. On read, the
+// device looks up its own entry by recipient key id and decrypts only that ciphertext.
+{
+  ciphertexts: {
+    [recipientKeyId: string]: string,  // base64-encoded libsodium sealed/box ciphertext
+  },
+  updatedAt: Timestamp,                // unencrypted metadata, used for change detection
+}
+```
+
+> Forward-only friend visibility: when a new friend is added, future daily summaries are encrypted to include them, but historical summaries are **not** re-encrypted. Friends see your heatmap from the day the friendship was accepted onward — the shared history starts at the friendship.
+
+### `publicKeys/{userId}`
+```typescript
+// Unencrypted by design — public keys are public. Contains no PII beyond an
+// anonymous UID and a key. This is the second of two non-encrypted collections
+// (alongside usernameIndex), and exists so that friends can encrypt per-recipient
+// payloads addressed to this user.
+{
+  userId: string,                      // anonymous UID, matches users/{userId}
+  publicKey: string,                   // the user's public encryption key (libsodium box public key, base64)
+  updatedAt: Timestamp,                // last key rotation
+}
+```
+
+### `usernameIndex/{usernameHash}`
+```typescript
+// usernameHash = SHA-256(normalise(username)) — deterministic, computed client-side.
+// Normalisation: trim → Unicode NFC → lowercase. Always applied before hashing on
+// both write (signup) and read (friend search) so case and diacritic variants
+// resolve to the same hash.
+// This collection is unencrypted by design. It contains only the hash → userId
+// mapping; no PII, no plaintext usernames.
+{
+  usernameHash: string,                // document ID is the hash itself
+  userId: string,                      // anonymous UID of the owning user
+  createdAt: Timestamp,
+}
+```
+
+**Friend search flow:**
+1. User types a username into the search field.
+2. App normalises it — trim → Unicode NFC → lowercase — and computes SHA-256 client-side.
+3. App reads `usernameIndex/{usernameHash}` — single doc-id lookup, no scan.
+4. If hit, app retrieves the encrypted `users/{userId}` document and decrypts the friend-shared portion to confirm and display.
+
+No plaintext username is ever written to Firestore. The hash is one-way; the developer cannot recover usernames from the index.
 
 ### `friendships/{userId}/friends/{friendId}`
 ```typescript
@@ -167,12 +217,38 @@ src/
 
 ## Privacy Design
 
-- All log details (Bristol type, duration, notes) are stored in full regardless of privacy settings
-- Friends can currently see: heatmap (daily count intensity only), aggregate stats (streak, weekly avg, today's count, Bristol avg)
-- Friends cannot see: individual log timestamps, Bristol per entry, duration per entry, notes
-- Privacy is enforced at two levels: Firestore security rules (what can be read) and UI (what is displayed)
-- To open full detail sharing in future: update security rules to allow friends to read `logs` collection + update FriendDetailScreen to show log cards. No data model changes needed.
-- `privacyLevel` field on user profile is reserved for future granular control
+The app is designed so that the developer has **no access** to any user's raw logs, readable stats, counts, or social graph — by design, not by policy. The architectural principles below are mandatory and load-bearing.
+
+**Local-only raw data**
+- Raw logs (Bristol type, duration, notes, timestamps) are stored locally on-device via SQLite and **never transmitted to any server**.
+- The developer holds no copy of any user's log data.
+
+**Encrypted Firestore**
+- All Firestore documents (`users`, `userDailySummaries`, `friendships`) are **client-side encrypted** before being written. Firestore stores opaque encrypted blobs only.
+- The developer holds the encrypted data but cannot decrypt it; direct database access yields nothing readable.
+
+**Per-recipient encryption (mandatory from day one)**
+- Every encrypted document written to Firestore is encrypted **per-recipient** — each friend receives a copy encrypted specifically with their public key, never a single shared key.
+- This is mandatory from v1 to support granular per-friend sharing of additional fields (Bristol type, duration, notes) in future versions without requiring re-encryption of historical data.
+- `src/utils/encryption.ts` exposes per-recipient encrypt/decrypt functions that accept a recipient's public key as a parameter.
+
+**Anonymous identity in Firestore**
+- Email is held by Firebase Auth for account recovery purposes only — it is **never** written to Firestore.
+- Display name is held by Firebase Auth only — it is **never** duplicated to Firestore.
+- Firestore references users by anonymous UID exclusively.
+
+**Friend discovery via deterministic hashing**
+- Encrypted fields cannot be queried server-side, so plaintext usernames are never written to Firestore.
+- On signup, the app normalises the username (trim → Unicode NFC → lowercase), computes `SHA-256` client-side, and writes the hash → userId mapping to a separate unencrypted `usernameIndex/{usernameHash}` collection. The same normalisation is applied on every search.
+- Friend search hashes the search input client-side and performs a single doc-id lookup against `usernameIndex` — no plaintext username ever leaves the device.
+- The hash is one-way; the developer holds the index but cannot recover usernames from it.
+- This is the only Firestore collection that is not encrypted, and it contains no PII beyond an opaque hash and an anonymous UID.
+
+**Friend visibility (v1)**
+- Friends can see: heatmap (daily count intensity only), aggregate stats (streak, weekly avg, today's count, Bristol avg) — all decrypted on the recipient device.
+- Friends cannot see: individual log timestamps, Bristol per entry, duration per entry, notes — these never leave the originating device.
+
+**Future encrypted backup** of local logs is explicitly noted as a v2 feature hook (see Future Feature Hooks).
 
 ---
 
@@ -395,13 +471,24 @@ RootNavigator
 
 ## Leaderboard Logic
 
-- Computed from `userDailySummaries` collection across friend group
+Because daily summaries are client-side encrypted and the server cannot read them, leaderboard computation happens **entirely on-device**. The server performs no ranking and has no view of any user's counts.
+
+**Computation:**
+- The user's device fetches all friends' encrypted stat packets from `userDailySummaries`.
+- Each packet is decrypted locally using the user's private key (per-recipient encryption — see Privacy Design).
+- Rankings are computed in-memory on-device.
+
+**Aggregation windows (computed on-device after decryption):**
 - Day: sum of counts for today's date document
 - Week: sum of counts for date documents in current Mon-Sun window
 - Month: sum of counts for date documents in current calendar month
 - Year: sum of counts for date documents in current calendar year
 - Ties broken alphabetically by username
 - Current user always shown even if count is 0
+
+**Fetch strategy:**
+- The leaderboard fetches fresh data **on screen open** — every time the user navigates to the friends screen, the app pulls all friends' encrypted stat packets, decrypts them locally, and recomputes rankings.
+- Real-time listeners are **not** used in v1 (would require continuous decryption on every server-side change). Real-time listeners are noted as a v2 enhancement.
 
 ---
 
@@ -457,13 +544,17 @@ export const INTENSITY_COLOURS = {
 
 | Feature | What's already in place |
 |---|---|
-| Full detail sharing with friends | Full log data stored, security rules just need updating |
 | Smart suppress notifications | `smartSuppress` preference captured on every account |
 | ML anomaly detection | Full log history stored with timestamps and Bristol types |
 | ML optimal reminder timing | Log timestamps available for circadian pattern analysis |
 | Food correlation ML | Data model has `notes` field, tags field easy to add |
 | Games / challenges | Friend graph already built, daily summary data queryable |
-| Privacy granularity | `privacyLevel` field on user profile, extendable |
+| Privacy granularity | Per-recipient encryption already supports per-friend visibility; granular UI controls layer on top without architectural changes |
+| Encrypted backup of local logs | SQLite schema is stable and exportable, key management deferred to v2 |
+| End-to-end encrypted social layer | Friend graph already built with anonymous UIDs, transport encryption deferred to v3 |
+| Federated learning insights | Local log history is the training data, FL infrastructure deferred to v3-4 |
+| Decentralised relay server | Replace Firestore with a relay that routes encrypted packets without storing them, deferred to v4 |
+| Granular per-friend data sharing | Per-recipient encryption already in place, share additional fields by including them in the encrypted packet per consenting friend, no architectural changes needed |
 
 ---
 
@@ -483,11 +574,11 @@ export const INTENSITY_COLOURS = {
 ## Development Order
 
 1. Project scaffold — React Native + TypeScript + folder structure + dependencies
-2. Firebase setup — initialise app, auth, Firestore
+2. Firebase setup — initialise app, Firebase Auth only for identity and account recovery.
 3. Auth flow — signup, login, logout, Apple sign-in
 4. Onboarding — notification preferences screen
-5. Firestore data model — security rules, collections
-6. Log CRUD — create, read, update, delete log entries
+5. Firestore data model — security rules, collections, client-side encryption utility.
+6. Local database setup — SQLite schema, logRepository CRUD, Firestore summary sync on write.
 7. HomeScreen — heatmap, day card accordion, stat cards
 8. QuickLogButton + LogEntryModal — Bristol selector, save/delete
 9. Notification scheduling — Notifee setup, schedule on signup/settings change
