@@ -1,9 +1,22 @@
-import { View, Text } from 'react-native';
+import { View, Text, Button, StyleSheet } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { AuthStackParamList } from '../../navigation/AuthStack';
 
-export default function WelcomeScreen() {
+type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
+
+export default function WelcomeScreen({ navigation }: Props) {
   return (
-    <View>
-      <Text>WelcomeScreen</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>PoopTracker</Text>
+      <Button title="Create account" onPress={() => navigation.navigate('Signup')} />
+      <View style={styles.spacer} />
+      <Button title="I have an account" onPress={() => navigation.navigate('Login')} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', padding: 24 },
+  title: { fontSize: 32, fontWeight: '600', textAlign: 'center', marginBottom: 32 },
+  spacer: { height: 12 },
+});

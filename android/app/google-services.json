@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "793594765861",
+    "project_id": "pooptracker-154e3",
+    "storage_bucket": "pooptracker-154e3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:793594765861:android:25ebb2a58f6ae913ee15cc",
+        "android_client_info": {
+          "package_name": "com.pooptracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLs2hqWE3KgcW5l7qGBncm7F23Bx1mW28"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
