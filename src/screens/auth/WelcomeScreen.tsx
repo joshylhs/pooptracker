@@ -1,22 +1,31 @@
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthStack';
+import ScreenContainer from '../../components/shared/ScreenContainer';
+import AppText from '../../components/shared/Text';
+import Button from '../../components/shared/Button';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
 
 export default function WelcomeScreen({ navigation }: Props) {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>PoopTracker</Text>
-      <Button title="Create account" onPress={() => navigation.navigate('Signup')} />
-      <View style={styles.spacer} />
-      <Button title="I have an account" onPress={() => navigation.navigate('Login')} />
-    </View>
+    <ScreenContainer centered>
+      <AppText variant="screenTitle" style={styles.title}>
+        shitster
+      </AppText>
+      <View style={styles.buttons}>
+        <Button title="Create account" onPress={() => navigation.navigate('Signup')} />
+        <Button
+          title="I have an account"
+          variant="secondary"
+          onPress={() => navigation.navigate('Login')}
+        />
+      </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 32, fontWeight: '600', textAlign: 'center', marginBottom: 32 },
-  spacer: { height: 12 },
+  title: { textAlign: 'center', fontSize: 32, marginBottom: 32 },
+  buttons: { gap: 12 },
 });

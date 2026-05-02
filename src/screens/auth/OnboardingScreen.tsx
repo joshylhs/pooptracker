@@ -1,22 +1,26 @@
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useAuthStore } from '../../store/authStore';
+import ScreenContainer from '../../components/shared/ScreenContainer';
+import AppText from '../../components/shared/Text';
+import Button from '../../components/shared/Button';
 
 export default function OnboardingScreen() {
   const completeOnboarding = useAuthStore(s => s.completeOnboarding);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Welcome aboard</Text>
-      <Text style={styles.note}>
+    <ScreenContainer centered>
+      <AppText variant="screenTitle" style={styles.heading}>
+        Welcome aboard
+      </AppText>
+      <AppText variant="body" colour="textSecondary" style={styles.note}>
         Notification preferences (toggle, time picker, smart suppress) go here in step 4.
-      </Text>
+      </AppText>
       <Button title="Continue" onPress={completeOnboarding} />
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24 },
-  heading: { fontSize: 24, fontWeight: '500', marginBottom: 8 },
-  note: { fontSize: 13, color: '#666', marginBottom: 24 },
+  heading: { marginBottom: 8 },
+  note: { marginBottom: 24 },
 });

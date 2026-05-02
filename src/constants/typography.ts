@@ -1,5 +1,7 @@
 import { TextStyle } from 'react-native';
 
+// No fontFamily — uses the platform's default system font (San Francisco on iOS,
+// Roboto on Android).
 export const typography = {
   screenTitle: { fontSize: 24, fontWeight: '500' },
   sectionHeading: { fontSize: 18, fontWeight: '500' },
