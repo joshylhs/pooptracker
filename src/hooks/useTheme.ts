@@ -6,8 +6,8 @@ import { typography } from '../constants/typography';
 // colour scheme — both light and dark return the same surface palette for now.
 // Brand colours (purple, coral, heatmap greens) stay unchanged in `colours`.
 const warmDarkSurface = {
-  background: '#2C2622',
-  surface: '#3A332D',
+  background: '#2b2928', // originally '#2C2622'
+  surface: '#3c3a38', // '#3c3a38'
   border: '#4A4239',
   textPrimary: '#F5EFE6',
   textSecondary: '#B8AE9F',

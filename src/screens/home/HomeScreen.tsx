@@ -52,7 +52,7 @@ export default function HomeScreen() {
         <CalendarHeatmap
           summaries={summaries}
           selectedDate={selectedDate}
-          onDayPress={setSelectedDate}
+          onDayPress={d => setSelectedDate(d === selectedDate ? null : d)}
         />
 
         {selectedDate && (
