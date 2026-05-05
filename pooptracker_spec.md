@@ -452,9 +452,9 @@ RootNavigator
 **Default settings:**
 - Enabled: true
 - Time: 12:00 (noon)
-- Smart suppress: true (preference stored from day 1, suppression logic implemented later)
+- Smart suppress: true
 
-**v1 behaviour:** Always fires at scheduled time regardless of whether user has logged. Smart suppress preference is captured but not yet acted on.
+**v1 behaviour:** Fires daily at scheduled time. If smart suppress is enabled, the notification for the current day is cancelled and rescheduled for tomorrow whenever the user saves a log (implemented via `suppressTodayIfNeeded` in `src/services/notifications.ts`).
 
 **Scheduling logic:**
 - Schedule on: account creation (after onboarding), settings change
@@ -466,7 +466,7 @@ RootNavigator
 - Body: "Have you logged today?"
 
 **Permission request:**
-- Triggered after user saves their first log (not on first launch)
+- Triggered during onboarding, after the user taps Continue
 - iOS: system permission popup
 - Android 13+: runtime permission request
 
@@ -538,7 +538,6 @@ export const INTENSITY_COLOURS = {
 - Food / lifestyle tagging (future ML feature)
 - ML insights and pattern detection
 - Push notifications via server (all notifications are local in v1)
-- Smart suppress logic (preference captured, logic deferred)
 - Full log detail sharing with friends (privacy gating in place, UI deferred)
 - Games / challenges
 - Apple Health / Google Fit integration
@@ -551,7 +550,6 @@ export const INTENSITY_COLOURS = {
 
 | Feature | What's already in place |
 |---|---|
-| Smart suppress notifications | `smartSuppress` preference captured on every account |
 | ML anomaly detection | Full log history stored with timestamps and Bristol types |
 | ML optimal reminder timing | Log timestamps available for circadian pattern analysis |
 | Food correlation ML | Data model has `notes` field, tags field easy to add |

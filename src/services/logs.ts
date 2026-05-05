@@ -11,6 +11,8 @@ import {
 import { BristolTypeNumber } from '../utils/bristolData';
 import { formatDate } from '../utils/dateUtils';
 import { syncDailySummary } from './dailySummaries';
+import { loadNotificationPrefs } from './notificationPrefs';
+import { suppressTodayIfNeeded } from './notifications';
 
 export type { LogEntry };
 
@@ -35,10 +37,15 @@ export interface LogDetails {
   timestamp?: number;
 }
 
+function suppressNotificationAsync(): void {
+  void loadNotificationPrefs().then(suppressTodayIfNeeded);
+}
+
 export function quickLog(): LogEntry {
   const userId = requireUserId();
   const entry = repoInsertLog({ userId, isQuickLog: true });
   syncDates(userId, [entry.date]);
+  suppressNotificationAsync();
   return entry;
 }
 
@@ -53,6 +60,7 @@ export function saveDetailedLog(details: LogDetails): LogEntry {
     isQuickLog: false,
   });
   syncDates(userId, [entry.date]);
+  suppressNotificationAsync();
   return entry;
 }
 

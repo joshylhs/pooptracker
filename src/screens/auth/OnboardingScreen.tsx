@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../store/authStore';
 import {
@@ -7,27 +8,15 @@ import {
   NotificationPrefs,
   saveNotificationPrefs,
 } from '../../services/notificationPrefs';
+import { requestPermission, scheduleDaily } from '../../services/notifications';
 import { createUserProfile, UsernameTakenError } from '../../services/users';
 import ScreenContainer from '../../components/shared/ScreenContainer';
 import AppText from '../../components/shared/Text';
 import Button from '../../components/shared/Button';
 import TextField from '../../components/shared/TextField';
 
-// 30-minute steps from 6:00 AM to 10:00 PM
-const TIMES: { hour: number; minute: number }[] = [];
-for (let h = 6; h <= 22; h++) {
-  TIMES.push({ hour: h, minute: 0 });
-  if (h < 22) TIMES.push({ hour: h, minute: 30 });
-}
-
 const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/i;
 
-function formatTime(hour: number, minute: number): string {
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const h = hour % 12 || 12;
-  const m = String(minute).padStart(2, '0');
-  return `${h}:${m} ${ampm}`;
-}
 
 export default function OnboardingScreen() {
   const { surface, colours } = useTheme();
@@ -42,12 +31,11 @@ export default function OnboardingScreen() {
   const update = (patch: Partial<NotificationPrefs>) =>
     setPrefs(p => ({ ...p, ...patch }));
 
-  const stepTime = (dir: 1 | -1) => {
-    const idx = TIMES.findIndex(
-      t => t.hour === prefs.hour && t.minute === prefs.minute,
-    );
-    const next = TIMES[(idx + dir + TIMES.length) % TIMES.length];
-    update({ hour: next.hour, minute: next.minute });
+  const pickerDate = new Date();
+  pickerDate.setHours(prefs.hour, prefs.minute, 0, 0);
+
+  const onTimeChange = (_: unknown, date: Date) => {
+    update({ hour: date.getHours(), minute: date.getMinutes() });
   };
 
   const validateUsername = (value: string): string | null => {
@@ -80,6 +68,8 @@ export default function OnboardingScreen() {
         notifications: prefs,
       });
       await saveNotificationPrefs(prefs);
+      await requestPermission();
+      await scheduleDaily(prefs);
       completeOnboarding();
     } catch (e) {
       if (e instanceof UsernameTakenError) {
@@ -122,12 +112,18 @@ export default function OnboardingScreen() {
           ]}
         >
           <View style={styles.row}>
-            <AppText variant="body">Daily reminder</AppText>
+            <View style={styles.reminderLabel}>
+              <AppText variant="body">Daily reminder</AppText>
+              <AppText variant="caption" colour="textSecondary">
+                Change anytime in profile settings!
+              </AppText>
+            </View>
             <Switch
               value={prefs.enabled}
               onValueChange={enabled => update({ enabled })}
               trackColor={{ false: surface.border, true: colours.primary400 }}
               thumbColor="#fff"
+              style={styles.switch}
             />
           </View>
 
@@ -135,32 +131,22 @@ export default function OnboardingScreen() {
             <>
               <View style={[styles.divider, { backgroundColor: surface.border }]} />
 
-              <View style={styles.row}>
-                <AppText variant="body">Time</AppText>
-                <View style={styles.timePicker}>
-                  <Pressable onPress={() => stepTime(-1)} hitSlop={10}>
-                    <AppText style={[styles.arrow, { color: surface.textPrimary }]}>
-                      ‹
-                    </AppText>
-                  </Pressable>
-                  <AppText variant="bodyEmphasis" style={styles.timeLabel}>
-                    {formatTime(prefs.hour, prefs.minute)}
-                  </AppText>
-                  <Pressable onPress={() => stepTime(1)} hitSlop={10}>
-                    <AppText style={[styles.arrow, { color: surface.textPrimary }]}>
-                      ›
-                    </AppText>
-                  </Pressable>
-                </View>
-              </View>
+              <DateTimePicker
+                mode="time"
+                display="spinner"
+                value={pickerDate}
+                onValueChange={onTimeChange}
+                textColor={surface.textPrimary}
+                style={styles.timePicker}
+              />
 
               <View style={[styles.divider, { backgroundColor: surface.border }]} />
 
               <View style={styles.row}>
                 <View style={styles.suppressLabel}>
-                  <AppText variant="body">Skip if already logged</AppText>
+                  <AppText variant="body">Only remind if needed</AppText>
                   <AppText variant="caption" colour="textSecondary">
-                    No reminder if you've already logged today
+                    Won't remind you if you've logged today
                   </AppText>
                 </View>
                 <Switch
@@ -168,6 +154,7 @@ export default function OnboardingScreen() {
                   onValueChange={smartSuppress => update({ smartSuppress })}
                   trackColor={{ false: surface.border, true: colours.primary400 }}
                   thumbColor="#fff"
+                  style={styles.switch}
                 />
               </View>
             </>
@@ -194,13 +181,9 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   divider: { height: 1, marginHorizontal: 14 },
-  timePicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  arrow: { fontSize: 26, lineHeight: 26 },
-  timeLabel: { minWidth: 80, textAlign: 'center' },
-  suppressLabel: { flex: 1, paddingRight: 12 },
+  reminderLabel: { flex: 1, paddingRight: 12, gap: 5 },
+  timePicker: { width: '100%' },
+  suppressLabel: { flex: 1, paddingRight: 12, gap: 5 },
+  switch: { transform: [{ scaleX: 0.9 }, { scaleY: 1 }] },
   cta: { marginTop: 24 },
 });
