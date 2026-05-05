@@ -4,10 +4,12 @@ import ScreenContainer from '../../components/shared/ScreenContainer';
 import AppText from '../../components/shared/Text';
 import StatCard from '../../components/shared/StatCard';
 import CalendarHeatmap from '../../components/heatmap/CalendarHeatmap';
+import DayLogCard from '../../components/log/DayLogCard';
 import QuickLogButton from '../../components/log/QuickLogButton';
 import LogEntryModal from '../../components/log/LogEntryModal';
 import { useLogStore } from '../../store/logStore';
 import { useAuthStore } from '../../store/authStore';
+import { LogEntry } from '../../services/logs';
 import { calculateStreaks, DailySummary } from '../../utils/streakUtils';
 import { todayCount, monthlyAverage } from '../../utils/statsUtils';
 
@@ -19,6 +21,7 @@ export default function HomeScreen() {
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
 
   useEffect(() => {
     refresh();
@@ -56,9 +59,14 @@ export default function HomeScreen() {
         />
 
         {selectedDate && (
-          <AppText variant="caption" colour="textSecondary" style={styles.selection}>
-            Selected: {selectedDate}
-          </AppText>
+          <DayLogCard
+            date={selectedDate}
+            logs={logs.filter(l => l.date === selectedDate)}
+            onEditLog={log => {
+              setEditingLog(log);
+              setIsModalOpen(true);
+            }}
+          />
         )}
       </ScrollView>
 
@@ -71,7 +79,11 @@ export default function HomeScreen() {
 
       <LogEntryModal
         visible={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        existingLog={editingLog}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingLog(null);
+        }}
       />
     </ScreenContainer>
   );
@@ -81,7 +93,6 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: 140, gap: 16 },
   heading: { marginBottom: 4 },
   stats: { flexDirection: 'row', gap: 8 },
-  selection: { textAlign: 'center', marginTop: 4 },
   fab: {
     position: 'absolute',
     left: 24,

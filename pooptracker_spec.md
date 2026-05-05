@@ -17,7 +17,7 @@ A social poop tracking app for iOS and Android. Users log their bowel movements,
 | Firebase SDK | `firebase` (JS SDK) | Cross-platform, no native build dependency; sufficient for v1 auth + low-rate Firestore queries. Migration to native SDK (`@react-native-firebase`) deferred to a future version if performance demands it. |
 | Auth token persistence | `@react-native-async-storage/async-storage` | Required peer of the Firebase JS SDK in React Native; persists session refresh tokens so users stay signed in across app restarts. |
 | Local storage | @op-engineering/op-sqlite | Local-first log storage, privacy by design. JSI-backed (synchronous queries from JS), pure RN — no Expo Modules dependency. |
-| Encryption | libsodium-wrappers | Client-side encryption of all Firestore documents |
+| Encryption | tweetnacl + tweetnacl-sealedbox-js + js-sha256 | Client-side NaCl-based encryption of all Firestore documents. Pure JS — no native modules, no WASM. (Original choice was `libsodium-wrappers`, swapped because its WASM build is incompatible with Hermes / React Native; same NaCl primitives, interoperable wire format.) |
 | State management | Zustand | Lightweight, beginner-friendly, scales well |
 | Navigation | React Navigation v7 | Standard for React Native, flexible |
 | Notifications | Notifee | Best-in-class local notifications for React Native |
@@ -160,7 +160,7 @@ src/
 // device looks up its own entry by recipient key id and decrypts only that ciphertext.
 {
   ciphertexts: {
-    [recipientKeyId: string]: string,  // base64-encoded libsodium sealed/box ciphertext
+    [recipientKeyId: string]: string,  // base64-encoded NaCl sealed-box ciphertext
   },
   updatedAt: Timestamp,                // unencrypted metadata, used for change detection
 }
@@ -176,7 +176,7 @@ src/
 // payloads addressed to this user.
 {
   userId: string,                      // anonymous UID, matches users/{userId}
-  publicKey: string,                   // the user's public encryption key (libsodium box public key, base64)
+  publicKey: string,                   // the user's public encryption key (NaCl box public key, base64)
   updatedAt: Timestamp,                // last key rotation
 }
 ```
@@ -241,8 +241,8 @@ The app is designed so that the developer has **no access** to any user's raw lo
 
 **On-device secret storage tiers**
 - Firebase Auth refresh tokens are persisted by the Firebase JS SDK in `AsyncStorage`. These tokens are short-lived, scoped to the device, and revocable from the Firebase Console — adequate security for session resumption.
-- The libsodium private encryption key (used to decrypt friend-shared Firestore documents) is held in the platform secure enclave: iOS Keychain on iPhone, Android Keystore on Android. It is **never** written to AsyncStorage.
-- Cross-device sync of the libsodium key uses iCloud Keychain (iOS) and Google Block Store (Android); both are end-to-end encrypted by Apple/Google with the user's device passcode as part of the key derivation. This is the same trust boundary already accepted for Firebase Auth.
+- The NaCl private encryption key (used to decrypt friend-shared Firestore documents) is held in the platform secure enclave: iOS Keychain on iPhone, Android Keystore on Android. It is **never** written to AsyncStorage.
+- Cross-device sync of the NaCl key uses iCloud Keychain (iOS) and Google Block Store (Android); both are end-to-end encrypted by Apple/Google with the user's device passcode as part of the key derivation. This is the same trust boundary already accepted for Firebase Auth.
 
 **Friend discovery via deterministic hashing**
 - Encrypted fields cannot be queried server-side, so plaintext usernames are never written to Firestore.

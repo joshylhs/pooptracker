@@ -106,6 +106,13 @@ export function listLogsForUser(userId: string): LogEntry[] {
   return (result.rows as unknown as LogRow[]).map(rowToEntry);
 }
 
+export function getLogById(logId: string): LogEntry | null {
+  const db = getDB();
+  const result = db.executeSync(`SELECT * FROM logs WHERE log_id = ?`, [logId]);
+  const rows = result.rows as unknown as LogRow[];
+  return rows.length > 0 ? rowToEntry(rows[0]) : null;
+}
+
 export function listLogsForDate(userId: string, date: string): LogEntry[] {
   const db = getDB();
   const result = db.executeSync(

@@ -1,0 +1,67 @@
+rules_version = '2';
+
+// PoopTracker Firestore security rules.
+//
+// All sensitive documents are also client-side encrypted before write — these
+// rules are defence-in-depth, not the primary security boundary. The encryption
+// keys live only on the user's device, so even if these rules were bypassed,
+// the developer still cannot read user data.
+//
+// Deploy: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Encrypted user profile (username, avatar, notifications, stats).
+    // Only the owner reads or writes. Others have no need — friend-visible
+    // data lives in userDailySummaries, encrypted per-recipient.
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Encrypted per-recipient daily summaries — the heatmap data source.
+    // Owner writes; any signed-in user may read. Reads are safe because
+    // each doc is a map of recipient-keyed ciphertexts; without the matching
+    // private key, there is nothing to decrypt.
+    match /userDailySummaries/{userId}/days/{date} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId);
+    }
+
+    // Public encryption keys. Public by design — friends need them to encrypt
+    // per-recipient ciphertexts. Only the owner may write their own key.
+    match /publicKeys/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId);
+    }
+
+    // Username hash index. Lets friend search resolve username → uid via a
+    // single doc-id lookup without storing plaintext usernames anywhere.
+    // Anyone signed-in may read; writers must claim their own uid.
+    match /usernameIndex/{usernameHash} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Friendships. Each user owns their own friend list under their uid.
+    // Step 10 will add cross-user write rules for accepting requests.
+    match /friendships/{userId}/friends/{friendId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Default deny — anything not matched above is rejected.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
