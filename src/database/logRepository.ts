@@ -1,4 +1,17 @@
-import { getDB } from './schema';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  orderBy,
+  query,
+  setDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
+import { db } from '../services/firebase';
 import { formatDate } from '../utils/dateUtils';
 import { BristolTypeNumber } from '../utils/bristolData';
 
@@ -24,32 +37,36 @@ export interface NewLogInput {
   isQuickLog: boolean;
 }
 
-interface LogRow {
-  log_id: string;
-  user_id: string;
+interface LogDoc {
   timestamp: number;
-  bristol_type: number | null;
+  bristolType: BristolTypeNumber | null;
   duration: number | null;
   notes: string | null;
-  is_quick_log: number;
+  isQuickLog: boolean;
   date: string;
-  created_at: number;
-  updated_at: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
-function rowToEntry(row: LogRow): LogEntry {
-  return {
-    logId: row.log_id,
-    userId: row.user_id,
-    timestamp: row.timestamp,
-    bristolType: row.bristol_type as BristolTypeNumber | null,
-    duration: row.duration,
-    notes: row.notes,
-    isQuickLog: row.is_quick_log === 1,
-    date: row.date,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
+function logsCol(userId: string) {
+  return collection(db, 'users', userId, 'logs');
+}
+
+function logRef(userId: string, logId: string) {
+  return doc(db, 'users', userId, 'logs', logId);
+}
+
+function dailyRef(userId: string, date: string) {
+  return doc(db, 'users', userId, 'dailySummaries', date);
+}
+
+function monthlyRef(userId: string, date: string) {
+  // date = "YYYY-MM-DD" → "YYYY-MM"
+  return doc(db, 'users', userId, 'monthlyTotals', date.slice(0, 7));
+}
+
+function yearlyRef(userId: string, date: string) {
+  return doc(db, 'users', userId, 'yearlyTotals', date.slice(0, 4));
 }
 
 function generateId(): string {
@@ -59,10 +76,25 @@ function generateId(): string {
   return `${stamp}-${random}`;
 }
 
-export function insertLog(input: NewLogInput): LogEntry {
-  const db = getDB();
+function docToEntry(userId: string, logId: string, data: LogDoc): LogEntry {
+  return {
+    logId,
+    userId,
+    timestamp: data.timestamp,
+    bristolType: data.bristolType,
+    duration: data.duration,
+    notes: data.notes,
+    isQuickLog: data.isQuickLog,
+    date: data.date,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  };
+}
+
+export async function insertLog(input: NewLogInput): Promise<LogEntry> {
   const now = Date.now();
   const timestamp = input.timestamp ?? now;
+  const date = formatDate(new Date(timestamp));
   const entry: LogEntry = {
     logId: generateId(),
     userId: input.userId,
@@ -71,62 +103,64 @@ export function insertLog(input: NewLogInput): LogEntry {
     duration: input.duration ?? null,
     notes: input.notes ?? null,
     isQuickLog: input.isQuickLog,
-    date: formatDate(new Date(timestamp)),
+    date,
     createdAt: now,
     updatedAt: now,
   };
 
-  db.executeSync(
-    `INSERT INTO logs (log_id, user_id, timestamp, bristol_type, duration, notes,
-                       is_quick_log, date, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      entry.logId,
-      entry.userId,
-      entry.timestamp,
-      entry.bristolType,
-      entry.duration,
-      entry.notes,
-      entry.isQuickLog ? 1 : 0,
-      entry.date,
-      entry.createdAt,
-      entry.updatedAt,
-    ],
-  );
+  const docData: LogDoc = {
+    timestamp: entry.timestamp,
+    bristolType: entry.bristolType,
+    duration: entry.duration,
+    notes: entry.notes,
+    isQuickLog: entry.isQuickLog,
+    date: entry.date,
+    createdAt: entry.createdAt,
+    updatedAt: entry.updatedAt,
+  };
+
+  const batch = writeBatch(db);
+  batch.set(logRef(input.userId, entry.logId), docData);
+  batch.set(dailyRef(input.userId, date), { count: increment(1) }, { merge: true });
+  batch.set(monthlyRef(input.userId, date), { count: increment(1) }, { merge: true });
+  batch.set(yearlyRef(input.userId, date), { count: increment(1) }, { merge: true });
+  await batch.commit();
 
   return entry;
 }
 
-export function listLogsForUser(userId: string): LogEntry[] {
-  const db = getDB();
-  const result = db.executeSync(
-    `SELECT * FROM logs WHERE user_id = ? ORDER BY timestamp DESC`,
-    [userId],
+export async function listLogsForUser(userId: string): Promise<LogEntry[]> {
+  const snap = await getDocs(query(logsCol(userId), orderBy('timestamp', 'desc')));
+  return snap.docs.map(d => docToEntry(userId, d.id, d.data() as LogDoc));
+}
+
+export async function getLogById(userId: string, logId: string): Promise<LogEntry | null> {
+  const snap = await getDoc(logRef(userId, logId));
+  if (!snap.exists()) return null;
+  return docToEntry(userId, snap.id, snap.data() as LogDoc);
+}
+
+export async function listLogsForDate(userId: string, date: string): Promise<LogEntry[]> {
+  const snap = await getDocs(
+    query(logsCol(userId), where('date', '==', date), orderBy('timestamp', 'asc')),
   );
-  return (result.rows as unknown as LogRow[]).map(rowToEntry);
+  return snap.docs.map(d => docToEntry(userId, d.id, d.data() as LogDoc));
 }
 
-export function getLogById(logId: string): LogEntry | null {
-  const db = getDB();
-  const result = db.executeSync(`SELECT * FROM logs WHERE log_id = ?`, [logId]);
-  const rows = result.rows as unknown as LogRow[];
-  return rows.length > 0 ? rowToEntry(rows[0]) : null;
+export async function deleteLog(userId: string, logId: string): Promise<void> {
+  const existing = await getLogById(userId, logId);
+  if (!existing) return;
+
+  const batch = writeBatch(db);
+  batch.delete(logRef(userId, logId));
+  batch.set(dailyRef(userId, existing.date), { count: increment(-1) }, { merge: true });
+  batch.set(monthlyRef(userId, existing.date), { count: increment(-1) }, { merge: true });
+  batch.set(yearlyRef(userId, existing.date), { count: increment(-1) }, { merge: true });
+  await batch.commit();
 }
 
-export function listLogsForDate(userId: string, date: string): LogEntry[] {
-  const db = getDB();
-  const result = db.executeSync(
-    `SELECT * FROM logs WHERE user_id = ? AND date = ? ORDER BY timestamp ASC`,
-    [userId, date],
-  );
-  return (result.rows as unknown as LogRow[]).map(rowToEntry);
-}
-
-export function deleteLog(logId: string): void {
-  getDB().execute(`DELETE FROM logs WHERE log_id = ?`, [logId]);
-}
-
-export function updateLog(
+export async function updateLog(
+  userId: string,
   logId: string,
   patch: {
     bristolType?: BristolTypeNumber | null;
@@ -134,32 +168,35 @@ export function updateLog(
     notes?: string | null;
     timestamp?: number;
   },
-): void {
-  const db = getDB();
-  const updates: string[] = [];
-  const params: (string | number | null)[] = [];
+): Promise<void> {
+  const existing = await getLogById(userId, logId);
+  if (!existing) return;
 
-  if (patch.bristolType !== undefined) {
-    updates.push('bristol_type = ?');
-    params.push(patch.bristolType);
-  }
-  if (patch.duration !== undefined) {
-    updates.push('duration = ?');
-    params.push(patch.duration);
-  }
-  if (patch.notes !== undefined) {
-    updates.push('notes = ?');
-    params.push(patch.notes);
-  }
-  if (patch.timestamp !== undefined) {
-    updates.push('timestamp = ?', 'date = ?');
-    params.push(patch.timestamp, formatDate(new Date(patch.timestamp)));
-  }
-  if (updates.length === 0) return;
+  const next: LogDoc = {
+    timestamp: patch.timestamp ?? existing.timestamp,
+    bristolType: patch.bristolType !== undefined ? patch.bristolType : existing.bristolType,
+    duration: patch.duration !== undefined ? patch.duration : existing.duration,
+    notes: patch.notes !== undefined ? patch.notes : existing.notes,
+    isQuickLog: existing.isQuickLog,
+    date: patch.timestamp !== undefined
+      ? formatDate(new Date(patch.timestamp))
+      : existing.date,
+    createdAt: existing.createdAt,
+    updatedAt: Date.now(),
+  };
 
-  updates.push('updated_at = ?');
-  params.push(Date.now());
-  params.push(logId);
+  const batch = writeBatch(db);
+  batch.set(logRef(userId, logId), next);
 
-  db.executeSync(`UPDATE logs SET ${updates.join(', ')} WHERE log_id = ?`, params);
+  // If date changed, decrement old rollups and increment new ones.
+  if (next.date !== existing.date) {
+    batch.set(dailyRef(userId, existing.date), { count: increment(-1) }, { merge: true });
+    batch.set(monthlyRef(userId, existing.date), { count: increment(-1) }, { merge: true });
+    batch.set(yearlyRef(userId, existing.date), { count: increment(-1) }, { merge: true });
+    batch.set(dailyRef(userId, next.date), { count: increment(1) }, { merge: true });
+    batch.set(monthlyRef(userId, next.date), { count: increment(1) }, { merge: true });
+    batch.set(yearlyRef(userId, next.date), { count: increment(1) }, { merge: true });
+  }
+
+  await batch.commit();
 }

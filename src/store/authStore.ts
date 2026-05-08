@@ -8,6 +8,8 @@ import {
   signUp as signUpService,
   subscribeToAuthState,
 } from '../services/auth';
+import { useLogStore } from './logStore';
+import { useFriendsStore } from './friendsStore';
 
 interface AuthState {
   user: FirebaseUser | null;
@@ -50,6 +52,15 @@ let unsubscribe: (() => void) | null = null;
 export function startAuthListener(): void {
   if (unsubscribe) return;
   unsubscribe = subscribeToAuthState(user => {
+    const previousUid = useAuthStore.getState().user?.uid ?? null;
+    const nextUid = user?.uid ?? null;
+    // Clear per-user stores whenever the identity changes (sign-out, sign-in,
+    // account switch). Prevents stale heatmap / leaderboard data from leaking
+    // between accounts during the brief window before fresh data loads.
+    if (previousUid !== nextUid) {
+      useLogStore.getState().clear();
+      useFriendsStore.getState().clear();
+    }
     useAuthStore.setState(state => ({
       user,
       isInitialised: true,

@@ -23,6 +23,13 @@ export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
 
+// Firestore JS SDK on React Native: persistentLocalCache requires IndexedDB,
+// which RN doesn't have. We rely on (1) the SDK's in-memory cache within a
+// session, (2) Zustand TTL caching for cross-screen reuse, and (3) AsyncStorage
+// hydration for the profile cold-start path.
 export const db = getFirestore(app);
 
 export { app };
+
+import { setLogLevel } from 'firebase/firestore';
+if (__DEV__) setLogLevel('debug');

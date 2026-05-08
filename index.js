@@ -2,9 +2,9 @@
  * @format
  */
 
-// Must be the very first import — installs globalThis.crypto.getRandomValues
-// using the platform secure random source (SecRandomCopyBytes on iOS,
-// SecureRandom on Android). libsodium-wrappers refuses to load without it.
+// Polyfill globalThis.crypto.getRandomValues with the platform secure random
+// source (SecRandomCopyBytes on iOS, SecureRandom on Android). Firebase and
+// other libs may rely on it; safer to install before any other import.
 import 'react-native-get-random-values';
 import 'react-native-gesture-handler';
 import { AppRegistry } from 'react-native';

@@ -2,10 +2,9 @@ rules_version = '2';
 
 // PoopTracker Firestore security rules.
 //
-// All sensitive documents are also client-side encrypted before write — these
-// rules are defence-in-depth, not the primary security boundary. The encryption
-// keys live only on the user's device, so even if these rules were bypassed,
-// the developer still cannot read user data.
+// Data is stored plaintext on Firestore. Access control is via these rules.
+// Friend-gated reads use a get() on the requester's friendships subcollection
+// to check the accepted relationship — costs 1 extra doc read per evaluation.
 //
 // Deploy: firebase deploy --only firestore:rules
 service cloud.firestore {
@@ -19,32 +18,53 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Encrypted user profile (username, avatar, notifications, stats).
-    // Only the owner reads or writes. Others have no need — friend-visible
-    // data lives in userDailySummaries, encrypted per-recipient.
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
+    // Any friendship record exists (pending or accepted, requester's side).
+    // Used to gate profile reads — recipients of pending requests need to
+    // read the requester's profile to display the pending card.
+    function knowsUser(otherId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/friendships/$(request.auth.uid)/friends/$(otherId));
     }
 
-    // Encrypted per-recipient daily summaries — the heatmap data source.
-    // Owner writes; any signed-in user may read. Reads are safe because
-    // each doc is a map of recipient-keyed ciphertexts; without the matching
-    // private key, there is nothing to decrypt.
-    match /userDailySummaries/{userId}/days/{date} {
-      allow read: if isSignedIn();
+    // Accepted friendship — gates summary/heatmap reads. Strict: pending
+    // requests do not grant access to log counts.
+    function isFriend(otherId) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/friendships/$(request.auth.uid)/friends/$(otherId))
+        && get(/databases/$(database)/documents/friendships/$(request.auth.uid)/friends/$(otherId)).data.status == 'accepted';
+    }
+
+    // User profile (username, avatar, prefs). Plaintext.
+    // Self always; anyone in a friendship (pending or accepted) for display.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || knowsUser(userId);
       allow write: if isOwner(userId);
     }
 
-    // Public encryption keys. Public by design — friends need them to encrypt
-    // per-recipient ciphertexts. Only the owner may write their own key.
-    match /publicKeys/{userId} {
-      allow read: if isSignedIn();
+    // Individual logs — strictly owner-only. Friends never see raw logs.
+    match /users/{userId}/logs/{logId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Daily / monthly / yearly summary rollups — readable by accepted friends
+    // for leaderboard and heatmap; writable only by owner.
+    match /users/{userId}/dailySummaries/{date} {
+      allow read: if isOwner(userId) || isFriend(userId);
+      allow write: if isOwner(userId);
+    }
+
+    match /users/{userId}/monthlyTotals/{month} {
+      allow read: if isOwner(userId) || isFriend(userId);
+      allow write: if isOwner(userId);
+    }
+
+    match /users/{userId}/yearlyTotals/{year} {
+      allow read: if isOwner(userId) || isFriend(userId);
       allow write: if isOwner(userId);
     }
 
     // Username hash index. Lets friend search resolve username → uid via a
     // single doc-id lookup without storing plaintext usernames anywhere.
-    // Anyone signed-in may read; writers must claim their own uid.
     match /usernameIndex/{usernameHash} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
@@ -53,13 +73,40 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
-    // Friendships. Each user owns their own friend list under their uid.
-    // Step 10 will add cross-user write rules for accepting requests.
+    // Friendships. Cross-user writes are needed for friend requests.
+    //
+    // Path: friendships/{userId}/friends/{friendId}.
+    // "userId" owns the list; "friendId" is the other party.
     match /friendships/{userId}/friends/{friendId} {
+      // Owner has full control over their own friend list.
       allow read, write: if isOwner(userId);
+
+      // The other party can read their own entry (e.g. to check whether
+      // their outgoing request was accepted).
+      allow read: if isSignedIn() && request.auth.uid == friendId;
+
+      // Sending a request: requester (friendId) creates the pending record
+      // in the recipient's (userId) list.
+      allow create: if isSignedIn()
+        && request.auth.uid == friendId
+        && request.resource.data.friendId == friendId
+        && request.resource.data.initiatedBy == friendId
+        && request.resource.data.status == 'pending';
+
+      // Accepting: friendId updates their entry in userId's list to accepted,
+      // but only if userId originally initiated the request.
+      allow update: if isSignedIn()
+        && request.auth.uid == friendId
+        && resource.data.initiatedBy == userId
+        && request.resource.data.status == 'accepted';
+
+      // Declining or removing: either party can delete the record from the
+      // other's list.
+      allow delete: if isSignedIn()
+        && request.auth.uid == friendId;
     }
 
-    // Default deny — anything not matched above is rejected.
+    // Default deny.
     match /{document=**} {
       allow read, write: if false;
     }

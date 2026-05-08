@@ -6,11 +6,8 @@ import {
   listLogsForDate as repoListLogsForDate,
   deleteLog as repoDeleteLog,
   updateLog as repoUpdateLog,
-  getLogById as repoGetLogById,
 } from '../database/logRepository';
 import { BristolTypeNumber } from '../utils/bristolData';
-import { formatDate } from '../utils/dateUtils';
-import { syncDailySummary } from './dailySummaries';
 import { loadNotificationPrefs } from './notificationPrefs';
 import { suppressTodayIfNeeded } from './notifications';
 
@@ -24,12 +21,6 @@ function requireUserId(): string {
   return user.uid;
 }
 
-function syncDates(uid: string, dates: Iterable<string>): void {
-  for (const date of new Set(dates)) {
-    void syncDailySummary(uid, date);
-  }
-}
-
 export interface LogDetails {
   bristolType?: BristolTypeNumber | null;
   duration?: number | null;
@@ -41,17 +32,16 @@ function suppressNotificationAsync(): void {
   void loadNotificationPrefs().then(suppressTodayIfNeeded);
 }
 
-export function quickLog(): LogEntry {
+export async function quickLog(): Promise<LogEntry> {
   const userId = requireUserId();
-  const entry = repoInsertLog({ userId, isQuickLog: true });
-  syncDates(userId, [entry.date]);
+  const entry = await repoInsertLog({ userId, isQuickLog: true });
   suppressNotificationAsync();
   return entry;
 }
 
-export function saveDetailedLog(details: LogDetails): LogEntry {
+export async function saveDetailedLog(details: LogDetails): Promise<LogEntry> {
   const userId = requireUserId();
-  const entry = repoInsertLog({
+  const entry = await repoInsertLog({
     userId,
     timestamp: details.timestamp,
     bristolType: details.bristolType,
@@ -59,35 +49,24 @@ export function saveDetailedLog(details: LogDetails): LogEntry {
     notes: details.notes,
     isQuickLog: false,
   });
-  syncDates(userId, [entry.date]);
   suppressNotificationAsync();
   return entry;
 }
 
-export function listAllLogs(): LogEntry[] {
+export async function listAllLogs(): Promise<LogEntry[]> {
   return repoListLogsForUser(requireUserId());
 }
 
-export function listLogsForDate(date: string): LogEntry[] {
+export async function listLogsForDate(date: string): Promise<LogEntry[]> {
   return repoListLogsForDate(requireUserId(), date);
 }
 
-export function editLog(logId: string, patch: LogDetails): void {
+export async function editLog(logId: string, patch: LogDetails): Promise<void> {
   const userId = requireUserId();
-  const previous = repoGetLogById(logId);
-  repoUpdateLog(logId, patch);
-
-  const dates: string[] = [];
-  if (previous) dates.push(previous.date);
-  if (patch.timestamp !== undefined) {
-    dates.push(formatDate(new Date(patch.timestamp)));
-  }
-  syncDates(userId, dates);
+  await repoUpdateLog(userId, logId, patch);
 }
 
-export function removeLog(logId: string): void {
+export async function removeLog(logId: string): Promise<void> {
   const userId = requireUserId();
-  const previous = repoGetLogById(logId);
-  repoDeleteLog(logId);
-  if (previous) syncDates(userId, [previous.date]);
+  await repoDeleteLog(userId, logId);
 }

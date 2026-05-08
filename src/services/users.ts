@@ -3,22 +3,11 @@ import {
   getDoc,
   runTransaction,
   serverTimestamp,
+  setDoc,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import {
-  decryptForSelf,
-  encryptForRecipient,
-  getPublicKeyBase64,
-  hashUsername,
-} from '../utils/encryption';
+import { hashUsername } from '../utils/encryption';
 import { NotificationPrefs } from './notificationPrefs';
-
-export interface UserStats {
-  totalLogs: number;
-  currentStreak: number;
-  longestStreak: number;
-  lastLogDate: string | null;
-}
 
 export interface UserProfile {
   uid: string;
@@ -31,7 +20,6 @@ export interface UserProfile {
     time: string; // "HH:MM" 24h
     smartSuppress: boolean;
   };
-  stats: UserStats;
 }
 
 export class UsernameTakenError extends Error {
@@ -64,10 +52,9 @@ function timeString(hour: number, minute: number): string {
 }
 
 /**
- * Creates the three Firestore docs for a new user inside one transaction:
- *   - `users/{uid}` (encrypted to self)
- *   - `publicKeys/{uid}` (unencrypted — public keys are meant to be public)
- *   - `usernameIndex/{hash}` (unencrypted — hash → uid)
+ * Creates two Firestore docs for a new user inside one transaction:
+ *   - `users/{uid}` (plaintext profile)
+ *   - `usernameIndex/{hash}` (hash → uid, for private friend search)
  * Throws UsernameTakenError if the username is already in use.
  */
 export async function createUserProfile(args: {
@@ -77,7 +64,6 @@ export async function createUserProfile(args: {
   notifications: NotificationPrefs;
 }): Promise<UserProfile> {
   const { uid, displayName, username, notifications } = args;
-  const publicKey = await getPublicKeyBase64();
   const usernameHashValue = await hashUsername(username);
 
   const profile: UserProfile = {
@@ -91,15 +77,7 @@ export async function createUserProfile(args: {
       time: timeString(notifications.hour, notifications.minute),
       smartSuppress: notifications.smartSuppress,
     },
-    stats: {
-      totalLogs: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-      lastLogDate: null,
-    },
   };
-
-  const selfCiphertext = await encryptForRecipient(profile, publicKey);
 
   await runTransaction(db, async tx => {
     const indexRef = doc(db, 'usernameIndex', usernameHashValue);
@@ -108,12 +86,7 @@ export async function createUserProfile(args: {
       throw new UsernameTakenError();
     }
     tx.set(doc(db, 'users', uid), {
-      ciphertexts: { [uid]: selfCiphertext },
-      updatedAt: serverTimestamp(),
-    });
-    tx.set(doc(db, 'publicKeys', uid), {
-      userId: uid,
-      publicKey,
+      ...profile,
       updatedAt: serverTimestamp(),
     });
     tx.set(indexRef, {
@@ -126,15 +99,19 @@ export async function createUserProfile(args: {
   return profile;
 }
 
-/** Reads and decrypts the current user's profile, or null if missing. */
+/** Reads a user's profile. Works for self and any friend (rule-gated). */
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const snap = await getDoc(doc(db, 'users', uid));
   if (!snap.exists()) return null;
-  const data = snap.data() as { ciphertexts?: Record<string, string> };
-  const cipher = data.ciphertexts?.[uid];
-  if (!cipher) return null;
-  const plaintext = await decryptForSelf(cipher);
-  return (plaintext as UserProfile) ?? null;
+  const data = snap.data();
+  return {
+    uid,
+    username: data.username,
+    avatarInitials: data.avatarInitials,
+    avatarColour: data.avatarColour,
+    createdAt: data.createdAt,
+    notifications: data.notifications,
+  };
 }
 
 /** Looks up a uid by username via the deterministic hash index. */
@@ -146,10 +123,14 @@ export async function findUidByUsername(username: string): Promise<string | null
   return data.userId ?? null;
 }
 
-/** Reads a user's public key from the unencrypted `publicKeys` collection. */
-export async function getPublicKeyForUser(uid: string): Promise<string | null> {
-  const snap = await getDoc(doc(db, 'publicKeys', uid));
-  if (!snap.exists()) return null;
-  const data = snap.data() as { publicKey?: string };
-  return data.publicKey ?? null;
+/** Patches fields on the user's own profile doc. */
+export async function updateUserProfile(
+  uid: string,
+  patch: Partial<Pick<UserProfile, 'username' | 'avatarInitials' | 'avatarColour' | 'notifications'>>,
+): Promise<void> {
+  await setDoc(
+    doc(db, 'users', uid),
+    { ...patch, updatedAt: serverTimestamp() },
+    { merge: true },
+  );
 }
