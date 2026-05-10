@@ -13,7 +13,11 @@ export default function FriendsStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="FriendsMain" component={FriendsScreen} />
-      <Stack.Screen name="FriendDetail" component={FriendDetailScreen} />
+      <Stack.Screen
+        name="FriendDetail"
+        component={FriendDetailScreen}
+        options={{ presentation: 'transparentModal', animation: 'slide_from_bottom', gestureEnabled: true }}
+      />
     </Stack.Navigator>
   );
 }
