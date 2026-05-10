@@ -7,7 +7,7 @@ import {
   serverTimestamp,
   where,
   writeBatch,
-} from 'firebase/firestore';
+} from '@react-native-firebase/firestore';
 import { db } from './firebase';
 import { getUserProfile } from './users';
 import { useAuthStore } from '../store/authStore';
@@ -82,12 +82,13 @@ export async function searchUser(username: string): Promise<UserSearchResult | n
   const hash = await hashUsername(username);
   const snap = await getDoc(doc(db, 'usernameIndex', hash));
   if (!snap.exists()) return null;
-  const { userId } = snap.data() as { userId: string };
+  const data = snap.data() as { userId?: string } | undefined;
+  if (!data?.userId) return null;
   return {
-    uid: userId,
+    uid: data.userId,
     username,
     avatarInitials: deriveAvatarInitials(username),
-    avatarColour: deriveAvatarColour(userId),
+    avatarColour: deriveAvatarColour(data.userId),
   };
 }
 
@@ -100,7 +101,6 @@ export async function sendFriendRequest(targetUid: string): Promise<void> {
   const myUid = requireUid();
   const batch = writeBatch(db);
 
-  // My record (outgoing)
   batch.set(doc(db, 'friendships', myUid, 'friends', targetUid), {
     friendId: targetUid,
     status: 'pending',
@@ -109,7 +109,6 @@ export async function sendFriendRequest(targetUid: string): Promise<void> {
     acceptedAt: null,
   });
 
-  // Their record (incoming)
   batch.set(doc(db, 'friendships', targetUid, 'friends', myUid), {
     friendId: myUid,
     status: 'pending',
@@ -218,7 +217,8 @@ export async function loadPendingOutgoing(): Promise<PendingFriend[]> {
 async function readCount(path: [string, string, string, string]): Promise<number> {
   const snap = await getDoc(doc(db, ...path));
   if (!snap.exists()) return 0;
-  return (snap.data() as { count?: number }).count ?? 0;
+  const data = snap.data() as { count?: number } | undefined;
+  return data?.count ?? 0;
 }
 
 async function fetchUserCountForWindow(

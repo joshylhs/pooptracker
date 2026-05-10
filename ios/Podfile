@@ -15,6 +15,14 @@ if linkage != nil
 end
 
 target 'PoopTracker' do
+  # @react-native-firebase needs framework-style Swift module generation so
+  # FirebaseAuth's auto-generated -Swift.h headers are visible to ObjC
+  # consumers (RNFBApp's Firebase.h umbrella). Static linkage keeps the
+  # binary slim and works with Hermes.
+  use_frameworks! :linkage => :static
+  $RNFirebaseAsStaticFramework = true
+  use_modular_headers!
+
   config = use_native_modules!
 
   use_react_native!(
@@ -30,5 +38,34 @@ target 'PoopTracker' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 26 defaults to Swift 6 strict concurrency. FirebaseCore's Swift
+    # sources don't compile cleanly under it yet. Pin every Pod target back
+    # to Swift 5 to avoid `error in the Swift 6 language mode`.
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['SWIFT_VERSION'] = '5.0'
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
+    end
+
+    # All three RNFB ObjC pods pull React headers through their umbrella headers.
+    # Clang absorbs React types into whichever RNFB module is compiled first,
+    # then rejects the same types when the next RNFB pod tries to include them
+    # ("declaration must be imported from module X"). Fix: strip the RNFB-specific
+    # #import lines from the pure-ObjC pods' umbrella headers so their module maps
+    # own no types. Only RNFBFirestore keeps its full umbrella — it has Swift files
+    # that need Swift-ObjC interop with its own ObjC types (RNFBFirestoreCommon,
+    # RNFBFirestoreQuery, etc.). The framework Headers directories are untouched, so
+    # direct #import <RNFBApp/...> calls in other pods still resolve correctly.
+    ['RNFBApp', 'RNFBAuth'].each do |pod_name|
+      umbrella = "#{installer.sandbox.root}/Target Support Files/#{pod_name}/#{pod_name}-umbrella.h"
+      next unless File.exist?(umbrella)
+      content = File.read(umbrella)
+      # Strip only the pod-specific quoted imports; keep UIKit/Foundation boilerplate
+      # and the FOUNDATION_EXPORT version symbols (required by the linker).
+      content = content.gsub(/^#import ".*"\n/, '')
+      File.write(umbrella, content)
+    end
   end
 end

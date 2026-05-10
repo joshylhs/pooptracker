@@ -4,7 +4,7 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
-} from 'firebase/firestore';
+} from '@react-native-firebase/firestore';
 import { db } from './firebase';
 import { hashUsername } from '../utils/encryption';
 import { NotificationPrefs } from './notificationPrefs';
@@ -82,7 +82,7 @@ export async function createUserProfile(args: {
   await runTransaction(db, async tx => {
     const indexRef = doc(db, 'usernameIndex', usernameHashValue);
     const existing = await tx.get(indexRef);
-    if (existing.exists() && existing.data().userId !== uid) {
+    if (existing.exists() && existing.data()?.userId !== uid) {
       throw new UsernameTakenError();
     }
     tx.set(doc(db, 'users', uid), {
@@ -99,11 +99,16 @@ export async function createUserProfile(args: {
   return profile;
 }
 
-/** Reads a user's profile. Works for self and any friend (rule-gated). */
+/**
+ * Reads a user's profile. Works for self and any friend (rule-gated).
+ * Native Firestore SDK caches reads automatically, so subsequent calls within
+ * the persistent cache window are free.
+ */
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const snap = await getDoc(doc(db, 'users', uid));
   if (!snap.exists()) return null;
   const data = snap.data();
+  if (!data) return null;
   return {
     uid,
     username: data.username,
@@ -119,8 +124,8 @@ export async function findUidByUsername(username: string): Promise<string | null
   const usernameHashValue = await hashUsername(username);
   const snap = await getDoc(doc(db, 'usernameIndex', usernameHashValue));
   if (!snap.exists()) return null;
-  const data = snap.data() as { userId?: string };
-  return data.userId ?? null;
+  const data = snap.data() as { userId?: string } | undefined;
+  return data?.userId ?? null;
 }
 
 /** Patches fields on the user's own profile doc. */

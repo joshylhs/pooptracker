@@ -1,19 +1,22 @@
 import {
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
   increment,
   orderBy,
   query,
-  setDoc,
   where,
   writeBatch,
-} from 'firebase/firestore';
+} from '@react-native-firebase/firestore';
 import { db } from '../services/firebase';
 import { formatDate } from '../utils/dateUtils';
 import { BristolTypeNumber } from '../utils/bristolData';
+
+// All log persistence goes through the native Firestore SDK. The SDK's
+// persistent cache (enabled by default on @react-native-firebase) makes
+// reads-from-cache free across sessions and queues writes when offline,
+// flushing them when the network returns — even across app restarts.
 
 export interface LogEntry {
   logId: string;
@@ -61,7 +64,6 @@ function dailyRef(userId: string, date: string) {
 }
 
 function monthlyRef(userId: string, date: string) {
-  // date = "YYYY-MM-DD" → "YYYY-MM"
   return doc(db, 'users', userId, 'monthlyTotals', date.slice(0, 7));
 }
 
@@ -188,7 +190,6 @@ export async function updateLog(
   const batch = writeBatch(db);
   batch.set(logRef(userId, logId), next);
 
-  // If date changed, decrement old rollups and increment new ones.
   if (next.date !== existing.date) {
     batch.set(dailyRef(userId, existing.date), { count: increment(-1) }, { merge: true });
     batch.set(monthlyRef(userId, existing.date), { count: increment(-1) }, { merge: true });

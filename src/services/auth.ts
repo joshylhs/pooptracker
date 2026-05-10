@@ -1,14 +1,14 @@
 import {
-  User as FirebaseUser,
+  FirebaseAuthTypes,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
-} from 'firebase/auth';
+} from '@react-native-firebase/auth';
 import { auth } from './firebase';
 
-export type { FirebaseUser };
+export type FirebaseUser = FirebaseAuthTypes.User;
 
 export interface SignUpInput {
   email: string;
