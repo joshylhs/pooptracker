@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Fragment, useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuthStore } from '../../store/authStore';
 import { getUserProfile, UserProfile, deleteUserData, updateUserProfile } from '../../services/users';
@@ -9,6 +9,7 @@ import {
   saveNotificationPrefs,
   NotificationPrefs,
   DEFAULT_PREFS,
+  MAX_NOTIFICATION_SLOTS,
 } from '../../services/notificationPrefs';
 import { scheduleDaily } from '../../services/notifications';
 import { useTheme } from '../../hooks/useTheme';
@@ -31,7 +32,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([getUserProfile(user.uid), loadNotificationPrefs()]).then(([p, n]) => {
+    Promise.all([getUserProfile(user.uid), loadNotificationPrefs(user.uid)]).then(([p, n]) => {
       setProfile(p);
       setNotifPrefs(n);
       setSavedPrefs(n);
@@ -40,27 +41,38 @@ export default function ProfileScreen() {
 
   const isDirty = JSON.stringify(notifPrefs) !== JSON.stringify(savedPrefs);
 
-  const timeAsDate = (() => {
-    const d = new Date();
-    d.setHours(notifPrefs.hour, notifPrefs.minute, 0, 0);
-    return d;
-  })();
+  const handleSlotTimeChange = (index: number) => (_: unknown, selected: Date) => {
+    setNotifPrefs(p => ({
+      ...p,
+      slots: p.slots.map((s, i) =>
+        i === index ? { hour: selected.getHours(), minute: selected.getMinutes() } : s,
+      ),
+    }));
+  };
 
-  const handleTimeChange = (_: unknown, selected: Date) => {
-    setNotifPrefs(p => ({ ...p, hour: selected.getHours(), minute: selected.getMinutes() }));
+  const addSlot = () => {
+    setNotifPrefs(p => ({ ...p, slots: [...p.slots, { hour: 9, minute: 0 }] }));
+  };
+
+  const removeSlot = (index: number) => {
+    setNotifPrefs(p => ({ ...p, slots: p.slots.filter((_, i) => i !== index) }));
   };
 
   const handleSaveNotifs = async () => {
     if (!user) return;
     setSavingNotifs(true);
     try {
-      await saveNotificationPrefs(notifPrefs);
+      await saveNotificationPrefs(notifPrefs, user.uid);
       await scheduleDaily(notifPrefs);
       if (profile) {
-        const hh = String(notifPrefs.hour).padStart(2, '0');
-        const mm = String(notifPrefs.minute).padStart(2, '0');
         await updateUserProfile(user.uid, {
-          notifications: { enabled: notifPrefs.enabled, time: `${hh}:${mm}`, smartSuppress: notifPrefs.smartSuppress },
+          notifications: {
+            enabled: notifPrefs.enabled,
+            times: notifPrefs.slots.map(
+              s => `${String(s.hour).padStart(2, '0')}:${String(s.minute).padStart(2, '0')}`,
+            ),
+            smartSuppress: notifPrefs.smartSuppress,
+          },
         });
       }
       setSavedPrefs(notifPrefs);
@@ -111,6 +123,7 @@ export default function ProfileScreen() {
   };
 
   const cardStyle = [styles.card, { backgroundColor: surface.surface, borderColor: surface.border }];
+  const dividerStyle = [styles.divider, { backgroundColor: surface.border }];
 
   return (
     <ScreenContainer>
@@ -145,25 +158,53 @@ export default function ProfileScreen() {
               trackColor={{ true: '#7F77DD' }}
             />
           </View>
+
           {notifPrefs.enabled && (
             <>
-              <View style={[styles.divider, { backgroundColor: surface.border }]} />
-              <View style={styles.row}>
-                <AppText variant="body">Time</AppText>
-                <DateTimePicker
-                  mode="time"
-                  display="compact"
-                  value={timeAsDate}
-                  onValueChange={handleTimeChange}
-                  themeVariant="dark"
-                />
-              </View>
-              <View style={[styles.divider, { backgroundColor: surface.border }]} />
+              {notifPrefs.slots.map((slot, i) => {
+                const slotDate = new Date();
+                slotDate.setHours(slot.hour, slot.minute, 0, 0);
+                return (
+                  <Fragment key={i}>
+                    <View style={dividerStyle} />
+                    <View style={[styles.row, styles.slotRow]}>
+                      <AppText variant="body">
+                        {notifPrefs.slots.length > 1 ? `Reminder ${i + 1}` : 'Time'}
+                      </AppText>
+                      <View style={styles.slotRight}>
+                        <DateTimePicker
+                          mode="time"
+                          display="compact"
+                          value={slotDate}
+                          onValueChange={handleSlotTimeChange(i)}
+                          themeVariant="dark"
+                        />
+                        {notifPrefs.slots.length > 1 && (
+                          <Pressable onPress={() => removeSlot(i)} hitSlop={8}>
+                            <AppText variant="body" colour="textSecondary"> ✕</AppText>
+                          </Pressable>
+                        )}
+                      </View>
+                    </View>
+                  </Fragment>
+                );
+              })}
+
+              {notifPrefs.slots.length < MAX_NOTIFICATION_SLOTS && (
+                <>
+                  <View style={dividerStyle} />
+                  <Pressable onPress={addSlot} style={[styles.row, styles.slotRow]}>
+                    <AppText variant="body" style={styles.addLabel}>+ Add reminder</AppText>
+                  </Pressable>
+                </>
+              )}
+
+              <View style={[styles.dividerThick, { backgroundColor: surface.border }]} />
               <View style={styles.row}>
                 <View style={styles.rowLabelBlock}>
                   <AppText variant="body">Smart suppress</AppText>
                   <AppText variant="caption" colour="textSecondary">
-                    Skip reminder on days you've already logged
+                    Skip reminders on days you've already logged
                   </AppText>
                 </View>
                 <Switch
@@ -215,7 +256,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
   },
+  slotRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  slotRow: { paddingLeft: 20 },
   rowLabelBlock: { flex: 1, gap: 2, marginRight: 12 },
   divider: { height: StyleSheet.hairlineWidth },
+  dividerThick: { height: 1 },
+  addLabel: { color: '#7F77DD' },
   accountButtons: { gap: 8 },
 });

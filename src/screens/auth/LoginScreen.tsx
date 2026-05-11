@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useAuthStore } from '../../store/authStore';
+import { sendPasswordReset } from '../../services/auth';
 import ScreenContainer from '../../components/shared/ScreenContainer';
 import AppText from '../../components/shared/Text';
 import Button from '../../components/shared/Button';
@@ -16,6 +17,26 @@ export default function LoginScreen() {
 
   const canSubmit =
     email.trim().length > 0 && password.length > 0 && !isSubmitting;
+
+  const handleForgotPassword = () => {
+    Alert.prompt(
+      'Reset password',
+      "Enter your email and we'll send you a reset link.",
+      async enteredEmail => {
+        const addr = (enteredEmail ?? email).trim();
+        if (!addr) return;
+        try {
+          await sendPasswordReset(addr);
+          Alert.alert('Email sent', `Check ${addr} for a reset link.`);
+        } catch (e) {
+          Alert.alert('Error', e instanceof Error ? e.message : 'Could not send reset email.');
+        }
+      },
+      'plain-text',
+      email.trim(),
+      'email-address',
+    );
+  };
 
   const handleSubmit = async () => {
     setError(null);
@@ -53,6 +74,10 @@ export default function LoginScreen() {
         error={error}
       />
 
+      <Pressable onPress={handleForgotPassword} style={styles.forgotLink} hitSlop={8}>
+        <AppText variant="caption" colour="textSecondary">Forgot password?</AppText>
+      </Pressable>
+
       <View style={styles.submit}>
         <Button
           title="Log in"
@@ -67,5 +92,6 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   heading: { marginBottom: 16 },
+  forgotLink: { alignSelf: 'flex-end', marginTop: 4 },
   submit: { marginTop: 12 },
 });

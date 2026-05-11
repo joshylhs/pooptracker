@@ -29,7 +29,9 @@ export interface LogDetails {
 }
 
 function suppressNotificationAsync(): void {
-  void loadNotificationPrefs().then(suppressTodayIfNeeded);
+  const uid = useAuthStore.getState().user?.uid;
+  if (!uid) return;
+  void loadNotificationPrefs(uid).then(suppressTodayIfNeeded);
 }
 
 export async function quickLog(): Promise<LogEntry> {

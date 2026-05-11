@@ -21,7 +21,7 @@ export interface UserProfile {
   createdAt: number;
   notifications: {
     enabled: boolean;
-    time: string; // "HH:MM" 24h
+    times: string[]; // ["HH:MM", ...] 24h
     smartSuppress: boolean;
   };
 }
@@ -78,7 +78,7 @@ export async function createUserProfile(args: {
     createdAt: Date.now(),
     notifications: {
       enabled: notifications.enabled,
-      time: timeString(notifications.hour, notifications.minute),
+      times: notifications.slots.map(s => timeString(s.hour, s.minute)),
       smartSuppress: notifications.smartSuppress,
     },
   };

@@ -5,6 +5,7 @@ import {
   deleteUser,
   onAuthStateChanged,
   reauthenticateWithCredential,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
@@ -41,6 +42,10 @@ export async function logIn({ email, password }: LogInInput): Promise<FirebaseUs
 
 export async function logOut(): Promise<void> {
   await firebaseSignOut(auth);
+}
+
+export async function sendPasswordReset(email: string): Promise<void> {
+  await sendPasswordResetEmail(auth, email.trim());
 }
 
 export async function reauthenticateUser(password: string): Promise<void> {

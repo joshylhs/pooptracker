@@ -4,16 +4,19 @@ import notifee, {
   TriggerType,
 } from '@notifee/react-native';
 import { Platform } from 'react-native';
-import { loadNotificationPrefs, NotificationPrefs } from './notificationPrefs';
+import { loadNotificationPrefs, NotificationPrefs, MAX_NOTIFICATION_SLOTS } from './notificationPrefs';
+import { useAuthStore } from '../store/authStore';
 
-const NOTIFICATION_ID = 'daily-reminder';
 const ANDROID_CHANNEL_ID = 'daily-reminder';
+
+function slotId(i: number): string {
+  return `daily-reminder-${i}`;
+}
 
 function nextOccurrence(hour: number, minute: number, fromTomorrow = false): number {
   const d = new Date();
   if (fromTomorrow) d.setDate(d.getDate() + 1);
   d.setHours(hour, minute, 0, 0);
-  // If the time has already passed today (and we're not forcing tomorrow), roll to tomorrow
   if (!fromTomorrow && d.getTime() <= Date.now()) {
     d.setDate(d.getDate() + 1);
   }
@@ -28,6 +31,14 @@ async function ensureAndroidChannel(): Promise<void> {
   });
 }
 
+async function cancelAllSlots(): Promise<void> {
+  await Promise.all(
+    Array.from({ length: MAX_NOTIFICATION_SLOTS }, (_, i) =>
+      notifee.cancelTriggerNotification(slotId(i)),
+    ),
+  );
+}
+
 export async function requestPermission(): Promise<boolean> {
   const settings = await notifee.requestPermission();
   return (
@@ -37,54 +48,60 @@ export async function requestPermission(): Promise<boolean> {
 }
 
 export async function scheduleDaily(prefs: NotificationPrefs): Promise<void> {
-  await notifee.cancelTriggerNotification(NOTIFICATION_ID);
-  if (!prefs.enabled) return;
+  await cancelAllSlots();
+  if (!prefs.enabled || prefs.slots.length === 0) return;
 
   await ensureAndroidChannel();
 
-  await notifee.createTriggerNotification(
-    {
-      id: NOTIFICATION_ID,
-      title: 'Daily check-in',
-      body: "Have you logged today?",
-      android: { channelId: ANDROID_CHANNEL_ID },
-    },
-    {
-      type: TriggerType.TIMESTAMP,
-      timestamp: nextOccurrence(prefs.hour, prefs.minute),
-      repeatFrequency: RepeatFrequency.DAILY,
-    },
+  await Promise.all(
+    prefs.slots.map((slot, i) =>
+      notifee.createTriggerNotification(
+        {
+          id: slotId(i),
+          title: 'Daily check-in',
+          body: "Have you logged today?",
+          android: { channelId: ANDROID_CHANNEL_ID },
+        },
+        {
+          type: TriggerType.TIMESTAMP,
+          timestamp: nextOccurrence(slot.hour, slot.minute),
+          repeatFrequency: RepeatFrequency.DAILY,
+        },
+      ),
+    ),
   );
 }
 
 export async function cancelDaily(): Promise<void> {
-  await notifee.cancelTriggerNotification(NOTIFICATION_ID);
+  await cancelAllSlots();
 }
 
-// Called after a log is saved. If smartSuppress is on, pushes today's reminder
-// to tomorrow so the user isn't notified on days they've already logged.
 export async function suppressTodayIfNeeded(prefs: NotificationPrefs): Promise<void> {
-  if (!prefs.enabled || !prefs.smartSuppress) return;
-  await notifee.cancelTriggerNotification(NOTIFICATION_ID);
+  if (!prefs.enabled || !prefs.smartSuppress || prefs.slots.length === 0) return;
+  await cancelAllSlots();
   await ensureAndroidChannel();
-  await notifee.createTriggerNotification(
-    {
-      id: NOTIFICATION_ID,
-      title: 'Daily check-in',
-      body: "Have you logged today?",
-      android: { channelId: ANDROID_CHANNEL_ID },
-    },
-    {
-      type: TriggerType.TIMESTAMP,
-      timestamp: nextOccurrence(prefs.hour, prefs.minute, true),
-      repeatFrequency: RepeatFrequency.DAILY,
-    },
+  await Promise.all(
+    prefs.slots.map((slot, i) =>
+      notifee.createTriggerNotification(
+        {
+          id: slotId(i),
+          title: 'Daily check-in',
+          body: "Have you logged today?",
+          android: { channelId: ANDROID_CHANNEL_ID },
+        },
+        {
+          type: TriggerType.TIMESTAMP,
+          timestamp: nextOccurrence(slot.hour, slot.minute, true),
+          repeatFrequency: RepeatFrequency.DAILY,
+        },
+      ),
+    ),
   );
 }
 
-// Loads prefs from AsyncStorage and applies them — call this when prefs change
-// (e.g. from ProfileScreen settings) or on new-device login after syncing from Firestore.
 export async function rescheduleFromPrefs(): Promise<void> {
-  const prefs = await loadNotificationPrefs();
+  const uid = useAuthStore.getState().user?.uid;
+  if (!uid) return;
+  const prefs = await loadNotificationPrefs(uid);
   await scheduleDaily(prefs);
 }

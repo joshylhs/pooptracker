@@ -32,10 +32,13 @@ export default function OnboardingScreen() {
     setPrefs(p => ({ ...p, ...patch }));
 
   const pickerDate = new Date();
-  pickerDate.setHours(prefs.hour, prefs.minute, 0, 0);
+  pickerDate.setHours(prefs.slots[0].hour, prefs.slots[0].minute, 0, 0);
 
   const onTimeChange = (_: unknown, date: Date) => {
-    update({ hour: date.getHours(), minute: date.getMinutes() });
+    setPrefs(p => ({
+      ...p,
+      slots: [{ hour: date.getHours(), minute: date.getMinutes() }],
+    }));
   };
 
   const validateUsername = (value: string): string | null => {
@@ -67,7 +70,7 @@ export default function OnboardingScreen() {
         username: username.trim(),
         notifications: prefs,
       });
-      await saveNotificationPrefs(prefs);
+      await saveNotificationPrefs(prefs, user.uid);
       await requestPermission();
       await scheduleDaily(prefs);
       completeOnboarding();
