@@ -86,7 +86,7 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
     try {
       const friends = get().friends.length ? get().friends : await loadFriends();
       const myProfile = await getUserProfile(uid);
-      if (!myProfile) return;
+      if (!myProfile) throw new Error('Profile not found');
       const entries = await fetchLeaderboardWindow(window, uid, friends, {
         username: myProfile.username,
         avatarInitials: myProfile.avatarInitials,

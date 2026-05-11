@@ -1,6 +1,10 @@
 import {
+  collection,
+  deleteDoc,
   doc,
   getDoc,
+  getDocs,
+  query,
   runTransaction,
   serverTimestamp,
   setDoc,
@@ -126,6 +130,33 @@ export async function findUidByUsername(username: string): Promise<string | null
   if (!snap.exists()) return null;
   const data = snap.data() as { userId?: string } | undefined;
   return data?.userId ?? null;
+}
+
+/** Deletes all Firestore data for a user: profile, subcollections, username index, and friendships. */
+export async function deleteUserData(uid: string, username: string): Promise<void> {
+  const usernameHashValue = await hashUsername(username);
+
+  // Delete user subcollections
+  const subcollections = ['logs', 'dailySummaries', 'monthlyTotals', 'yearlyTotals'];
+  await Promise.all(
+    subcollections.map(async sub => {
+      const snap = await getDocs(query(collection(db, 'users', uid, sub)));
+      await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+    }),
+  );
+
+  // Remove this user from every friend's friends list, then delete own friendship doc
+  const friendsSnap = await getDocs(query(collection(db, 'friendships', uid, 'friends')));
+  await Promise.all([
+    ...friendsSnap.docs.map(d => deleteDoc(doc(db, 'friendships', d.id, 'friends', uid))),
+    ...friendsSnap.docs.map(d => deleteDoc(d.ref)),
+  ]);
+
+  // Delete profile and username index
+  await Promise.all([
+    deleteDoc(doc(db, 'users', uid)),
+    deleteDoc(doc(db, 'usernameIndex', usernameHashValue)),
+  ]);
 }
 
 /** Patches fields on the user's own profile doc. */

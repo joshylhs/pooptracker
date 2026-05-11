@@ -1,7 +1,10 @@
 import {
+  EmailAuthProvider,
   FirebaseAuthTypes,
   createUserWithEmailAndPassword,
+  deleteUser,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
@@ -38,6 +41,19 @@ export async function logIn({ email, password }: LogInInput): Promise<FirebaseUs
 
 export async function logOut(): Promise<void> {
   await firebaseSignOut(auth);
+}
+
+export async function reauthenticateUser(password: string): Promise<void> {
+  const user = auth.currentUser;
+  if (!user?.email) throw new Error('Not authenticated');
+  const credential = EmailAuthProvider.credential(user.email, password);
+  await reauthenticateWithCredential(user, credential);
+}
+
+export async function deleteAccount(): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Not authenticated');
+  await deleteUser(user);
 }
 
 export function subscribeToAuthState(
