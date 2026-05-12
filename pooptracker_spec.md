@@ -14,8 +14,8 @@ A social poop tracking app for iOS and Android. Users log their bowel movements,
 | Language | TypeScript | Type safety, catches bugs early, industry standard |
 | Auth | Firebase Auth | Handles signup, login, Apple sign-in (App Store requirement) |
 | Database | Firestore | Real-time, scalable, works well with React Native |
-| Firebase SDK | `firebase` (JS SDK) | Cross-platform, no native build dependency; sufficient for v1 auth + low-rate Firestore queries. Migration to native SDK (`@react-native-firebase`) deferred to a future version if performance demands it. |
-| Auth token persistence | `@react-native-async-storage/async-storage` | Required peer of the Firebase JS SDK in React Native; persists session refresh tokens so users stay signed in across app restarts. |
+| Firebase SDK | `@react-native-firebase` (native SDK) | Native modules for Auth and Firestore; better performance and reliability than the JS SDK on device. Auth token persistence handled natively (Keychain on iOS). |
+| Notification pref persistence | `@react-native-async-storage/async-storage` | Stores per-user notification preferences locally (key: `@pooptracker/notif_prefs/{uid}`) so settings survive app restarts without a Firestore round-trip. |
 | Username hashing | `js-sha256` + `tweetnacl-util` | One-way SHA-256 of the normalised username, base64-encoded for use as a Firestore document ID. Prevents storing plaintext usernames in the queryable `usernameIndex`. No other cryptography is used. |
 | State management | Zustand | Lightweight, beginner-friendly, scales well |
 | Navigation | React Navigation v7 | Standard for React Native, flexible |
@@ -57,23 +57,29 @@ src/
 │   │   └── FriendRow.tsx             # single friend row in leaderboard
 │   └── shared/
 │       ├── StatCard.tsx               # reusable metric card (streak, today, avg)
-│       └── Avatar.tsx                 # initials circle avatar
+│       ├── Avatar.tsx                 # initials circle avatar
+│       ├── Button.tsx                 # primary / secondary / destructive variants
+│       ├── ScreenContainer.tsx        # safe-area aware scroll wrapper
+│       ├── Text.tsx                   # themed AppText with variant prop
+│       └── TextField.tsx              # labelled input with error state
 │
 ├── navigation/
-│   ├── RootNavigator.tsx              # switches between Auth and App stacks
-│   ├── AuthStack.tsx                  # Welcome, Signup, Login, Onboarding
-│   └── AppTabs.tsx                    # Home, Friends, Profile bottom tabs
+│   ├── RootNavigator.tsx              # switches between Auth, Onboarding, and App; renders OnboardingScreen directly (not inside AuthStack)
+│   ├── AuthStack.tsx                  # Welcome, Signup, Login
+│   ├── AppTabs.tsx                    # Home, Friends, Profile bottom tabs
+│   └── FriendsStack.tsx              # stack navigator wrapping FriendsScreen + FriendDetailScreen
 │
 ├── database/
 │   └── logRepository.ts               # Firestore-backed log CRUD; writes log doc + atomic increments to dailySummaries / monthlyTotals / yearlyTotals
 │
 ├── services/
 │   ├── firebase.ts                    # Firebase app initialisation
-│   ├── auth.ts                        # signup, login, logout, Apple sign-in
+│   ├── auth.ts                        # signup, login, logout, password reset, reauthentication, account deletion
 │   ├── logs.ts                        # thin async wrapper around logRepository — applies the current user's uid and triggers notification suppression on quick log
 │   ├── friends.ts                     # friend requests, friendships, leaderboard queries (reads rollup docs)
 │   ├── users.ts                       # user profile reads and writes
-│   └── notifications.ts              # Notifee scheduling and cancellation
+│   ├── notificationPrefs.ts           # AsyncStorage-backed per-user notification preferences (load/save, migration from legacy key)
+│   └── notifications.ts              # Notifee scheduling and cancellation; supports up to MAX_NOTIFICATION_SLOTS (5) daily triggers
 │
 ├── store/
 │   ├── authStore.ts                   # current user, auth state
@@ -83,7 +89,8 @@ src/
 ├── hooks/
 │   ├── useLogEntries.ts               # fetch + subscribe to user's logs
 │   ├── useFriendStats.ts              # fetch friend aggregate stats
-│   └── useLeaderboard.ts             # compute leaderboard from friend data
+│   ├── useLeaderboard.ts             # compute leaderboard from friend data
+│   └── useTheme.ts                   # returns colour tokens + surface palette for current colour scheme
 │
 ├── utils/
 │   ├── bristolData.ts                 # type definitions, icons, descriptions, colours
@@ -95,8 +102,7 @@ src/
 │
 └── constants/
     ├── colours.ts                     # app colour palette
-    ├── typography.ts                  # font sizes and weights
-    └── config.ts                      # app-wide config values (default notif time etc.)
+    └── typography.ts                  # font sizes and weights
 ```
 
 ---
@@ -123,7 +129,7 @@ src/
   // notification preferences (set during onboarding, editable in profile)
   notifications: {
     enabled: boolean,
-    time: string,                      // "HH:MM" 24hr format, default "12:00"
+    times: string[],                   // ["HH:MM", ...] 24hr format; supports up to 5 slots; default ["09:00"]
     smartSuppress: boolean,
   },
 }
@@ -288,13 +294,16 @@ RootNavigator
 ├── AuthStack (shown when no authenticated user)
 │   ├── WelcomeScreen
 │   ├── SignupScreen
-│   ├── LoginScreen
-│   └── OnboardingScreen              # notification prefs, shown once after signup
+│   └── LoginScreen
 │
-└── AppTabs (shown when authenticated)
+├── OnboardingScreen (shown when authenticated but onboarding not completed)
+│   # Rendered directly by RootNavigator — not inside AuthStack
+│
+└── AppTabs (shown when authenticated + onboarding complete)
     ├── HomeScreen
     │   └── LogEntryModal             # slides up over home, detailed entry
-    ├── FriendsScreen
+    ├── FriendsStack
+    │   ├── FriendsScreen
     │   └── FriendDetailScreen        # pushed screen, friend's heatmap + stats
     └── ProfileScreen
 ```
@@ -370,7 +379,8 @@ RootNavigator
 **Displays:**
 - Friend's avatar + display name + username
 - Their heatmap (read-only, same calendar component)
-- Stat cards: their streak / today's count / weekly avg / Bristol avg this month
+- Stat cards: their streak / today's count / weekly avg
+  (Bristol type is owner-only — never visible to friends)
 
 **Actions:**
 - Remove friend (with confirmation)
@@ -379,17 +389,22 @@ RootNavigator
 ### ProfileScreen
 
 **Displays:**
-- Avatar + display name + username
+- Identity card: avatar (initials + colour) + username + email
+- Notification settings: enabled toggle, per-slot time pickers (up to 5), add/remove slot controls, smart suppress toggle; save button appears only when there are unsaved changes
+- Account actions: sign out, delete account
+
+**Planned (not yet built):**
 - All-time stats: total logs / longest streak / avg per week
-- Bristol distribution bar chart (breakdown of types logged all-time)
+- Bristol distribution breakdown
+- Edit display name / username
 
 **Actions:**
-- Edit display name
-- Edit username (with uniqueness check)
-- Notification settings: toggle on/off, time picker, smart suppress toggle
-- Privacy settings (placeholder for future)
+- Toggle notifications on/off
+- Add / remove / adjust reminder time slots
+- Toggle smart suppress
+- Save notification settings (syncs to Firestore + reschedules Notifee triggers)
 - Sign out
-- Delete account (required by App Store — with confirmation + re-auth)
+- Delete account (with confirmation + password re-auth)
 
 ### OnboardingScreen (shown once after signup)
 
@@ -413,10 +428,11 @@ RootNavigator
 
 **Default settings:**
 - Enabled: true
-- Time: 12:00 (noon)
+- Slots: [{ hour: 9, minute: 0 }] (09:00)
 - Smart suppress: true
+- Max slots: 5
 
-**v1 behaviour:** Fires daily at scheduled time. If smart suppress is enabled, the notification for the current day is cancelled and rescheduled for tomorrow whenever the user saves a log (implemented via `suppressTodayIfNeeded` in `src/services/notifications.ts`).
+**v1 behaviour:** Each slot fires as a separate Notifee TIMESTAMP trigger with DAILY repeat. All slots are cancelled and rescheduled together whenever settings change. If smart suppress is enabled, all slots for the current day are cancelled and rescheduled for tomorrow whenever the user saves a log (via `suppressTodayIfNeeded` in `src/services/notifications.ts`).
 
 **Scheduling logic:**
 - Schedule on: account creation (after onboarding), settings change
@@ -524,7 +540,7 @@ export const INTENSITY_COLOURS = {
 
 ## App Store Requirements Checklist
 
-- [ ] Apple sign-in implemented (mandatory when any social login exists)
+- [ ] Apple sign-in implemented (mandatory only when offering other third-party social logins e.g. Google, Facebook — email/password only is exempt)
 - [ ] In-app account deletion (mandatory — on ProfileScreen)
 - [ ] Privacy policy URL (required — host a simple one)
 - [ ] Notification permission requested at appropriate moment (not on cold launch)
