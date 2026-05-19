@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, View, Alert } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../../hooks/useTheme';
 import { BristolTypeNumber } from '../../utils/bristolData';
 import { LogEntry } from '../../services/logs';
@@ -16,41 +17,48 @@ interface LogEntryModalProps {
   existingLog?: LogEntry | null;
 }
 
+function isToday(ts: number): boolean {
+  const d = new Date(ts);
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+}
+
 export default function LogEntryModal({
   visible,
   onClose,
   existingLog,
 }: LogEntryModalProps) {
-  const { surface } = useTheme();
+  const { surface, colours } = useTheme();
   const saveDetailedLog = useLogStore(s => s.saveDetailedLog);
   const editLog = useLogStore(s => s.editLog);
   const removeLog = useLogStore(s => s.removeLog);
 
+  const [timestamp, setTimestamp] = useState(Date.now());
   const [bristolType, setBristolType] = useState<BristolTypeNumber | null>(null);
-  const [duration, setDuration] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Reset form fields whenever the modal opens. In edit mode, prefill from the
-  // existing log. In create mode, clear everything.
   useEffect(() => {
     if (!visible) return;
     if (existingLog) {
+      setTimestamp(existingLog.timestamp);
       setBristolType(existingLog.bristolType);
-      setDuration(existingLog.duration?.toString() ?? '');
       setNotes(existingLog.notes ?? '');
     } else {
+      setTimestamp(Date.now());
       setBristolType(null);
-      setDuration('');
       setNotes('');
     }
   }, [visible, existingLog]);
 
   const handleSave = () => {
-    const parsedDuration = duration.trim() ? parseInt(duration.trim(), 10) : null;
     const details = {
       bristolType,
-      duration: Number.isFinite(parsedDuration) ? parsedDuration : null,
       notes: notes.trim() || null,
+      timestamp,
     };
     if (existingLog) {
       editLog(existingLog.logId, details);
@@ -84,19 +92,35 @@ export default function LogEntryModal({
     >
       <View style={[styles.root, { backgroundColor: surface.background }]}>
         <ScrollView contentContainerStyle={styles.scroll}>
-          <AppText variant="screenTitle" style={styles.heading}>
-            {existingLog ? 'Edit log' : 'New log'}
-          </AppText>
+          <View style={styles.headerRow}>
+            <AppText variant="caption" colour="textSecondary" style={styles.editLabel}>
+              {existingLog ? 'EDITING LOG' : 'NEW LOG'}
+            </AppText>
+            <View style={[
+              styles.pill,
+              { backgroundColor: isToday(timestamp) ? colours.idealBg : colours.primary50 },
+            ]}>
+              <AppText
+                variant="caption"
+                style={{ color: isToday(timestamp) ? colours.ideal : colours.primary600 }}
+              >
+                {isToday(timestamp) ? 'Today' : 'Backdated'}
+              </AppText>
+            </View>
+          </View>
+          <View style={[styles.divider, { backgroundColor: surface.border }]} />
+          <View style={styles.whenRow}>
+            <DateTimePicker
+              mode="datetime"
+              display="compact"
+              value={new Date(timestamp)}
+              onValueChange={(_, date) => { if (date) setTimestamp(date.getTime()); }}
+              themeVariant="dark"
+            />
+          </View>
+          <View style={[styles.divider, { backgroundColor: surface.border }]} />
 
           <BristolSelector value={bristolType} onChange={setBristolType} />
-
-          <TextField
-            label="Duration (minutes)"
-            value={duration}
-            onChangeText={setDuration}
-            keyboardType="numeric"
-            placeholder="optional"
-          />
 
           <TextField
             label="Notes"
@@ -123,7 +147,22 @@ export default function LogEntryModal({
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { padding: 24, gap: 16 },
-  heading: { marginBottom: 4 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  editLabel: { letterSpacing: 0.5 },
+  pill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  divider: { height: StyleSheet.hairlineWidth },
+  whenRow: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
   notesInput: { minHeight: 80, textAlignVertical: 'top' },
   actions: { gap: 12, marginTop: 8 },
 });
