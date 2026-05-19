@@ -41,6 +41,7 @@ interface CalendarHeatmapProps {
 interface CellData {
   day: number;
   dateStr: string;
+  isOverflow: boolean;
 }
 
 function pad(n: number): string {
@@ -75,17 +76,43 @@ export default function CalendarHeatmap({
     // JS getDay: 0=Sun, 1=Mon, ..., 6=Sat. We want Monday-first.
     const startOffset = (firstDay.getDay() + 6) % 7;
 
-    const cells: Array<CellData | null> = [];
-    for (let i = 0; i < startOffset; i++) cells.push(null);
+    // Previous month overflow
+    const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
+    const prevYear = viewMonth === 0 ? viewYear - 1 : viewYear;
+    const prevMonth = viewMonth === 0 ? 11 : viewMonth - 1;
+
+    // Next month overflow
+    const nextYear = viewMonth === 11 ? viewYear + 1 : viewYear;
+    const nextMonth_ = viewMonth === 11 ? 0 : viewMonth + 1;
+
+    const cells: Array<CellData> = [];
+
+    for (let i = startOffset - 1; i >= 0; i--) {
+      const d = prevMonthDays - i;
+      cells.push({
+        day: d,
+        dateStr: `${prevYear}-${pad(prevMonth + 1)}-${pad(d)}`,
+        isOverflow: true,
+      });
+    }
     for (let d = 1; d <= daysInMonth; d++) {
       cells.push({
         day: d,
         dateStr: `${viewYear}-${pad(viewMonth + 1)}-${pad(d)}`,
+        isOverflow: false,
       });
     }
-    while (cells.length % 7 !== 0) cells.push(null);
+    let nextDay = 1;
+    while (cells.length % 7 !== 0) {
+      cells.push({
+        day: nextDay,
+        dateStr: `${nextYear}-${pad(nextMonth_ + 1)}-${pad(nextDay)}`,
+        isOverflow: true,
+      });
+      nextDay++;
+    }
 
-    const chunks: Array<Array<CellData | null>> = [];
+    const chunks: Array<Array<CellData>> = [];
     for (let i = 0; i < cells.length; i += 7) {
       chunks.push(cells.slice(i, i + 7));
     }
@@ -101,7 +128,11 @@ export default function CalendarHeatmap({
     }
   };
 
+  const isCurrentMonth =
+    viewYear === now.getFullYear() && viewMonth === now.getMonth();
+
   const nextMonth = () => {
+    if (isCurrentMonth) return;
     if (viewMonth === 11) {
       setViewYear(y => y + 1);
       setViewMonth(0);
@@ -127,8 +158,8 @@ export default function CalendarHeatmap({
         <AppText variant="sectionHeading">
           {monthName} {viewYear}
         </AppText>
-        <Pressable onPress={nextMonth} hitSlop={12} style={styles.arrowBtn}>
-          <AppText style={[styles.arrow, { color: surface.textPrimary }]}>
+        <Pressable onPress={nextMonth} hitSlop={12} style={styles.arrowBtn} disabled={isCurrentMonth}>
+          <AppText style={[styles.arrow, { color: isCurrentMonth ? surface.textPlaceholder : surface.textPrimary }]}>
             ›
           </AppText>
         </Pressable>
@@ -150,36 +181,32 @@ export default function CalendarHeatmap({
         {rows.map((row, rowIdx) => (
           <View key={rowIdx} style={styles.weekRow}>
             {row.map((cell, colIdx) => {
-              if (!cell) {
-                return (
-                  <View
-                    key={`empty-${rowIdx}-${colIdx}`}
-                    style={styles.cell}
-                  />
-                );
-              }
+              const isFuture = cell.dateStr > today;
               const count = countMap[cell.dateStr] ?? 0;
               const level = getIntensityLevel(count);
               const isToday = cell.dateStr === today;
               const isSelected = cell.dateStr === selectedDate;
-              const fill = level > 0 ? INTENSITY_COLOURS[level] : 'transparent';
+              const fill = !isFuture && level > 0 ? INTENSITY_COLOURS[level] : 'transparent';
               const borderColour = isSelected
                 ? colours.destructive
                 : isToday
                   ? colours.primary400
                   : 'transparent';
               const textColour =
-                level > 0 ? '#FFFFFF' : surface.textPrimary;
+                !isFuture && level > 0 ? '#FFFFFF' : surface.textPrimary;
+              const opacity = isFuture ? 0.2 : cell.isOverflow ? 0.4 : 1;
               return (
                 <Pressable
-                  key={cell.dateStr}
+                  key={`${cell.dateStr}-${colIdx}`}
                   onPress={() => onDayPress(cell.dateStr)}
+                  disabled={isFuture}
                   style={[
                     styles.cell,
                     {
                       backgroundColor: fill,
-                      borderColor: borderColour,
+                      borderColor: isFuture ? 'transparent' : borderColour,
                       borderWidth: 2,
+                      opacity,
                     },
                   ]}
                 >
@@ -188,7 +215,7 @@ export default function CalendarHeatmap({
                       styles.dayText,
                       {
                         color: textColour,
-                        fontWeight: level > 0 ? '500' : '400',
+                        fontWeight: !isFuture && level > 0 ? '500' : '400',
                       },
                     ]}
                   >

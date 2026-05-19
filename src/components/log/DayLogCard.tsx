@@ -44,7 +44,7 @@ export default function DayLogCard({ date, logs, onEditLog }: DayLogCardProps) {
 
       {logs.length === 0 ? (
         <AppText variant="body" colour="textSecondary">
-          No logs — tap Quick log to add one
+          No logs yet, log to add one!
         </AppText>
       ) : (
         logs.map((log, index) => {

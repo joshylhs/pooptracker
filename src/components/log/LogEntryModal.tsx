@@ -115,6 +115,7 @@ export default function LogEntryModal({
               display="compact"
               value={new Date(timestamp)}
               onValueChange={(_, date) => { if (date) setTimestamp(date.getTime()); }}
+              maximumDate={new Date()}
               themeVariant="dark"
             />
           </View>

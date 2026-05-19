@@ -1,4 +1,5 @@
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import {
   BRISTOL_TYPES,
@@ -15,17 +16,57 @@ interface BristolSelectorProps {
 function showBristolInfo() {
   Alert.alert(
     'Bristol Stool Scale',
-    'A medical scale that classifies stool into 7 types by consistency.\n\n' +
-    'Types 1–2 · Hard and lumpy — constipated\n' +
-    'Types 3–4 · Smooth or cracked sausage — normal to ideal\n' +
-    'Type 5 · Soft blobs — lacking fibre\n' +
-    'Types 6–7 · Mushy to liquid — loose or diarrhoea',
+    'A medical scale that classifies stool into 7 types based on their shape and consistency.\n\n' +
+    'Types 1-2: Hard and lumpy (probably constipated)\n\n' +
+    'Types 3–4: Smooth or cracked sausage (normal to ideal)\n\n' +
+    'Types 5–7: Soft/Mushy to liquidy',
   );
 }
 
 export default function BristolSelector({ value, onChange }: BristolSelectorProps) {
   const { surface, colours } = useTheme();
   const selectedEntry = BRISTOL_TYPES.find(e => e.type === value) ?? null;
+
+  // Keep last valid entry so panel has content while animating out
+  const lastEntryRef = useRef(selectedEntry);
+  if (selectedEntry) lastEntryRef.current = selectedEntry;
+  const displayEntry = selectedEntry ?? lastEntryRef.current;
+
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const [panelVisible, setPanelVisible] = useState(false);
+  const isShowingRef = useRef(false);
+
+  useEffect(() => {
+    if (value !== null) {
+      if (!isShowingRef.current) {
+        // First appearance: insert into layout first, then spring in
+        isShowingRef.current = true;
+        scaleAnim.setValue(0);
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setPanelVisible(true);
+      }
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 10,
+        tension: 70,
+      }).start();
+    } else {
+      isShowingRef.current = false;
+      // Spring out, then remove from layout
+      Animated.spring(scaleAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        friction: 20,
+        tension: 200,
+      }).start(({ finished }) => {
+        if (finished) {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setPanelVisible(false);
+        }
+      });
+    }
+  }, [value]);
 
   return (
     <View style={styles.container}>
@@ -61,16 +102,22 @@ export default function BristolSelector({ value, onChange }: BristolSelectorProp
         })}
       </View>
 
-      {selectedEntry && (
-        <View style={[styles.detail, { backgroundColor: surface.surface, borderColor: surface.border }]}>
+      {panelVisible && displayEntry && (
+        <Animated.View
+          style={[
+            styles.detail,
+            { backgroundColor: surface.surface, borderColor: surface.border },
+            { transform: [{ scale: scaleAnim }] },
+          ]}
+        >
           <View style={styles.detailHeader}>
-            <AppText variant="bodyEmphasis">{selectedEntry.label}</AppText>
-            {selectedEntry.category === 'ideal' && (
+            <AppText variant="bodyEmphasis">{displayEntry.label}</AppText>
+            {displayEntry.category === 'ideal' && (
               <AppText variant="caption" style={{ color: colours.ideal }}>ideal</AppText>
             )}
           </View>
-          <AppText variant="caption" colour="textSecondary">{selectedEntry.description}</AppText>
-        </View>
+          <AppText variant="caption" colour="textSecondary">{displayEntry.description}</AppText>
+        </Animated.View>
       )}
     </View>
   );
