@@ -34,9 +34,9 @@ function suppressNotificationAsync(): void {
   void loadNotificationPrefs(uid).then(suppressTodayIfNeeded);
 }
 
-export async function quickLog(): Promise<LogEntry> {
+export async function quickLog(timestamp?: number): Promise<LogEntry> {
   const userId = requireUserId();
-  const entry = await repoInsertLog({ userId, isQuickLog: true });
+  const entry = await repoInsertLog({ userId, timestamp, isQuickLog: true });
   suppressNotificationAsync();
   return entry;
 }

@@ -210,6 +210,9 @@ export default function CalendarHeatmap({
                     },
                   ]}
                 >
+                  {isSelected && !isToday && (
+                    <View style={[StyleSheet.absoluteFill, styles.selectedOverlay]} />
+                  )}
                   <AppText
                     style={[
                       styles.dayText,
@@ -302,6 +305,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  selectedOverlay: {
+    borderRadius: 8,
+    backgroundColor: 'rgba(216, 90, 48, 0.3)',
   },
   headerCell: {
     flex: 1,

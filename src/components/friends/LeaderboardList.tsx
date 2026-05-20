@@ -74,7 +74,7 @@ export default function LeaderboardList({
       )}
 
       <AppText variant="caption" colour="textSecondary" style={styles.footer}>
-        counts logs only — details stay private
+        Counts logs only — details stay private
       </AppText>
     </View>
   );

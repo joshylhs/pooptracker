@@ -20,7 +20,7 @@ interface LogState {
   logs: LogEntry[];
   isInitialised: boolean;
   refresh: () => Promise<void>;
-  quickLog: () => Promise<void>;
+  quickLog: (timestamp?: number) => Promise<void>;
   saveDetailedLog: (details: LogDetails) => Promise<void>;
   editLog: (logId: string, patch: LogDetails) => Promise<void>;
   removeLog: (logId: string) => Promise<void>;
@@ -43,8 +43,8 @@ export const useLogStore = create<LogState>(set => ({
 
   refresh: () => reloadLogs(set),
 
-  quickLog: async () => {
-    await svcQuickLog();
+  quickLog: async (timestamp) => {
+    await svcQuickLog(timestamp);
     await reloadLogs(set);
     invalidateLeaderboardCache();
   },

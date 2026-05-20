@@ -12,9 +12,11 @@ import AppText from '../shared/Text';
 
 interface LogEntryModalProps {
   visible: boolean;
-  onClose: () => void;
+  onClose: (saved?: boolean) => void;
   /** When provided, the modal opens in edit mode for this log. */
   existingLog?: LogEntry | null;
+  /** Pre-fill the datetime picker to this timestamp (used when logging for a past date). */
+  initialTimestamp?: number;
 }
 
 function isToday(ts: number): boolean {
@@ -31,6 +33,7 @@ export default function LogEntryModal({
   visible,
   onClose,
   existingLog,
+  initialTimestamp,
 }: LogEntryModalProps) {
   const { surface, colours } = useTheme();
   const saveDetailedLog = useLogStore(s => s.saveDetailedLog);
@@ -48,7 +51,7 @@ export default function LogEntryModal({
       setBristolType(existingLog.bristolType);
       setNotes(existingLog.notes ?? '');
     } else {
-      setTimestamp(Date.now());
+      setTimestamp(initialTimestamp ?? Date.now());
       setBristolType(null);
       setNotes('');
     }
@@ -65,7 +68,7 @@ export default function LogEntryModal({
     } else {
       saveDetailedLog(details);
     }
-    onClose();
+    onClose(true);
   };
 
   const handleDelete = () => {
@@ -88,7 +91,7 @@ export default function LogEntryModal({
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={onClose}
+      onRequestClose={() => onClose()}
     >
       <View style={[styles.root, { backgroundColor: surface.background }]}>
         <ScrollView contentContainerStyle={styles.scroll}>
@@ -134,7 +137,7 @@ export default function LogEntryModal({
 
           <View style={styles.actions}>
             <Button title={existingLog ? 'Save changes' : 'Save'} onPress={handleSave} />
-            <Button title="Cancel" variant="secondary" onPress={onClose} />
+            <Button title="Cancel" variant="secondary" onPress={() => onClose()} />
             {existingLog && (
               <Button title="Delete" variant="destructive" onPress={handleDelete} />
             )}

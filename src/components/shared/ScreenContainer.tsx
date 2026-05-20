@@ -20,7 +20,7 @@ export default function ScreenContainer({
 
   return (
     <SafeAreaView
-      edges={['top', 'bottom']}
+      edges={['top']}
       style={[styles.safeArea, { backgroundColor: surface.background }]}
     >
       <View
