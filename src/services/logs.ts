@@ -1,6 +1,7 @@
 import { useAuthStore } from '../store/authStore';
 import {
   LogEntry,
+  Symptoms,
   insertLog as repoInsertLog,
   listLogsForUser as repoListLogsForUser,
   listLogsForDate as repoListLogsForDate,
@@ -23,7 +24,7 @@ function requireUserId(): string {
 
 export interface LogDetails {
   bristolType?: BristolTypeNumber | null;
-  duration?: number | null;
+  symptoms?: Symptoms;
   notes?: string | null;
   timestamp?: number;
 }
@@ -47,7 +48,7 @@ export async function saveDetailedLog(details: LogDetails): Promise<LogEntry> {
     userId,
     timestamp: details.timestamp,
     bristolType: details.bristolType,
-    duration: details.duration,
+    symptoms: details.symptoms,
     notes: details.notes,
     isQuickLog: false,
   });

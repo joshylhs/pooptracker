@@ -19,6 +19,7 @@ export interface UserProfile {
   avatarInitials: string;
   avatarColour: string;
   createdAt: number;
+  allowPokes: boolean;
   notifications: {
     enabled: boolean;
     times: string[]; // ["HH:MM", ...] 24h
@@ -76,6 +77,7 @@ export async function createUserProfile(args: {
     avatarInitials: avatarInitialsFrom(displayName),
     avatarColour: pickAvatarColour(uid),
     createdAt: Date.now(),
+    allowPokes: true,
     notifications: {
       enabled: notifications.enabled,
       times: notifications.slots.map(s => timeString(s.hour, s.minute)),
@@ -119,6 +121,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     avatarInitials: data.avatarInitials,
     avatarColour: data.avatarColour,
     createdAt: data.createdAt,
+    allowPokes: data.allowPokes !== false,
     notifications: data.notifications,
   };
 }
@@ -162,7 +165,7 @@ export async function deleteUserData(uid: string, username: string): Promise<voi
 /** Patches fields on the user's own profile doc. */
 export async function updateUserProfile(
   uid: string,
-  patch: Partial<Pick<UserProfile, 'username' | 'avatarInitials' | 'avatarColour' | 'notifications'>>,
+  patch: Partial<Pick<UserProfile, 'username' | 'avatarInitials' | 'avatarColour' | 'notifications' | 'allowPokes'>>,
 ): Promise<void> {
   await setDoc(
     doc(db, 'users', uid),

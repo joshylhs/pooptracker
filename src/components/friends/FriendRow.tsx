@@ -1,8 +1,10 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from '../shared/Text';
 import Avatar from '../shared/Avatar';
 import { LeaderboardEntry } from '../../services/friends';
+import { sendPoke } from '../../services/pokes';
 
 interface FriendRowProps {
   rank: number;
@@ -12,6 +14,30 @@ interface FriendRowProps {
 
 export default function FriendRow({ rank, entry, onPress }: FriendRowProps) {
   const { surface, colours } = useTheme();
+  const [poking, setPoking] = useState(false);
+  const [poked, setPoked] = useState(false);
+
+  const handlePoke = () => {
+    Alert.prompt(
+      `Poke ${entry.username}`,
+      'Send a nudge with a custom message, or leave blank for the default.',
+      async (message) => {
+        setPoking(true);
+        try {
+          await sendPoke(entry.uid, message?.trim() || undefined);
+          setPoked(true);
+          setTimeout(() => setPoked(false), 30 * 60 * 1000);
+        } catch (e: any) {
+          const msg = e?.message ?? 'Failed to send poke.';
+          Alert.alert('Could not poke', msg);
+        } finally {
+          setPoking(false);
+        }
+      },
+      'plain-text',
+      '',
+    );
+  };
 
   return (
     <Pressable
@@ -37,6 +63,16 @@ export default function FriendRow({ rank, entry, onPress }: FriendRowProps) {
       <AppText variant="bodyEmphasis" style={{ color: surface.textPrimary }}>
         {entry.count}
       </AppText>
+      {!entry.isSelf && (
+        <Pressable
+          onPress={handlePoke}
+          disabled={poking || poked}
+          hitSlop={8}
+          style={[styles.pokeBtn, (poking || poked) && styles.pokeBtnDim]}
+        >
+          <AppText style={styles.pokeIcon}>🚽</AppText>
+        </Pressable>
+      )}
     </Pressable>
   );
 }
@@ -52,4 +88,7 @@ const styles = StyleSheet.create({
   },
   rank: { width: 20, textAlign: 'center' },
   nameCol: { flex: 1 },
+  pokeBtn: { padding: 4 },
+  pokeBtnDim: { opacity: 0.3 },
+  pokeIcon: { fontSize: 18 },
 });

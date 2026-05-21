@@ -18,12 +18,23 @@ import { BristolTypeNumber } from '../utils/bristolData';
 // reads-from-cache free across sessions and queues writes when offline,
 // flushing them when the network returns — even across app restarts.
 
+export type SymptomScale = 'mild' | 'severe';
+
+export interface Symptoms {
+  blood?: boolean;
+  pain?: SymptomScale | null;
+  straining?: SymptomScale | null;
+  bloating?: boolean;
+  incomplete?: boolean;
+  assisted?: boolean;
+}
+
 export interface LogEntry {
   logId: string;
   userId: string;
   timestamp: number;       // ms since epoch
   bristolType: BristolTypeNumber | null;
-  duration: number | null; // minutes
+  symptoms: Symptoms;
   notes: string | null;
   isQuickLog: boolean;
   date: string;            // "YYYY-MM-DD" — derived from timestamp
@@ -35,7 +46,7 @@ export interface NewLogInput {
   userId: string;
   timestamp?: number;
   bristolType?: BristolTypeNumber | null;
-  duration?: number | null;
+  symptoms?: Symptoms;
   notes?: string | null;
   isQuickLog: boolean;
 }
@@ -43,12 +54,18 @@ export interface NewLogInput {
 interface LogDoc {
   timestamp: number;
   bristolType: BristolTypeNumber | null;
-  duration: number | null;
+  symptoms: Symptoms;
   notes: string | null;
   isQuickLog: boolean;
   date: string;
   createdAt: number;
   updatedAt: number;
+}
+
+function cleanSymptoms(s: Symptoms): Record<string, boolean | string> {
+  return Object.fromEntries(
+    Object.entries(s).filter(([, v]) => v !== undefined && v !== null),
+  ) as Record<string, boolean | string>;
 }
 
 function logsCol(userId: string) {
@@ -84,7 +101,7 @@ function docToEntry(userId: string, logId: string, data: LogDoc): LogEntry {
     userId,
     timestamp: data.timestamp,
     bristolType: data.bristolType,
-    duration: data.duration,
+    symptoms: data.symptoms ?? {},
     notes: data.notes,
     isQuickLog: data.isQuickLog,
     date: data.date,
@@ -102,7 +119,7 @@ export async function insertLog(input: NewLogInput): Promise<LogEntry> {
     userId: input.userId,
     timestamp,
     bristolType: input.bristolType ?? null,
-    duration: input.duration ?? null,
+    symptoms: input.symptoms ?? {},
     notes: input.notes ?? null,
     isQuickLog: input.isQuickLog,
     date,
@@ -113,7 +130,7 @@ export async function insertLog(input: NewLogInput): Promise<LogEntry> {
   const docData: LogDoc = {
     timestamp: entry.timestamp,
     bristolType: entry.bristolType,
-    duration: entry.duration,
+    symptoms: cleanSymptoms(entry.symptoms),
     notes: entry.notes,
     isQuickLog: entry.isQuickLog,
     date: entry.date,
@@ -166,7 +183,7 @@ export async function updateLog(
   logId: string,
   patch: {
     bristolType?: BristolTypeNumber | null;
-    duration?: number | null;
+    symptoms?: Symptoms;
     notes?: string | null;
     timestamp?: number;
   },
@@ -177,7 +194,7 @@ export async function updateLog(
   const next: LogDoc = {
     timestamp: patch.timestamp ?? existing.timestamp,
     bristolType: patch.bristolType !== undefined ? patch.bristolType : existing.bristolType,
-    duration: patch.duration !== undefined ? patch.duration : existing.duration,
+    symptoms: cleanSymptoms(patch.symptoms !== undefined ? patch.symptoms : existing.symptoms),
     notes: patch.notes !== undefined ? patch.notes : existing.notes,
     isQuickLog: existing.isQuickLog,
     date: patch.timestamp !== undefined

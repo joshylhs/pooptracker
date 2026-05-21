@@ -15,6 +15,8 @@ export const colours = {
 
   // Semantic
   destructive: '#D85A30',
+  destructive200: '#F0997B',
+  destructive600: '#993C1D',
   destructiveBg: '#FAECE7',
   destructiveBorder: '#F5C4B3',
   warning: '#BA7517',

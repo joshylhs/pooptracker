@@ -225,6 +225,30 @@ export default function ProfileScreen() {
           />
         )}
 
+        {/* Friends section */}
+        <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
+          FRIENDS
+        </AppText>
+        <View style={cardStyle}>
+          <View style={styles.row}>
+            <View style={styles.rowLabelBlock}>
+              <AppText variant="body">Allow pokes</AppText>
+              <AppText variant="caption" colour="textSecondary">
+                Friends can nudge you to log
+              </AppText>
+            </View>
+            <Switch
+              value={profile?.allowPokes !== false}
+              onValueChange={async v => {
+                if (!user || !profile) return;
+                await updateUserProfile(user.uid, { allowPokes: v });
+                setProfile(p => p ? { ...p, allowPokes: v } : p);
+              }}
+              trackColor={{ true: '#7F77DD' }}
+            />
+          </View>
+        </View>
+
         {/* Account section */}
         <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
           ACCOUNT

@@ -6,6 +6,7 @@ import { BristolTypeNumber } from '../../utils/bristolData';
 import { LogEntry } from '../../services/logs';
 import { useLogStore } from '../../store/logStore';
 import BristolSelector from './BristolSelector';
+import SymptomsGrid, { Symptoms } from './SymptomsGrid';
 import Button from '../shared/Button';
 import TextField from '../shared/TextField';
 import AppText from '../shared/Text';
@@ -42,6 +43,7 @@ export default function LogEntryModal({
 
   const [timestamp, setTimestamp] = useState(Date.now());
   const [bristolType, setBristolType] = useState<BristolTypeNumber | null>(null);
+  const [symptoms, setSymptoms] = useState<Symptoms>({});
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -49,10 +51,12 @@ export default function LogEntryModal({
     if (existingLog) {
       setTimestamp(existingLog.timestamp);
       setBristolType(existingLog.bristolType);
+      setSymptoms(existingLog.symptoms ?? {});
       setNotes(existingLog.notes ?? '');
     } else {
       setTimestamp(initialTimestamp ?? Date.now());
       setBristolType(null);
+      setSymptoms({});
       setNotes('');
     }
   }, [visible, existingLog]);
@@ -60,6 +64,7 @@ export default function LogEntryModal({
   const handleSave = () => {
     const details = {
       bristolType,
+      symptoms,
       notes: notes.trim() || null,
       timestamp,
     };
@@ -125,6 +130,8 @@ export default function LogEntryModal({
           <View style={[styles.divider, { backgroundColor: surface.border }]} />
 
           <BristolSelector value={bristolType} onChange={setBristolType} />
+
+          <SymptomsGrid value={symptoms} onChange={setSymptoms} />
 
           <TextField
             label="Notes"

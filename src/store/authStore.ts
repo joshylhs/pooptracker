@@ -10,6 +10,7 @@ import {
 } from '../services/auth';
 import { useLogStore } from './logStore';
 import { useFriendsStore } from './friendsStore';
+import { registerFcmToken } from '../services/pokes';
 
 interface AuthState {
   user: FirebaseUser | null;
@@ -60,6 +61,7 @@ export function startAuthListener(): void {
     if (previousUid !== nextUid) {
       useLogStore.getState().clear();
       useFriendsStore.getState().clear();
+      if (user?.uid) void registerFcmToken(user.uid);
     }
     useAuthStore.setState(state => ({
       user,
