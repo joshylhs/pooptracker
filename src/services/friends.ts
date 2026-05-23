@@ -29,6 +29,7 @@ export interface FriendProfile {
   username: string;
   avatarInitials: string;
   avatarColour: string;
+  allowPokes: boolean;
 }
 
 export interface PendingFriend {
@@ -45,6 +46,7 @@ export interface LeaderboardEntry {
   avatarColour: string;
   count: number;
   isSelf: boolean;
+  allowPokes: boolean;
 }
 
 export interface UserSearchResult {
@@ -156,6 +158,7 @@ async function loadOtherProfile(uid: string): Promise<FriendProfile> {
     username: '(syncing…)',
     avatarInitials: '?',
     avatarColour: deriveAvatarColour(uid),
+    allowPokes: true,
   };
   try {
     const profile = await getUserProfile(uid);
@@ -165,6 +168,7 @@ async function loadOtherProfile(uid: string): Promise<FriendProfile> {
       username: profile.username,
       avatarInitials: profile.avatarInitials,
       avatarColour: profile.avatarColour,
+      allowPokes: profile.allowPokes,
     };
   } catch {
     return fallback;
@@ -264,12 +268,13 @@ export async function fetchLeaderboardWindow(
         avatarColour: f.avatarColour,
         count: await fetchUserCountForWindow(f.uid, window),
         isSelf: false,
+        allowPokes: f.allowPokes,
       })),
     ),
   ]);
 
   const entries: LeaderboardEntry[] = [
-    { uid: myUid, ...myDisplayProfile, count: selfCount, isSelf: true },
+    { uid: myUid, ...myDisplayProfile, count: selfCount, isSelf: true, allowPokes: true },
     ...friendEntries,
   ];
   entries.sort((a, b) => b.count !== a.count ? b.count - a.count : a.username.localeCompare(b.username));

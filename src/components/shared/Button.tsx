@@ -2,8 +2,10 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
+  View,
   ViewStyle,
 } from 'react-native';
+import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from './Text';
 
@@ -16,6 +18,7 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle;
+  icon?: string;
 }
 
 export default function Button({
@@ -25,6 +28,7 @@ export default function Button({
   disabled = false,
   loading = false,
   style,
+  icon,
 }: ButtonProps) {
   const { colours } = useTheme();
   const isDisabled = disabled || loading;
@@ -46,12 +50,12 @@ export default function Button({
       {loading ? (
         <ActivityIndicator color={variantStyles.spinnerColour} />
       ) : (
-        <AppText
-          variant="bodyEmphasis"
-          style={{ color: variantStyles.textColour }}
-        >
-          {title}
-        </AppText>
+        <View style={styles.inner}>
+          {icon && <MCI name={icon} size={18} color={variantStyles.textColour} />}
+          <AppText variant="bodyEmphasis" style={{ color: variantStyles.textColour }}>
+            {title}
+          </AppText>
+        </View>
       )}
     </Pressable>
   );
@@ -103,4 +107,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   disabled: { opacity: 0.5 },
+  inner: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });

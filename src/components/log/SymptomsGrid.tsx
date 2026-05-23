@@ -1,96 +1,40 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import { Symptoms, SymptomScale } from '../../database/logRepository';
 import AppText from '../shared/Text';
+import InfoModal, { InfoButton } from '../shared/InfoModal';
 
 export type { Symptoms };
 
-// ─── Outline icon components ──────────────────────────────────────────────────
+// ─── Info content ─────────────────────────────────────────────────────────────
 
-function DropIcon({ color }: { color: string }) {
-  return (
-    <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{
-        width: 18,
-        height: 18,
-        borderWidth: 2,
-        borderColor: color,
-        borderRadius: 9,
-        borderTopRightRadius: 1,
-        transform: [{ rotate: '-45deg' }],
-      }} />
-    </View>
-  );
-}
-
-function PulseIcon({ color }: { color: string }) {
-  return <Text style={{ fontSize: 24, color, lineHeight: 28 }}>{'∿'}</Text>;
-}
-
-function ArrowsIcon({ color }: { color: string }) {
-  return <Text style={{ fontSize: 22, color, lineHeight: 28 }}>{'⇊'}</Text>;
-}
-
-function BubblesIcon({ color }: { color: string }) {
-  const dot = (key: number) => (
-    <View key={key} style={{ width: 11, height: 11, borderRadius: 5.5, borderWidth: 2, borderColor: color }} />
-  );
-  return (
-    <View style={{ alignItems: 'center', gap: 4 }}>
-      <View style={{ flexDirection: 'row', gap: 4 }}>{dot(0)}{dot(1)}</View>
-      {dot(2)}
-    </View>
-  );
-}
-
-function AlertCircleIcon({ color }: { color: string }) {
-  return (
-    <View style={{
-      width: 28, height: 28, borderRadius: 14,
-      borderWidth: 2, borderColor: color,
-      alignItems: 'center', justifyContent: 'center',
-    }}>
-      <Text style={{ color, fontSize: 16, fontWeight: '700', lineHeight: 20 }}>!</Text>
-    </View>
-  );
-}
-
-function HandIcon({ color }: { color: string }) {
-  return (
-    <View style={{ alignItems: 'center' }}>
-      <View style={{ flexDirection: 'row', gap: 3 }}>
-        {[0, 1, 2].map(i => (
-          <View key={i} style={{
-            width: 5, height: 13, borderRadius: 3,
-            borderWidth: 1.5, borderColor: color,
-          }} />
-        ))}
-      </View>
-      <View style={{
-        width: 21, height: 8, borderRadius: 3,
-        borderWidth: 1.5, borderColor: color,
-        marginTop: -2,
-      }} />
-    </View>
-  );
-}
+const SYMPTOM_INFO_ROWS = [
+  { label: 'blood',      body: 'Visible blood in the stool or on toilet paper.' },
+  { label: 'pain',       body: 'Abdominal or rectal pain during or after a bowel movement.', tag: 'mild / severe' },
+  { label: 'straining',  body: 'Difficulty or effort required to pass a stool.', tag: 'mild / severe' },
+  { label: 'bloating',   body: 'A feeling of fullness, tightness, or swelling in the abdomen.' },
+  { label: 'incomplete', body: "Sensation that the bowel wasn't fully emptied." },
+  { label: 'assisted',   body: 'Required laxatives, enemas, or manual assistance.' },
+];
 
 // ─── Tile config ──────────────────────────────────────────────────────────────
 
 interface TileConfig {
   key: keyof Symptoms;
   label: string;
-  Icon: React.ComponentType<{ color: string }>;
+  icon: string;
   type: 'boolean' | 'scale';
 }
 
 const TILES: TileConfig[] = [
-  { key: 'blood',      label: 'blood',      Icon: DropIcon,        type: 'boolean' },
-  { key: 'pain',       label: 'pain',       Icon: PulseIcon,       type: 'scale'   },
-  { key: 'straining',  label: 'straining',  Icon: ArrowsIcon,      type: 'scale'   },
-  { key: 'bloating',   label: 'bloating',   Icon: BubblesIcon,     type: 'boolean' },
-  { key: 'incomplete', label: 'incomplete', Icon: AlertCircleIcon, type: 'boolean' },
-  { key: 'assisted',   label: 'assisted',   Icon: HandIcon,        type: 'boolean' },
+  { key: 'blood',      label: 'blood',      icon: 'water-outline',          type: 'boolean' },
+  { key: 'pain',       label: 'pain',       icon: 'heart-pulse',            type: 'scale'   },
+  { key: 'straining',  label: 'straining',  icon: 'arrow-collapse-down',    type: 'scale'   },
+  { key: 'bloating',   label: 'bloating',   icon: 'circle-expand',          type: 'boolean' },
+  { key: 'incomplete', label: 'incomplete', icon: 'alert-circle-outline',   type: 'boolean' },
+  { key: 'assisted',   label: 'assisted',   icon: 'hand-front-left-outline', type: 'boolean' },
 ];
 
 // ─── State cycling ────────────────────────────────────────────────────────────
@@ -114,6 +58,7 @@ interface SymptomsGridProps {
 
 export default function SymptomsGrid({ value, onChange }: SymptomsGridProps) {
   const { surface, colours } = useTheme();
+  const [showInfo, setShowInfo] = useState(false);
 
   const handlePress = (tile: TileConfig) => {
     if (tile.type === 'boolean') {
@@ -127,9 +72,19 @@ export default function SymptomsGrid({ value, onChange }: SymptomsGridProps) {
 
   return (
     <View style={styles.container}>
-      <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
-        SYMPTOMS
-      </AppText>
+      <InfoModal
+        visible={showInfo}
+        onClose={() => setShowInfo(false)}
+        title="Symptoms"
+        intro="Tap a tile to log it. Pain and straining can be mild or severe — tap again to cycle."
+        rows={SYMPTOM_INFO_ROWS}
+      />
+      <View style={styles.labelRow}>
+        <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
+          SYMPTOMS
+        </AppText>
+        <InfoButton onPress={() => setShowInfo(true)} />
+      </View>
 
       {rows.map((row, rowIdx) => (
         <View key={rowIdx} style={styles.row}>
@@ -152,7 +107,7 @@ export default function SymptomsGrid({ value, onChange }: SymptomsGridProps) {
                 style={[styles.tile, { borderColor, backgroundColor: bgColor }]}
               >
                 <View style={[styles.dot, { backgroundColor: dotColor }]} />
-                <tile.Icon color={iconColor} />
+                <MCI name={tile.icon} size={24} color={iconColor} />
                 <AppText variant="caption" style={[styles.tileLabel, { color: labelColor }]}>
                   {tile.label}
                 </AppText>
@@ -207,6 +162,7 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 4,
   },
+  labelRow:   { flexDirection: 'row', alignItems: 'center', gap: 6 },
   tileLabel:  { letterSpacing: 0.3, textAlign: 'center' },
   scaleLabel: { letterSpacing: 0.3, opacity: 0.85 },
   legend:     { flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 2 },

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import {
   BRISTOL_TYPES,
@@ -7,24 +7,24 @@ import {
   BristolTypeNumber,
 } from '../../utils/bristolData';
 import AppText from '../shared/Text';
+import InfoModal, { InfoButton } from '../shared/InfoModal';
 
 interface BristolSelectorProps {
   value: BristolTypeNumber | null;
   onChange: (next: BristolTypeNumber | null) => void;
 }
 
-function showBristolInfo() {
-  Alert.alert(
-    'Bristol Stool Scale',
-    'A medical scale that classifies stool into 7 types based on their shape and consistency.\n\n' +
-    'Types 1-2: Hard and lumpy (probably constipated)\n\n' +
-    'Types 3–4: Smooth or cracked sausage (normal to ideal)\n\n' +
-    'Types 5–7: Soft/Mushy to liquidy',
-  );
-}
+const BRISTOL_INFO_ROWS = [
+  { label: 'Types 1–2', body: 'Separate hard lumps or sausage-shaped but lumpy. Indicates constipation.' },
+  { label: 'Type 3',    body: 'Like a sausage with cracks on the surface. Slightly lacking in fibre/fluids.' },
+  { label: 'Type 4',    body: 'Smooth, soft sausage or snake. Ideal.' },
+  { label: 'Type 5',    body: 'Soft blobs with clear-cut edges. Lacking in fibre.' },
+  { label: 'Types 6–7', body: 'Fluffy, mushy, or entirely liquid. Indicates diarrhoea.' },
+];
 
 export default function BristolSelector({ value, onChange }: BristolSelectorProps) {
   const { surface, colours } = useTheme();
+  const [showInfo, setShowInfo] = useState(false);
   const selectedEntry = BRISTOL_TYPES.find(e => e.type === value) ?? null;
 
   // Keep last valid entry so panel has content while animating out
@@ -70,13 +70,18 @@ export default function BristolSelector({ value, onChange }: BristolSelectorProp
 
   return (
     <View style={styles.container}>
+      <InfoModal
+        visible={showInfo}
+        onClose={() => setShowInfo(false)}
+        title="Bristol Stool Scale"
+        intro="A medical scale classifying stool into 7 types by shape and consistency."
+        rows={BRISTOL_INFO_ROWS}
+      />
       <View style={styles.labelRow}>
         <AppText variant="caption" colour="textSecondary" style={styles.label}>
           BRISTOL TYPE
         </AppText>
-        <Pressable onPress={showBristolInfo} style={styles.infoButton} hitSlop={8}>
-          <AppText variant="caption" style={styles.infoText}>?</AppText>
-        </Pressable>
+        <InfoButton onPress={() => setShowInfo(true)} />
       </View>
 
       <View style={styles.row}>
@@ -127,15 +132,6 @@ const styles = StyleSheet.create({
   container: { gap: 12 },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   label: { letterSpacing: 0.5 },
-  infoButton: {
-    width: 16,
-    height: 16,
-    borderRadius: 999,
-    backgroundColor: '#4A4239',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoText: { color: '#B8AE9F', lineHeight: 16 },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',

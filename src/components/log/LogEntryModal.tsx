@@ -146,7 +146,7 @@ export default function LogEntryModal({
             <Button title={existingLog ? 'Save changes' : 'Save'} onPress={handleSave} />
             <Button title="Cancel" variant="secondary" onPress={() => onClose()} />
             {existingLog && (
-              <Button title="Delete" variant="destructive" onPress={handleDelete} />
+              <Button title="Delete" variant="destructive" icon="trash-can-outline" onPress={handleDelete} />
             )}
           </View>
         </ScrollView>

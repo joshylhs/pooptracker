@@ -1,15 +1,23 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from './Text';
+import InfoModal, { InfoButton, InfoRow } from './InfoModal';
 
 interface StatCardProps {
   value: string | number;
   label: string;
-  onInfo?: () => void;
+  icon?: string;
+  infoTitle?: string;
+  infoIntro?: string;
+  infoRows?: InfoRow[];
 }
 
-export default function StatCard({ value, label, onInfo }: StatCardProps) {
+export default function StatCard({ value, label, icon, infoTitle, infoIntro, infoRows }: StatCardProps) {
   const { surface } = useTheme();
+  const [showInfo, setShowInfo] = useState(false);
+  const hasInfo = !!(infoTitle && infoRows?.length);
 
   return (
     <View
@@ -18,14 +26,23 @@ export default function StatCard({ value, label, onInfo }: StatCardProps) {
         { backgroundColor: surface.surface, borderColor: surface.border },
       ]}
     >
+      {hasInfo && (
+        <InfoModal
+          visible={showInfo}
+          onClose={() => setShowInfo(false)}
+          title={infoTitle!}
+          intro={infoIntro}
+          rows={infoRows!}
+        />
+      )}
+      {icon
+        ? <MCI name={icon} size={20} color={surface.textSecondary} />
+        : <View style={styles.iconSpacer} />
+      }
       <AppText variant="screenTitle">{value}</AppText>
       <View style={styles.labelRow}>
         <AppText variant="caption" colour="textSecondary">{label}</AppText>
-        {onInfo && (
-          <Pressable onPress={onInfo} hitSlop={8} style={styles.infoButton}>
-            <AppText variant="caption" style={styles.infoText}>?</AppText>
-          </Pressable>
-        )}
+        {hasInfo && <InfoButton onPress={() => setShowInfo(true)} />}
       </View>
     </View>
   );
@@ -42,13 +59,5 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  infoButton: {
-    width: 14,
-    height: 14,
-    borderRadius: 999,
-    backgroundColor: '#4A4239',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoText: { color: '#B8AE9F', lineHeight: 14, fontSize: 10 },
+  iconSpacer: { height: 20 },
 });

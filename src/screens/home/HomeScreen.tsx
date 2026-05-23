@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import ScreenContainer from '../../components/shared/ScreenContainer';
 import AppText from '../../components/shared/Text';
 import StatCard from '../../components/shared/StatCard';
@@ -89,13 +89,16 @@ export default function HomeScreen() {
           <StatCard
             value={currentStreak}
             label="day streak"
-            onInfo={() => Alert.alert(
-              'Day streak',
-              'Counts consecutive days you logged based on when you created each log, not the date of the log itself.\n\n ∴ Backdating a log won\'t extend your streak.',
-            )}
+            icon="fire"
+            infoTitle="Day streak"
+            infoIntro="Counts consecutive days you logged at least once."
+            infoRows={[
+              { label: 'How it counts', body: 'Based on when you created each log for that day instead of the date of the log itself.' },
+              { label: 'Backdating', body: "Logging for a past date won't extend your streak." },
+            ]}
           />
-          <StatCard value={today} label="today" />
-          <StatCard value={monthly.toFixed(1)} label="monthly avg" />
+          <StatCard value={today} label="today" icon="toilet" />
+          <StatCard value={monthly.toFixed(1)} label="monthly avg" icon="chart-bar" />
         </View>
 
         <CalendarHeatmap

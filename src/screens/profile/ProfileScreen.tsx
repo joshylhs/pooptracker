@@ -254,10 +254,11 @@ export default function ProfileScreen() {
           ACCOUNT
         </AppText>
         <View style={styles.accountButtons}>
-          <Button title="Sign out" onPress={handleSignOut} loading={signingOut} />
+          <Button title="Sign out" icon="logout" onPress={handleSignOut} loading={signingOut} />
           <Button
             title="Delete account"
             variant="destructive"
+            icon="account-remove-outline"
             onPress={handleDeleteAccount}
             loading={deleting}
           />

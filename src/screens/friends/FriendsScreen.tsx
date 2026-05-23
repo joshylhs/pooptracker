@@ -25,6 +25,7 @@ export default function FriendsScreen() {
     leaderboard,
     loading,
     leaderboardLoading,
+    leaderboardFetchedAt,
     loadAll,
     loadLeaderboard,
     sendRequest,
@@ -75,16 +76,13 @@ export default function FriendsScreen() {
           onRemove={remove}
         />
 
-        <AppText variant="sectionHeading" style={styles.leaderboardTitle}>
-          Leaderboard
-        </AppText>
-
         <LeaderboardList
           entries={leaderboard?.entries ?? []}
           loading={loading || leaderboardLoading}
           activeWindow={activeWindow}
           onWindowChange={handleWindowChange}
           onFriendPress={uid => navigation.navigate('FriendDetail', { friendId: uid })}
+          lastUpdated={leaderboardFetchedAt}
         />
       </ScrollView>
     </ScreenContainer>
@@ -94,5 +92,4 @@ export default function FriendsScreen() {
 const styles = StyleSheet.create({
   scroll: { gap: 16, paddingBottom: 24 },
   title: { marginBottom: 4 },
-  leaderboardTitle: { marginTop: 8 },
 });

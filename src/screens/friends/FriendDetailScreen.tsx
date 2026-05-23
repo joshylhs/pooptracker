@@ -16,6 +16,7 @@ import { useFriendsStore } from '../../store/friendsStore';
 import { DailySummary, calculateStreaks } from '../../utils/streakUtils';
 import { todayCount, weeklyAverage } from '../../utils/statsUtils';
 import { formatDate } from '../../utils/dateUtils';
+import { useTheme } from '../../hooks/useTheme';
 import AppText from '../../components/shared/Text';
 import Avatar from '../../components/shared/Avatar';
 import StatCard from '../../components/shared/StatCard';
@@ -44,6 +45,7 @@ async function fetchFriendSummaries(userId: string): Promise<DailySummary[]> {
 }
 
 export default function FriendDetailScreen({ route, navigation }: Props) {
+  const { colours } = useTheme();
   const { friendId } = route.params;
   const remove = useFriendsStore(s => s.remove);
 
@@ -115,7 +117,17 @@ export default function FriendDetailScreen({ route, navigation }: Props) {
                 colour={profile?.avatarColour ?? '#888'}
                 size={64}
               />
-              <AppText variant="screenTitle">{profile?.username ?? '—'}</AppText>
+              <View style={styles.nameBlock}>
+                <AppText variant="screenTitle">{profile?.username ?? '—'}</AppText>
+                <View style={[
+                  styles.pokePill,
+                  { backgroundColor: profile?.allowPokes ? colours.idealBg : colours.warningBg },
+                ]}>
+                  <AppText variant="caption" style={{ color: profile?.allowPokes ? colours.ideal : colours.warning }}>
+                    {profile?.allowPokes ? 'accepting pokes' : 'not accepting pokes'}
+                  </AppText>
+                </View>
+              </View>
             </View>
 
             <View style={styles.stats}>
@@ -172,5 +184,7 @@ const styles = StyleSheet.create({
   spinner: { paddingVertical: 48 },
   scroll: { gap: 16, paddingBottom: 8 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  nameBlock: { gap: 8 },
+  pokePill: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   stats: { flexDirection: 'row', gap: 8 },
 });

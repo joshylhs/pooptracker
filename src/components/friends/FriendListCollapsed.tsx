@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   StyleSheet,
   TextInput,
@@ -41,6 +42,10 @@ export default function FriendListCollapsed({
 }: FriendListCollapsedProps) {
   const { surface, colours } = useTheme();
   const [expanded, setExpanded] = useState(false);
+  const manageScale = useRef(new Animated.Value(1)).current;
+
+  const manageScaleUp = () => Animated.timing(manageScale, { toValue: 1.15, duration: 100, useNativeDriver: true }).start();
+  const manageScaleDown = (cb?: () => void) => Animated.timing(manageScale, { toValue: 1, duration: 150, useNativeDriver: true }).start(cb);
   const [query, setQuery] = useState('');
   const [searchState, setSearchState] = useState<SearchState>({ status: 'idle' });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -91,14 +96,25 @@ export default function FriendListCollapsed({
   return (
     <View style={[styles.container, { backgroundColor: surface.surface, borderColor: surface.border }]}>
       {/* Header row */}
-      <Pressable style={styles.header} onPress={() => setExpanded(e => !e)}>
+      <View style={styles.header}>
         <AppText variant="bodyEmphasis">
           Friends ({totalCount})
         </AppText>
-        <AppText variant="body" colour="textSecondary">
-          {expanded ? 'hide ▴' : 'manage ▾'}
-        </AppText>
-      </Pressable>
+        <Pressable
+          onPressIn={manageScaleUp}
+          onPressOut={() => { manageScaleDown(); setExpanded(e => !e); }}
+          hitSlop={8}
+        >
+          <Animated.View style={[styles.manageBtn, { backgroundColor: surface.border }, { transform: [{ scale: manageScale }] }]}>
+            <AppText variant="caption" colour="textSecondary">
+              {expanded ? 'hide' : 'manage'}
+            </AppText>
+            <AppText style={[styles.chevron, { color: surface.textSecondary }]}>
+              {expanded ? '▴' : '▾'}
+            </AppText>
+          </Animated.View>
+        </Pressable>
+      </View>
 
       {expanded && (
         <View style={styles.body}>
@@ -256,6 +272,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 14,
   },
+  manageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  chevron: { fontSize: 18 },
   body: { paddingHorizontal: 14, paddingBottom: 14, gap: 10 },
   searchRow: {
     flexDirection: 'row',
