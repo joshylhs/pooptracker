@@ -1,14 +1,29 @@
+import { StyleSheet, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
-import HomeScreen from '../screens/home/HomeScreen';
+import HomeStack from './HomeStack';
 import FriendsStack from './FriendsStack';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import { useHealthFindings } from '../hooks/useHealthFindings';
 
 export type AppTabsParamList = {
   Home: undefined;
   Friends: undefined;
   Profile: undefined;
 };
+
+function HomeTabIcon({ color, size }: { color: string; size: number }) {
+  const { status } = useHealthFindings();
+  const showBadge = status.severity === 'urgent' || status.severity === 'gp';
+  return (
+    <View>
+      <MCI name="home-outline" size={size} color={color} />
+      {showBadge && (
+        <View style={[styles.badge, { backgroundColor: status.colour }]} />
+      )}
+    </View>
+  );
+}
 
 const Tab = createBottomTabNavigator<AppTabsParamList>();
 
@@ -28,8 +43,8 @@ export default function AppTabs() {
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
-        options={{ tabBarIcon: ({ color, size }) => <MCI name="home-outline" size={size} color={color} /> }}
+        component={HomeStack}
+        options={{ tabBarIcon: ({ color, size }) => <HomeTabIcon color={color} size={size} /> }}
       />
       <Tab.Screen
         name="Friends"
@@ -44,3 +59,14 @@ export default function AppTabs() {
     </Tab.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -1,
+    right: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+});

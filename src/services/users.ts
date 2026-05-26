@@ -12,12 +12,14 @@ import {
 import { db } from './firebase';
 import { hashUsername } from '../utils/encryption';
 import { NotificationPrefs } from './notificationPrefs';
+import type { AvatarConfig } from '../components/avatar/AvatarPicker';
 
 export interface UserProfile {
   uid: string;
   username: string;
   avatarInitials: string;
   avatarColour: string;
+  avatarConfig?: AvatarConfig;
   createdAt: number;
   allowPokes: boolean;
   notifications: {
@@ -66,9 +68,10 @@ export async function createUserProfile(args: {
   uid: string;
   displayName: string;
   username: string;
+  avatarConfig?: AvatarConfig;
   notifications: NotificationPrefs;
 }): Promise<UserProfile> {
-  const { uid, displayName, username, notifications } = args;
+  const { uid, displayName, username, avatarConfig, notifications } = args;
   const usernameHashValue = await hashUsername(username);
 
   const profile: UserProfile = {
@@ -76,6 +79,7 @@ export async function createUserProfile(args: {
     username,
     avatarInitials: avatarInitialsFrom(displayName),
     avatarColour: pickAvatarColour(uid),
+    ...(avatarConfig ? { avatarConfig } : {}),
     createdAt: Date.now(),
     allowPokes: true,
     notifications: {
@@ -120,6 +124,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     username: data.username,
     avatarInitials: data.avatarInitials,
     avatarColour: data.avatarColour,
+    avatarConfig: data.avatarConfig ?? undefined,
     createdAt: data.createdAt,
     allowPokes: data.allowPokes !== false,
     notifications: data.notifications,
@@ -165,7 +170,7 @@ export async function deleteUserData(uid: string, username: string): Promise<voi
 /** Patches fields on the user's own profile doc. */
 export async function updateUserProfile(
   uid: string,
-  patch: Partial<Pick<UserProfile, 'username' | 'avatarInitials' | 'avatarColour' | 'notifications' | 'allowPokes'>>,
+  patch: Partial<Pick<UserProfile, 'username' | 'avatarInitials' | 'avatarColour' | 'avatarConfig' | 'notifications' | 'allowPokes'>>,
 ): Promise<void> {
   await setDoc(
     doc(db, 'users', uid),

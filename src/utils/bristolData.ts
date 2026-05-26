@@ -20,14 +20,14 @@ export const BRISTOL_TYPES: readonly BristolType[] = [
   {
     type: 1,
     label: 'Separate hard lumps',
-    description: 'Like nuts, hard to pass',
+    description: 'Like nuts, difficult to pass',
     category: 'constipated',
     colour: '#854F0B',
   },
   {
     type: 2,
     label: 'Lumpy sausage',
-    description: 'Sausage-shaped but lumpy',
+    description: 'Still sausage-shaped but lumpy',
     category: 'constipated',
     colour: '#854F0B',
   },

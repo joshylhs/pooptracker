@@ -11,12 +11,12 @@ export type { Symptoms };
 // ─── Info content ─────────────────────────────────────────────────────────────
 
 const SYMPTOM_INFO_ROWS = [
-  { label: 'blood',      body: 'Visible blood in the stool or on toilet paper.' },
-  { label: 'pain',       body: 'Abdominal or rectal pain during or after a bowel movement.', tag: 'mild / severe' },
-  { label: 'straining',  body: 'Difficulty or effort required to pass a stool.', tag: 'mild / severe' },
-  { label: 'bloating',   body: 'A feeling of fullness, tightness, or swelling in the abdomen.' },
-  { label: 'incomplete', body: "Sensation that the bowel wasn't fully emptied." },
-  { label: 'assisted',   body: 'Required laxatives, enemas, or manual assistance.' },
+  { label: 'Blood',      body: 'Visible blood in the stool or on toilet paper.' },
+  { label: 'Pain',       body: 'Abdominal or rectal pain relating to the bowel movement.', tag: 'mild / severe' },
+  { label: 'Straining',  body: 'Difficulty or effort required to pass a stool.', tag: 'mild / severe' },
+  { label: 'Bloating',   body: 'A feeling of fullness, tightness, or swelling in the abdomen.' },
+  { label: 'Incomplete', body: "Sensation that the bowel wasn't fully emptied." },
+  { label: 'Assisted',   body: 'Required laxatives, enemas, or manual assistance.' },
 ];
 
 // ─── Tile config ──────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ export default function SymptomsGrid({ value, onChange }: SymptomsGridProps) {
         visible={showInfo}
         onClose={() => setShowInfo(false)}
         title="Symptoms"
-        intro="Tap a tile to log it. Pain and straining can be mild or severe — tap again to cycle."
+        intro="Tap a tile to log it. Pain and straining can be mild or severe, tap again to cycle."
         rows={SYMPTOM_INFO_ROWS}
       />
       <View style={styles.labelRow}>

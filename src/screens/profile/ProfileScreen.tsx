@@ -15,8 +15,9 @@ import { scheduleDaily } from '../../services/notifications';
 import { useTheme } from '../../hooks/useTheme';
 import ScreenContainer from '../../components/shared/ScreenContainer';
 import AppText from '../../components/shared/Text';
-import Avatar from '../../components/shared/Avatar';
 import Button from '../../components/shared/Button';
+import AvatarPickerModal from '../../components/shared/AvatarPickerModal';
+import { CatAvatarCircle, AvatarConfig, DEFAULT_AVATAR_CONFIG } from '../../components/avatar';
 
 export default function ProfileScreen() {
   const user = useAuthStore(s => s.user);
@@ -24,6 +25,9 @@ export default function ProfileScreen() {
   const { surface } = useTheme();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>(DEFAULT_AVATAR_CONFIG);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
   const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const [savedPrefs, setSavedPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const [signingOut, setSigningOut] = useState(false);
@@ -34,6 +38,7 @@ export default function ProfileScreen() {
     if (!user) return;
     Promise.all([getUserProfile(user.uid), loadNotificationPrefs(user.uid)]).then(([p, n]) => {
       setProfile(p);
+      if (p?.avatarConfig) setAvatarConfig(p.avatarConfig);
       setNotifPrefs(n);
       setSavedPrefs(n);
     });
@@ -81,13 +86,26 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    try {
-      await logOut();
-    } finally {
-      setSigningOut(false);
-    }
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out',
+          style: 'destructive',
+          onPress: async () => {
+            setSigningOut(true);
+            try {
+              await logOut();
+            } finally {
+              setSigningOut(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleDeleteAccount = () => {
@@ -122,6 +140,20 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleAvatarSave = async (config: AvatarConfig) => {
+    if (!user) return;
+    setSavingAvatar(true);
+    try {
+      await updateUserProfile(user.uid, { avatarConfig: config });
+      setAvatarConfig(config);
+      setProfile(p => p ? { ...p, avatarConfig: config } : p);
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
+
+  const AVATAR_SIZE = 72;
+
   const cardStyle = [styles.card, { backgroundColor: surface.surface, borderColor: surface.border }];
   const dividerStyle = [styles.divider, { backgroundColor: surface.border }];
 
@@ -133,17 +165,26 @@ export default function ProfileScreen() {
         {/* Identity card */}
         <View style={cardStyle}>
           <View style={styles.identity}>
-            <Avatar
-              initials={profile?.avatarInitials ?? (user?.displayName?.[0]?.toUpperCase() ?? '?')}
-              colour={profile?.avatarColour ?? '#888'}
-              size={52}
-            />
+            <Pressable onPress={() => setAvatarPickerVisible(true)} hitSlop={4}>
+              <CatAvatarCircle config={avatarConfig} size={AVATAR_SIZE} />
+              <View style={styles.editBadge}>
+                <AppText style={styles.editBadgeText}>✎</AppText>
+              </View>
+            </Pressable>
             <View style={styles.identityText}>
               <AppText variant="bodyEmphasis">{profile?.username ?? '—'}</AppText>
               <AppText variant="body" colour="textSecondary">{user?.email ?? '—'}</AppText>
             </View>
           </View>
         </View>
+
+        <AvatarPickerModal
+          visible={avatarPickerVisible}
+          current={avatarConfig}
+          onSave={handleAvatarSave}
+          onClose={() => setAvatarPickerVisible(false)}
+          saving={savingAvatar}
+        />
 
         {/* Notifications section */}
         <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
@@ -274,6 +315,18 @@ const styles = StyleSheet.create({
   card: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 4 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   identityText: { gap: 2 },
+  editBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#7F77DD',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editBadgeText: { fontSize: 10, color: '#fff' },
   sectionLabel: { marginTop: 8, marginLeft: 4, letterSpacing: 0.5 },
   row: {
     flexDirection: 'row',

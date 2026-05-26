@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import { DailySummary } from '../../utils/streakUtils';
 import { todayString } from '../../utils/dateUtils';
@@ -151,17 +152,17 @@ export default function CalendarHeatmap({
       {/* Header: ‹ Month YYYY › */}
       <View style={styles.header}>
         <Pressable onPress={prevMonth} hitSlop={12} style={styles.arrowBtn}>
-          <AppText style={[styles.arrow, { color: surface.textPrimary }]}>
-            ‹
-          </AppText>
+          <View style={styles.chevronCircle}>
+            <MCI name="chevron-left" size={22} color={surface.textPrimary} />
+          </View>
         </Pressable>
         <AppText variant="sectionHeading">
           {monthName} {viewYear}
         </AppText>
         <Pressable onPress={nextMonth} hitSlop={12} style={styles.arrowBtn} disabled={isCurrentMonth}>
-          <AppText style={[styles.arrow, { color: isCurrentMonth ? surface.textPlaceholder : surface.textPrimary }]}>
-            ›
-          </AppText>
+          <View style={styles.chevronCircle}>
+            <MCI name="chevron-right" size={22} color={isCurrentMonth ? surface.textPlaceholder : surface.textPrimary} />
+          </View>
         </Pressable>
       </View>
 
@@ -281,10 +282,14 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 6,
   },
-  arrowBtn: { paddingHorizontal: 4 },
-  arrow: {
-    fontSize: 26,
-    lineHeight: 26,
+  arrowBtn: { padding: 2 },
+  chevronCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dowRow: {
     paddingHorizontal: GAP,

@@ -15,11 +15,11 @@ interface BristolSelectorProps {
 }
 
 const BRISTOL_INFO_ROWS = [
-  { label: 'Types 1–2', body: 'Separate hard lumps or sausage-shaped but lumpy. Indicates constipation.' },
+  { label: 'Types 1–2', body: 'Separate hard lumps or sausage-shaped but lumpy and hard. Indicates constipation.' },
   { label: 'Type 3',    body: 'Like a sausage with cracks on the surface. Slightly lacking in fibre/fluids.' },
   { label: 'Type 4',    body: 'Smooth, soft sausage or snake. Ideal.' },
   { label: 'Type 5',    body: 'Soft blobs with clear-cut edges. Lacking in fibre.' },
-  { label: 'Types 6–7', body: 'Fluffy, mushy, or entirely liquid. Indicates diarrhoea.' },
+  { label: 'Types 6–7', body: 'Fluffy, mushy (pieces), or entirely liquid. Indicates diarrhoea.' },
 ];
 
 export default function BristolSelector({ value, onChange }: BristolSelectorProps) {

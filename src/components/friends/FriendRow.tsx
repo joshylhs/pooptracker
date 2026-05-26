@@ -4,6 +4,7 @@ import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from '../shared/Text';
 import Avatar from '../shared/Avatar';
+import { CatAvatarCircle } from '../avatar';
 import { LeaderboardEntry } from '../../services/friends';
 import { sendPoke } from '../../services/pokes';
 
@@ -57,7 +58,11 @@ export default function FriendRow({ rank, entry, onPress }: FriendRowProps) {
       <AppText variant="bodyEmphasis" style={[styles.rank, { color: surface.textSecondary }]}>
         {rank}
       </AppText>
-      <Avatar initials={entry.avatarInitials} colour={entry.avatarColour} size={34} />
+      {entry.avatarConfig ? (
+        <CatAvatarCircle config={entry.avatarConfig} size={48} />
+      ) : (
+        <Avatar initials={entry.avatarInitials} colour={entry.avatarColour} emoji={entry.avatarEmoji} size={34} />
+      )}
       <View style={styles.nameCol}>
         <View style={styles.nameRow}>
           <AppText variant="bodyEmphasis">{entry.username}</AppText>

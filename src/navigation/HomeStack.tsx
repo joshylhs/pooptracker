@@ -1,0 +1,19 @@
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from '../screens/home/HomeScreen';
+import HealthSignalsScreen from '../screens/home/HealthSignalsScreen';
+
+export type HomeStackParamList = {
+  HomeMain: undefined;
+  HealthSignals: undefined;
+};
+
+const Stack = createNativeStackNavigator<HomeStackParamList>();
+
+export default function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="HealthSignals" component={HealthSignalsScreen} />
+    </Stack.Navigator>
+  );
+}

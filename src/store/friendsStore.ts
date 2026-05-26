@@ -91,6 +91,8 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
         username: myProfile.username,
         avatarInitials: myProfile.avatarInitials,
         avatarColour: myProfile.avatarColour,
+        avatarEmoji: myProfile.avatarEmoji,
+        avatarConfig: myProfile.avatarConfig,
       });
       set({ leaderboard: { window, entries }, leaderboardFetchedAt: Date.now() });
     } catch (e) {

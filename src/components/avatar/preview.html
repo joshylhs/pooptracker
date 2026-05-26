@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cat Avatar Preview</title>
+<style>
+  body { background: #1a1a2e; font-family: monospace; color: #eee; padding: 24px; }
+  h2 { color: #a0c4ff; margin: 32px 0 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; margin-bottom: 8px; }
+  .cell { text-align: center; }
+  .cell span { display: block; font-size: 10px; color: #aaa; margin-top: 4px; }
+  hr { border: 1px solid #333; margin: 32px 0; }
+</style>
+</head>
+<body>
+
+<h1 style="color:#ff8fab">🐱 Cat Avatar Preview</h1>
+
+<h2>Body Colours</h2>
+<div class="row" id="colours"></div>
+
+<h2>Snout Colours (orange body)</h2>
+<div class="row" id="snouts"></div>
+
+<h2>Eye Shapes</h2>
+<div class="row" id="eyes"></div>
+
+<h2>Eye Primary Colours</h2>
+<div class="row" id="eyeprimary"></div>
+
+<h2>Eye Secondary Colours</h2>
+<div class="row" id="eyesecondary"></div>
+
+<h2>Headdresses</h2>
+<div class="row" id="headdresses"></div>
+
+<h2>Background (Wall)</h2>
+<div class="row" id="walls"></div>
+
+<hr>
+<h2>Combinations</h2>
+<div class="row" id="showcase"></div>
+
+<script>
+const INNER_EAR = '#FFB3C6';
+const NOSE  = '#C87080';
+const MOUTH = '#2C1810';
+const BLUSH = '#F0A0B0';
+
+const EYE_PRIMARY   = { dark:'#2C1810', green:'#2D6A2D', blue:'#1A4A8A', orange:'#B85A00' };
+const EYE_SECONDARY = { white:'#FFFFFF', green:'#A8D8A8', pink:'#FFB3C6', yellow:'#FFE066' };
+const WALL_COLORS   = { none:'transparent', dusk:'#2B2250', sage:'#4A7C59', rose:'#A0404A', slate:'#3A4A5C', sand:'#8C6E45', lilac:'#6A4A7C', teal:'#2A6B6B', charcoal:'#2C2C2C' };
+
+const COLORS = {
+  cream:'#F5DEB3', orange:'#E8824A', grey:'#9BA3A3', black:'#3C3C3C',
+  brown:'#8B6355', white:'#F0F0F0', lavender:'#C4A8C8', bluegrey:'#8FA8BF',
+};
+
+const r = (x,y,w,h,f) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"/>`;
+
+function body(c, s='#F0F0F0') {
+  return `
+    ${r(6,0,1,1,c)}${r(5,1,3,1,c)}${r(5,2,5,1,c)}${r(5,3,6,1,c)}
+    ${r(6,1,1,1,INNER_EAR)}${r(6,2,3,1,INNER_EAR)}${r(6,3,4,1,INNER_EAR)}
+    ${r(25,0,1,1,c)}${r(24,1,3,1,c)}${r(22,2,5,1,c)}${r(21,3,6,1,c)}
+    ${r(25,1,1,1,INNER_EAR)}${r(23,2,3,1,INNER_EAR)}${r(22,3,4,1,INNER_EAR)}
+    ${r(5,4,22,15,c)}
+    ${r(6,19,20,1,c)}${r(7,20,18,1,c)}${r(9,21,14,1,c)}${r(11,22,10,1,c)}
+    ${r(13,23,6,1,c)}${r(12,24,8,1,c)}
+    ${r(11,25,10,1,c)}${r(9,26,14,1,c)}${r(8,27,16,1,c)}${r(9,28,14,4,c)}
+    ${r(12,14,8,1,s)}${r(11,15,10,4,s)}${r(12,19,8,1,s)}${r(13,20,6,1,s)}
+    ${r(14,15,3,2,NOSE)}
+    ${r(15,17,1,2,MOUTH)}
+    ${r(13,18,1,1,MOUTH)}${r(17,18,1,1,MOUTH)}
+    ${r(14,19,1,1,MOUTH)}${r(16,19,1,1,MOUTH)}
+  `;
+}
+
+function blush() {
+  return `${r(7,15,3,2,BLUSH)}${r(22,15,3,2,BLUSH)}`;
+}
+
+function eyes(style, ep='dark', es='white') {
+  const p = EYE_PRIMARY[ep]   || EYE_PRIMARY.dark;
+  const s = EYE_SECONDARY[es] || EYE_SECONDARY.white;
+  if (style === 'button') return `
+    ${r(10,10,3,3,s)}${r(11,10,1,3,p)}
+    ${r(19,10,3,3,s)}${r(20,10,1,3,p)}
+  `;
+  if (style === 'sparkle') return `
+    ${r(10,11,2,2,p)}${r(20,11,2,2,p)}
+    ${r(10,11,1,1,s)}${r(11,12,1,1,s)}
+    ${r(20,11,1,1,s)}${r(21,12,1,1,s)}
+    ${r(12,10,1,1,s)}${r(22,10,1,1,s)}
+  `;
+  return `
+    ${r(10,11,2,2,p)}${r(20,11,2,2,p)}
+    ${r(10,11,1,1,s)}${r(20,11,1,1,s)}
+  `;
+}
+
+function headdress(style) {
+  if (style === 'flower') return `
+    ${r(15,2,2,2,'#FFE066')}
+    ${r(15,1,2,1,'#FF8FAB')}${r(15,4,2,1,'#FF8FAB')}
+    ${r(13,2,2,2,'#FF8FAB')}${r(17,2,2,2,'#FF8FAB')}
+  `;
+  if (style === 'bow') return `
+    ${r(7,0,2,1,'#FF8FAB')}${r(9,1,2,1,'#FF8FAB')}${r(11,2,2,1,'#FF8FAB')}${r(13,3,2,1,'#FF8FAB')}
+    ${r(23,0,2,1,'#FF8FAB')}${r(21,1,2,1,'#FF8FAB')}${r(19,2,2,1,'#FF8FAB')}${r(17,3,2,1,'#FF8FAB')}
+    ${r(14,3,4,2,'#E0607E')}
+    ${r(11,4,2,1,'#FF8FAB')}${r(19,4,2,1,'#FF8FAB')}
+    ${r(9,5,2,1,'#FF8FAB')}${r(21,5,2,1,'#FF8FAB')}
+  `;
+  if (style === 'crown') return `
+    ${r(10,3,12,1,'#FFD700')}
+    ${r(10,2,3,1,'#FFD700')}${r(14,1,4,2,'#FFD700')}${r(15,0,2,1,'#FFD700')}${r(19,2,3,1,'#FFD700')}
+    ${r(11,3,1,1,'#FF4444')}${r(15,2,2,1,'#FF4444')}${r(20,3,1,1,'#FF4444')}
+  `;
+  if (style === 'partyhat') return `
+    ${r(15,0,2,1,'#FFFFFF')}
+    ${r(15,1,2,1,'#FF6B6B')}${r(14,2,4,1,'#FF6B6B')}${r(13,3,6,1,'#FF6B6B')}${r(12,4,8,1,'#E55555')}
+    ${r(16,2,1,1,'#FFFFFF')}${r(14,3,1,1,'#FFFFFF')}
+  `;
+  if (style === 'beanie') return `
+    ${r(14,0,4,1,'#FFFFFF')}
+    ${r(12,1,8,1,'#FF8FAB')}${r(10,2,12,1,'#FF8FAB')}
+    ${r(9,3,14,1,'#5B8CFF')}
+    ${r(8,4,16,1,'#FF8FAB')}
+    ${r(8,5,16,2,'#4070DD')}
+  `;
+  if (style === 'tophat') return `
+    ${r(11,0,10,1,'#1A1A1A')}
+    ${r(10,1,12,1,'#1A1A1A')}${r(10,2,12,1,'#1A1A1A')}${r(10,3,12,1,'#1A1A1A')}
+    ${r(10,4,12,1,'#C0392B')}
+    ${r(7,5,18,1,'#1A1A1A')}
+  `;
+  return '';
+}
+
+function makeSvg(bc, sc, eyeStyle, h, px, ep='dark', es='white', wall='none') {
+  const bg = wall !== 'none' ? `<rect x="0" y="0" width="32" height="32" fill="${WALL_COLORS[wall] || wall}"/>` : '';
+  return `<svg width="${px}" height="${px}" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+    ${bg}${body(bc,sc)}${eyes(eyeStyle,ep,es)}${blush()}${headdress(h)}
+  </svg>`;
+}
+const cell = (s,l) => `<div class="cell">${s}<span>${l}</span></div>`;
+const W = COLORS.white, C = COLORS.cream;
+
+document.getElementById('colours').innerHTML =
+  Object.entries(COLORS).map(([n,h]) => cell(makeSvg(h,W,'button','none',96),n)).join('');
+
+document.getElementById('snouts').innerHTML =
+  Object.entries(COLORS).map(([n,h]) => cell(makeSvg(COLORS.orange,h,'button','none',96),n)).join('');
+
+document.getElementById('eyes').innerHTML =
+  ['round','sparkle','button'].map(s => cell(makeSvg(C,W,s,'none',96),s)).join('');
+
+document.getElementById('eyeprimary').innerHTML =
+  Object.keys(EYE_PRIMARY).map(ep => cell(makeSvg(C,W,'button','none',96,ep,'white'),ep)).join('');
+
+document.getElementById('eyesecondary').innerHTML =
+  Object.keys(EYE_SECONDARY).map(es => cell(makeSvg(C,W,'button','none',96,'dark',es),es)).join('');
+
+document.getElementById('headdresses').innerHTML =
+  ['none','flower','bow','crown','partyhat','beanie','tophat'].map(s => cell(makeSvg(C,W,'button',s,96),s)).join('');
+
+document.getElementById('walls').innerHTML =
+  Object.keys(WALL_COLORS).map(w => cell(makeSvg(C,W,'button','none',96,'dark','white',w), w)).join('');
+
+const combos = [
+  [COLORS.orange,   COLORS.cream,    'button',  'crown',    'orange queen',   'dark',   'white'],
+  [COLORS.grey,     COLORS.white,    'button',  'tophat',   'fancy grey',     'blue',   'white'],
+  [COLORS.lavender, COLORS.cream,    'round',   'flower',   'lavender bloom', 'green',  'green'],
+  [COLORS.black,    COLORS.grey,     'sparkle', 'partyhat', 'party gremlin',  'orange', 'yellow'],
+  [COLORS.brown,    COLORS.cream,    'button',  'bow',      'cosy brown',     'dark',   'pink'],
+  [COLORS.bluegrey, COLORS.white,    'sparkle', 'none',     'blue wednesday', 'blue',   'white'],
+  [COLORS.cream,    COLORS.lavender, 'round',   'beanie',   'birthday cat',   'dark',   'white'],
+  [COLORS.white,    COLORS.bluegrey, 'button',  'crown',    'snow royale',    'dark',   'green'],
+];
+document.getElementById('showcase').innerHTML =
+  combos.map(([bc,sc,e,h,l,ep,es]) => cell(makeSvg(bc,sc,e,h,112,ep,es),l)).join('');
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-A social poop tracking app for iOS and Android. Users log their bowel movements, view their history on a calendar heatmap, and compete with friends on a leaderboard. Built to be modular and scalable for future features including ML-powered insights and games.
+A social poop tracking app for iOS (Android deferred post-v1). Users log their bowel movements, view their history on a calendar heatmap, and compete with friends on a leaderboard. Built to be modular and scalable for future features including ML-powered insights and games.
 
 ---
 
@@ -20,6 +20,8 @@ A social poop tracking app for iOS and Android. Users log their bowel movements,
 | State management | Zustand | Lightweight, beginner-friendly, scales well |
 | Navigation | React Navigation v7 | Standard for React Native, flexible |
 | Notifications | Notifee | Best-in-class local notifications for React Native |
+| Push notifications (pokes) | Firebase Cloud Functions + FCM | Server-side poke delivery via `sendPoke` callable function (`asia-southeast1`, Node 22) |
+| Icons | `react-native-vector-icons` (MaterialCommunityIcons) | Tab icons, symptom icons, button icons, poke button |
 | Styling | StyleSheet (React Native built-in) | No extra dependency for v1 |
 | Charts / heatmap | react-native-calendars + custom heatmap | Calendar base, custom colour intensity layer |
 
@@ -45,9 +47,10 @@ src/
 │
 ├── components/
 │   ├── log/
-│   │   ├── QuickLogButton.tsx         # primary CTA on home screen
+│   │   ├── LogButton.tsx              # primary CTA on home screen (quick log + add details)
 │   │   ├── LogEntryModal.tsx          # detailed log entry sheet
 │   │   ├── BristolSelector.tsx        # type 1-7 picker with icons + descriptions
+│   │   ├── SymptomsGrid.tsx           # symptom tile grid (blood/pain/straining/bloating/incomplete/assisted)
 │   │   └── DayLogCard.tsx             # expanded day detail below heatmap
 │   ├── heatmap/
 │   │   └── CalendarHeatmap.tsx        # calendar with colour intensity per day
@@ -56,12 +59,14 @@ src/
 │   │   ├── FriendListCollapsed.tsx    # collapsed friend management row
 │   │   └── FriendRow.tsx             # single friend row in leaderboard
 │   └── shared/
-│       ├── StatCard.tsx               # reusable metric card (streak, today, avg)
+│       ├── StatCard.tsx               # reusable metric card (streak, today, avg); icon prop reserves slot even when unused
 │       ├── Avatar.tsx                 # initials circle avatar
-│       ├── Button.tsx                 # primary / secondary / destructive variants
+│       ├── Button.tsx                 # primary / secondary / destructive variants; icon prop adds MCI icon inline
+│       ├── InfoModal.tsx              # shared info/help modal + InfoButton + InfoRow types; used by Bristol, symptoms, streak
 │       ├── ScreenContainer.tsx        # safe-area aware scroll wrapper
 │       ├── Text.tsx                   # themed AppText with variant prop
-│       └── TextField.tsx              # labelled input with error state
+│       ├── TextField.tsx              # labelled input with error state
+│       └── Toast.tsx                  # brief success/error toast overlay
 │
 ├── navigation/
 │   ├── RootNavigator.tsx              # switches between Auth, Onboarding, and App; renders OnboardingScreen directly (not inside AuthStack)
@@ -78,6 +83,7 @@ src/
 │   ├── logs.ts                        # thin async wrapper around logRepository — applies the current user's uid and triggers notification suppression on quick log
 │   ├── friends.ts                     # friend requests, friendships, leaderboard queries (reads rollup docs)
 │   ├── users.ts                       # user profile reads and writes
+│   ├── pokes.ts                       # FCM token registration + sendPoke Cloud Function callable
 │   ├── notificationPrefs.ts           # AsyncStorage-backed per-user notification preferences (load/save, migration from legacy key)
 │   └── notifications.ts              # Notifee scheduling and cancellation; supports up to MAX_NOTIFICATION_SLOTS (5) daily triggers
 │
@@ -132,6 +138,10 @@ src/
     times: string[],                   // ["HH:MM", ...] 24hr format; supports up to 5 slots; default ["09:00"]
     smartSuppress: boolean,
   },
+
+  // pokes
+  allowPokes: boolean,                 // user preference; defaults to true
+  fcmToken: string,                    // latest FCM device token, set by registerFcmToken() on login
 }
 ```
 
@@ -141,7 +151,14 @@ Individual logs. Strictly owner-readable — friends never see raw entries.
 {
   timestamp: number,                   // ms since epoch
   bristolType: 1 | 2 | 3 | 4 | 5 | 6 | 7 | null,
-  duration: number | null,             // minutes
+  symptoms: {                          // all fields optional; undefined/null stripped before write (cleanSymptoms)
+    blood?: boolean,
+    pain?: 'mild' | 'severe',
+    straining?: 'mild' | 'severe',
+    bloating?: boolean,
+    incomplete?: boolean,
+    assisted?: boolean,
+  },
   notes: string | null,
   isQuickLog: boolean,                 // true = bare quick-log; false = detailed
   date: string,                        // "YYYY-MM-DD" derived from timestamp; queried for day view
@@ -177,6 +194,18 @@ Readable by self and accepted friends. Powers the heatmap (one daily doc per cel
 3. App reads `usernameIndex/{usernameHash}` — one doc-id lookup, no scan.
 4. If hit, app sends a friend request to the returned userId. The recipient's profile is **not** read at this stage (rules forbid until a friendship record exists). Search results display only the typed username + a derived avatar.
 5. After the recipient sees the pending request and the underlying friendship doc, the rule's `knowsUser` predicate becomes true and either side can read the other's profile.
+
+### `pokes/{senderId_recipientId}`
+Rate-limit record written after each successful poke. Document ID is `{senderId}_{recipientId}`.
+```typescript
+{
+  senderId: string,
+  recipientId: string,
+  sentAt: serverTimestamp,
+  message: string,                     // resolved message (custom or default)
+}
+```
+Cooldown is enforced server-side in the Cloud Function (5-minute TTL). Client-side hides the poke button for 30 minutes after a successful poke (local state, not persisted).
 
 ### `friendships/{userId}/friends/{friendId}`
 Two records per friendship — one in each user's list. Cross-user writes are scoped by rules: `friendId` may create a pending record in `userId`'s list only if the doc's `initiatedBy === friendId`, and `friendId` may transition that record to `accepted` only if `initiatedBy === userId`.
@@ -359,32 +388,35 @@ RootNavigator
 ### FriendsScreen
 
 **Displays:**
-- Collapsed friend list row: "Friends (N) ▸ manage" — tapping expands to show friend list with add/remove options and pending requests
+- Collapsed friend list card: "Friends (N)" with a filled "manage/hide" pill button — expands to show friend list with add/remove options and pending requests
 - Leaderboard section
-  - Day / Week / Month / Year pill tab toggle
-  - Ranked list: rank number | avatar | username | log count
-  - Current user's row highlighted
-  - "you" badge on current user's row
-  - Footer note: "counts logs only — details stay private"
+  - "Leaderboard" title + "updated X ago" pill (green if < 60s, purple otherwise)
+  - Day / Week / Month / Year sliding pill tab toggle (indicator animates between tabs)
+  - Column header row: # | (avatar) | User | Logs
+  - Ranked list cards: rank | avatar | username + inline poke button (if allowPokes) | log count
+  - Current user's row: purple-tinted background + primary400 border + "you" caption
+  - Footer note: "Shows your friends' log counts only (no details!)"
 
 **Actions:**
-- Tap friend list row → expand/collapse
+- Tap manage pill → expand/collapse friend list (scale-up pop animation)
 - Search users by username → send friend request
 - Accept / decline incoming request
 - Tap leaderboard tab → switch time period
+- Tap poke button on a row → Alert.prompt for optional message → sends poke via Cloud Function
 - Tap a friend row → navigate to FriendDetailScreen
 
 ### FriendDetailScreen
 
 **Displays:**
-- Friend's avatar + display name + username
+- Friend's avatar + username
+- "accepting pokes" pill (green) or "not accepting pokes" pill (amber) below username
 - Their heatmap (read-only, same calendar component)
 - Stat cards: their streak / today's count / weekly avg
   (Bristol type is owner-only — never visible to friends)
 
 **Actions:**
 - Remove friend (with confirmation)
-- Back to FriendsScreen
+- Swipe down or tap dim area to dismiss (bottom sheet)
 
 ### ProfileScreen
 
@@ -465,8 +497,8 @@ Counts are pre-aggregated server-side as plaintext rollup docs (see `dailySummar
 - Year: N reads (one yearly doc each)
 
 Day, month, and year are cheap. Week is the costly window — for a 10-friend group that's 70 reads per fetch. Mitigations:
-- The Friends-tab screen caches the result in `friendsStore` and only re-fetches when stale (TTL gating; not yet implemented in v1.0 but planned).
-- Pull-to-refresh forces a re-fetch. Background tab navigations should not trigger one.
+- The Friends-tab screen caches the result in `friendsStore` with a 5-minute TTL (`CACHE_TTL_MS`). Tab navigations within TTL reuse cached data. `force: true` bypasses cache (used on pull-to-refresh and after write actions).
+- Pull-to-refresh forces a re-fetch.
 
 **Ranking rules:**
 - Ties broken alphabetically by username
@@ -572,7 +604,7 @@ export const INTENSITY_COLOURS = {
 ## Design System
 
 ### Personality
-Playful and fun — bold purple accent, rounded corners everywhere, generous spacing. Feels friendly and approachable, not clinical. Supports both light and dark mode from day one.
+Playful and fun — bold purple accent, rounded corners everywhere, generous spacing. Feels friendly and approachable, not clinical.
 
 ### Colour Tokens
 
@@ -628,7 +660,7 @@ export const typography = {
   sectionHeading:{ fontSize: 18, fontWeight: "500" },
   bodyEmphasis:  { fontSize: 15, fontWeight: "500" },
   body:          { fontSize: 13, fontWeight: "400" },
-  caption:       { fontSize: 11, fontWeight: "400" },
+  caption:       { fontSize: 12, fontWeight: "400" },
 };
 ```
 
@@ -664,5 +696,5 @@ export const typography = {
 ### Avatar System
 Each user is assigned one of 5 colour pairs at signup (purple, amber, teal, coral, blue). Stored as a string on the user profile. Initials are first letter of display name + first letter of last word. Displayed as 36px circle throughout the app.
 
-### Dark Mode
-All colours reference React Native's `useColorScheme()`. Create a `useTheme()` hook that returns the appropriate colour set for the current scheme. Never hardcode colours in component files — always reference through the theme hook.
+### Theme
+Currently a single warm dark palette (not system-adaptive). `useTheme()` returns fixed surface colours (`warmDarkSurface`) regardless of `useColorScheme()`. Never hardcode colours in component files — always reference through the theme hook. Light mode support is deferred post-v1.

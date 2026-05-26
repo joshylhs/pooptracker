@@ -63,6 +63,12 @@ service cloud.firestore {
       allow write: if isOwner(userId);
     }
 
+    // Health signal dismissals — strictly owner-only. Stores snooze records for
+    // the Rome IV assessment findings the user has acknowledged.
+    match /users/{userId}/dismissedSignals/{findingId} {
+      allow read, write: if isOwner(userId);
+    }
+
     // Username hash index. Lets friend search resolve username → uid via a
     // single doc-id lookup without storing plaintext usernames anywhere.
     match /usernameIndex/{usernameHash} {

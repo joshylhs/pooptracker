@@ -79,6 +79,7 @@ export default function LeaderboardList({
           const fresh = Date.now() - lastUpdated < 60_000;
           return (
             <View style={[styles.updatedPill, { backgroundColor: fresh ? colours.idealBg : colours.primary50 }]}>
+              <View style={[styles.updatedDot, { backgroundColor: fresh ? colours.ideal : colours.primary400 }]} />
               <AppText variant="caption" style={{ color: fresh ? colours.ideal : colours.primary600 }}>
                 {formatUpdated(lastUpdated)}
               </AppText>
@@ -161,7 +162,8 @@ export default function LeaderboardList({
 
 const styles = StyleSheet.create({
   titleRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  updatedPill: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  updatedPill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  updatedDot: { width: 6, height: 6, borderRadius: 999 },
   tabs: {
     flexDirection: 'row',
     borderRadius: 10,
@@ -191,7 +193,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   colRank: { width: 20, textAlign: 'center' },
-  colAvatarSpacer: { width: 34 },
+  colAvatarSpacer: { width: 48 },
   colName: { flex: 1 },
   colCount: { width: 36, textAlign: 'center' },
   list: { gap: 6 },

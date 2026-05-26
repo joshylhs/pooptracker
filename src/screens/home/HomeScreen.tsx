@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useTheme } from '../../hooks/useTheme';
 import ScreenContainer from '../../components/shared/ScreenContainer';
 import AppText from '../../components/shared/Text';
 import StatCard from '../../components/shared/StatCard';
@@ -8,8 +12,13 @@ import DayLogCard from '../../components/log/DayLogCard';
 import LogButton from '../../components/log/LogButton';
 import LogEntryModal from '../../components/log/LogEntryModal';
 import Toast from '../../components/shared/Toast';
+import InsightsSection from '../../components/home/InsightsSection';
+import SignalPopup from '../../components/home/SignalPopup';
+import { HomeStackParamList } from '../../navigation/HomeStack';
 import { useLogStore } from '../../store/logStore';
 import { useAuthStore } from '../../store/authStore';
+import { useSignalsStore } from '../../store/signalsStore';
+import { useHealthFindings } from '../../hooks/useHealthFindings';
 import { LogEntry } from '../../services/logs';
 import { calculateStreaks, DailySummary } from '../../utils/streakUtils';
 import { todayCount, monthlyAverage } from '../../utils/statsUtils';
@@ -17,11 +26,18 @@ import { formatDate } from '../../utils/dateUtils';
 
 const TOAST_DURATION = 1800;
 
+type HomeNav = NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>;
+
 export default function HomeScreen() {
+  const { surface } = useTheme();
+  const navigation = useNavigation<HomeNav>();
   const userId = useAuthStore(s => s.user?.uid ?? null);
   const logs = useLogStore(s => s.logs);
   const refresh = useLogStore(s => s.refresh);
   const quickLog = useLogStore(s => s.quickLog);
+  const loadDismissals = useSignalsStore(s => s.loadDismissals);
+  const clearSignals = useSignalsStore(s => s.clear);
+  const { active, status } = useHealthFindings();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,8 +47,13 @@ export default function HomeScreen() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (!userId) {
+      clearSignals();
+      return;
+    }
     refresh();
-  }, [userId, refresh]);
+    loadDismissals(userId);
+  }, [userId, refresh, loadDismissals, clearSignals]);
 
   const showToast = (message: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -76,14 +97,33 @@ export default function HomeScreen() {
   const today = todayCount(summaries);
   const monthly = monthlyAverage(summaries);
 
+  const navigateToSignals = () => navigation.navigate('HealthSignals');
+
+
   return (
     <ScreenContainer>
       <Toast visible={toastVisible} message={toastMessage} />
 
+      <SignalPopup findings={active} onViewSignals={navigateToSignals} />
+
       <ScrollView contentContainerStyle={styles.scroll}>
-        <AppText variant="screenTitle" style={styles.heading}>
-          Today
-        </AppText>
+        <AppText variant="screenTitle">Homepage</AppText>
+
+        {/* Health status bar tab */}
+        <TouchableOpacity
+          onPress={navigateToSignals}
+          activeOpacity={0.7}
+          style={[styles.barTab, { backgroundColor: surface.surface, borderColor: surface.border }]}
+        >
+          <View style={[styles.barTabStripe, { backgroundColor: status.colour }]} />
+          <AppText
+            style={[styles.barTabText, { color: status.colour }]}
+            numberOfLines={1}
+          >
+            {status.text}
+          </AppText>
+          <MCI name="chevron-right" size={14} color={status.colour + '99'} style={{ paddingRight: 12 }} />
+        </TouchableOpacity>
 
         <View style={styles.stats}>
           <StatCard
@@ -117,6 +157,8 @@ export default function HomeScreen() {
             }}
           />
         )}
+
+        <InsightsSection logs={logs} />
       </ScrollView>
 
       <View style={styles.fab}>
@@ -139,7 +181,16 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   scroll: { paddingBottom: 140, gap: 16 },
-  heading: { marginBottom: 4 },
+  barTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginTop: -4,
+  },
+  barTabStripe: { width: 4, alignSelf: 'stretch' },
+  barTabText: { flex: 1, fontSize: 13, fontWeight: '500', paddingHorizontal: 12, paddingVertical: 10 },
   stats: { flexDirection: 'row', gap: 8 },
   fab: {
     position: 'absolute',
