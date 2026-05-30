@@ -3,11 +3,11 @@ import { Animated, LayoutAnimation, Pressable, StyleSheet, View } from 'react-na
 import { useTheme } from '../../hooks/useTheme';
 import {
   BRISTOL_TYPES,
-  BristolType,
   BristolTypeNumber,
 } from '../../utils/bristolData';
 import AppText from '../shared/Text';
 import InfoModal, { InfoButton } from '../shared/InfoModal';
+import BristolIllustration from './BristolIllustration';
 
 interface BristolSelectorProps {
   value: BristolTypeNumber | null;
@@ -115,13 +115,16 @@ export default function BristolSelector({ value, onChange }: BristolSelectorProp
             { transform: [{ scale: scaleAnim }] },
           ]}
         >
-          <View style={styles.detailHeader}>
-            <AppText variant="bodyEmphasis">{displayEntry.label}</AppText>
-            {displayEntry.category === 'ideal' && (
-              <AppText variant="caption" style={{ color: colours.ideal }}>ideal</AppText>
-            )}
+          <BristolIllustration type={displayEntry.type} width={56} height={28} />
+          <View style={styles.detailText}>
+            <View style={styles.detailHeader}>
+              <AppText variant="bodyEmphasis">{displayEntry.label}</AppText>
+              {displayEntry.category === 'ideal' && (
+                <AppText variant="caption" style={{ color: colours.ideal }}>ideal</AppText>
+              )}
+            </View>
+            <AppText variant="caption" colour="textSecondary">{displayEntry.description}</AppText>
           </View>
-          <AppText variant="caption" colour="textSecondary">{displayEntry.description}</AppText>
         </Animated.View>
       )}
     </View>
@@ -156,7 +159,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     padding: 12,
-    gap: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
+  detailText: { flex: 1, gap: 4 },
   detailHeader: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
 });

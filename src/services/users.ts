@@ -22,6 +22,7 @@ export interface UserProfile {
   avatarConfig?: AvatarConfig;
   createdAt: number;
   allowPokes: boolean;
+  trustedFriendIds: string[];
   notifications: {
     enabled: boolean;
     times: string[]; // ["HH:MM", ...] 24h
@@ -82,6 +83,7 @@ export async function createUserProfile(args: {
     ...(avatarConfig ? { avatarConfig } : {}),
     createdAt: Date.now(),
     allowPokes: true,
+    trustedFriendIds: [],
     notifications: {
       enabled: notifications.enabled,
       times: notifications.slots.map(s => timeString(s.hour, s.minute)),
@@ -127,18 +129,11 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     avatarConfig: data.avatarConfig ?? undefined,
     createdAt: data.createdAt,
     allowPokes: data.allowPokes !== false,
+    trustedFriendIds: data.trustedFriendIds ?? [],
     notifications: data.notifications,
   };
 }
 
-/** Looks up a uid by username via the deterministic hash index. */
-export async function findUidByUsername(username: string): Promise<string | null> {
-  const usernameHashValue = await hashUsername(username);
-  const snap = await getDoc(doc(db, 'usernameIndex', usernameHashValue));
-  if (!snap.exists()) return null;
-  const data = snap.data() as { userId?: string } | undefined;
-  return data?.userId ?? null;
-}
 
 /** Deletes all Firestore data for a user: profile, subcollections, username index, and friendships. */
 export async function deleteUserData(uid: string, username: string): Promise<void> {
@@ -167,10 +162,28 @@ export async function deleteUserData(uid: string, username: string): Promise<voi
   ]);
 }
 
+/** Returns true if subjectUid has trustedFriendIds containing viewerUid. */
+export async function checkTrusted(subjectUid: string, viewerUid: string): Promise<boolean> {
+  const snap = await getDoc(doc(db, 'users', subjectUid));
+  if (!snap.exists()) return false;
+  const ids: string[] = snap.data()?.trustedFriendIds ?? [];
+  return ids.includes(viewerUid);
+}
+
+/** Adds or removes a uid from the current user's trustedFriendIds array. */
+export async function setTrustedFriend(uid: string, friendUid: string, trusted: boolean): Promise<void> {
+  const snap = await getDoc(doc(db, 'users', uid));
+  const current: string[] = snap.exists() ? (snap.data()?.trustedFriendIds ?? []) : [];
+  const updated = trusted
+    ? [...new Set([...current, friendUid])]
+    : current.filter(id => id !== friendUid);
+  await setDoc(doc(db, 'users', uid), { trustedFriendIds: updated, updatedAt: serverTimestamp() }, { merge: true });
+}
+
 /** Patches fields on the user's own profile doc. */
 export async function updateUserProfile(
   uid: string,
-  patch: Partial<Pick<UserProfile, 'username' | 'avatarInitials' | 'avatarColour' | 'avatarConfig' | 'notifications' | 'allowPokes'>>,
+  patch: Partial<Pick<UserProfile, 'username' | 'avatarInitials' | 'avatarColour' | 'notifications' | 'allowPokes'>> & { avatarConfig?: AvatarConfig | null },
 ): Promise<void> {
   await setDoc(
     doc(db, 'users', uid),

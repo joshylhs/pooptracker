@@ -10,7 +10,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useSignalsStore } from '../../store/signalsStore';
 import { useHealthFindings } from '../../hooks/useHealthFindings';
 import { RomeFinding } from '../../utils/romeIV';
-import { DismissedSignal } from '../../services/signals';
+import { AcknowledgedSignal } from '../../services/signals';
 import { getSignalCopy } from '../../utils/signalCopy';
 
 const BORDER_COLOUR: Record<RomeFinding['severity'], string> = {
@@ -37,7 +37,7 @@ const INFO_ROWS = [
 const LEGEND = [
   { label: 'Urgent', body: 'Consider seeing a GP soon.', colour: '#D85A30' },
   { label: 'GP flag', body: 'Worth discussing with a GP.', colour: '#BA7517' },
-  { label: 'Info', body: 'No action needed — for awareness.', colour: '#1D9E75' },
+  { label: 'Info', body: 'No additional action needed.', colour: '#1D9E75' },
 ];
 
 function relativeDate(ts: number): string {
@@ -47,67 +47,85 @@ function relativeDate(ts: number): string {
   return `${days} days ago`;
 }
 
-function SnoozePicker({
-  onSnooze1d,
-  onDismiss,
-}: {
-  onSnooze1d: () => void;
-  onDismiss: () => void;
-}) {
-  const { surface } = useTheme();
-  return (
-    <View style={styles.snoozeRow}>
-      <TouchableOpacity
-        onPress={onSnooze1d}
-        style={[styles.snoozeBtn, { borderColor: surface.border }]}
-        hitSlop={8}
-        activeOpacity={0.6}
-      >
-        <AppText variant="caption" style={{ color: surface.textSecondary }}>Snooze 1d</AppText>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={onDismiss}
-        style={[styles.snoozeBtn, { borderColor: surface.border }]}
-        hitSlop={8}
-        activeOpacity={0.6}
-      >
-        <AppText variant="caption" style={{ color: surface.textSecondary }}>Dismiss</AppText>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function FindingCard({
+// Card for LATEST (unacknowledged) findings
+function LatestCard({
   finding,
-  onSnooze1d,
-  onDismiss,
+  onAcknowledge,
 }: {
   finding: RomeFinding;
-  onSnooze1d: () => void;
-  onDismiss: () => void;
+  onAcknowledge: () => void;
 }) {
   const { surface } = useTheme();
   const copy = getSignalCopy(finding.id);
   const borderColour = BORDER_COLOUR[finding.severity];
+  const isBlood = finding.id === 'blood';
 
   return (
     <View style={[styles.findingCard, { backgroundColor: surface.surface, borderColor: surface.border, borderLeftColor: borderColour }]}>
       <View style={styles.findingMain}>
-        <AppText variant="bodyEmphasis">{copy.title}</AppText>
+        <View style={styles.findingTitleRow}>
+          <AppText variant="bodyEmphasis">{copy.title}</AppText>
+          <View style={[styles.severityPill, { backgroundColor: borderColour + '22', borderColor: borderColour + '55' }]}>
+            <AppText variant="caption" style={{ color: borderColour, fontSize: 11 }}>
+              {SEVERITY_LABEL[finding.severity]}
+            </AppText>
+          </View>
+        </View>
         <AppText variant="caption" colour="textSecondary" style={styles.findingBody}>
           {copy.body}
         </AppText>
-        <SnoozePicker onSnooze1d={onSnooze1d} onDismiss={onDismiss} />
+        {isBlood && (
+          <AppText variant="caption" style={[styles.gpNote, { color: borderColour }]}>
+            We recommend speaking to a GP about this.
+          </AppText>
+        )}
+        <TouchableOpacity
+          onPress={onAcknowledge}
+          style={[styles.acknowledgeBtn, { borderColor: surface.border }]}
+          hitSlop={8}
+          activeOpacity={0.6}
+        >
+          <AppText variant="caption" style={{ color: surface.textSecondary }}>Acknowledge</AppText>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function PastSignalCard({ record }: { record: DismissedSignal }) {
+// Card for CURRENT (acknowledged, still active) findings
+function CurrentCard({ finding, record }: { finding: RomeFinding; record: AcknowledgedSignal }) {
+  const { surface } = useTheme();
+  const copy = getSignalCopy(finding.id === 'blood' ? 'blood_acknowledged' : finding.id);
+  const borderColour = BORDER_COLOUR[finding.severity];
+  const isBlood = finding.id === 'blood';
+
+  return (
+    <View style={[styles.findingCard, { backgroundColor: surface.surface, borderColor: surface.border, borderLeftColor: borderColour, opacity: 0.85 }]}>
+      <View style={styles.findingMain}>
+        <View style={styles.findingTitleRow}>
+          <AppText variant="bodyEmphasis">{copy.title}</AppText>
+          <AppText variant="caption" colour="textSecondary" style={{ fontSize: 11 }}>
+            acknowledged {relativeDate(record.acknowledgedAt)}
+          </AppText>
+        </View>
+        <AppText variant="caption" colour="textSecondary" style={styles.findingBody}>
+          {copy.body}
+        </AppText>
+        {isBlood && record.cleanLogCount !== undefined && (
+          <AppText variant="caption" style={[styles.cleanCount, { color: '#1D9E75' }]}>
+            {record.cleanLogCount}/3 clean logs recorded
+          </AppText>
+        )}
+      </View>
+    </View>
+  );
+}
+
+// Card for PAST (resolved) findings
+function PastCard({ record }: { record: AcknowledgedSignal }) {
   const { surface } = useTheme();
   const dotColour = BORDER_COLOUR[record.severity];
-  const copy = getSignalCopy(record.findingId);
-  const snoozeLabel = record.snoozeType === 'dismiss' ? 'Dismissed' : 'Snoozed 1d';
+  const copy = getSignalCopy(record.findingId === 'blood' ? 'blood_resolved' : record.findingId);
 
   return (
     <View style={[styles.pastCard, { backgroundColor: surface.surface, borderColor: surface.border, borderLeftColor: dotColour }]}>
@@ -117,14 +135,16 @@ function PastSignalCard({ record }: { record: DismissedSignal }) {
             {SEVERITY_LABEL[record.severity]}
           </AppText>
         </View>
-        <AppText variant="caption" colour="textSecondary">{relativeDate(record.dismissedAt)}</AppText>
+        <View style={[styles.resolvedPill, { backgroundColor: '#1D9E7522', borderColor: '#1D9E7555' }]}>
+          <AppText variant="caption" style={{ color: '#1D9E75', fontSize: 11 }}>Resolved</AppText>
+        </View>
+        <AppText variant="caption" colour="textSecondary" style={{ marginLeft: 'auto' }}>
+          {relativeDate(record.acknowledgedAt)}
+        </AppText>
       </View>
       <AppText variant="bodyEmphasis" style={styles.pastCardTitle}>{record.plainTitle}</AppText>
       <AppText variant="caption" colour="textSecondary" style={styles.pastCardBody}>
         {copy.body}
-      </AppText>
-      <AppText variant="caption" style={[styles.pastCardSnoozeLabel, { color: surface.textSecondary }]}>
-        {snoozeLabel}
       </AppText>
     </View>
   );
@@ -134,19 +154,24 @@ export default function HealthSignalsScreen() {
   const { surface } = useTheme();
   const navigation = useNavigation();
   const userId = useAuthStore(s => s.user?.uid ?? null);
-  const dismiss = useSignalsStore(s => s.dismiss);
-  const { active, dismissals } = useHealthFindings();
+  const acknowledge = useSignalsStore(s => s.acknowledge);
+  const { latest, current, past, all } = useHealthFindings();
   const [infoVisible, setInfoVisible] = useState(false);
 
-  const actionableFindings = active.filter(f => f.severity === 'urgent' || f.severity === 'gp');
-  const infoFindings = active.filter(f => f.id === 'all_clear' || f.id === 'insufficient_data');
-  const pastSignals = [...dismissals].sort((a, b) => b.dismissedAt - a.dismissedAt);
+  const acknowledged = useSignalsStore(s => s.acknowledged);
 
-  const handleSnooze = (finding: RomeFinding, type: 'snooze1d' | 'dismiss') => {
+  const infoFindings = all.filter(f => f.id === 'all_clear' || f.id === 'insufficient_data');
+  const showInfoStatus = latest.length === 0 && current.length === 0 && infoFindings.length > 0;
+
+  const handleAcknowledge = (finding: RomeFinding) => {
     if (!userId) return;
     const copy = getSignalCopy(finding.id);
-    dismiss(userId, finding, copy.title, type);
+    acknowledge(userId, finding, copy.title);
   };
+
+  // Get the acknowledgement record for a current finding
+  const recordFor = (findingId: string) =>
+    acknowledged.find(a => a.findingId === findingId);
 
   return (
     <ScreenContainer>
@@ -167,7 +192,7 @@ export default function HealthSignalsScreen() {
             <View key={item.label} style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: item.colour }]} />
               <AppText variant="caption" style={{ color: item.colour, fontWeight: '600' }}>{item.label}</AppText>
-              <AppText variant="caption" colour="textSecondary"> — {item.body}</AppText>
+              <AppText variant="caption" colour="textSecondary"> : {item.body}</AppText>
             </View>
           ))}
         </View>
@@ -176,34 +201,47 @@ export default function HealthSignalsScreen() {
           visible={infoVisible}
           onClose={() => setInfoVisible(false)}
           title="What we monitor"
-          intro="Monitors 6 aspects of your bowel health over the last 90 days and flags patterns that match clinical criteria."
+          intro="Health Signals uses the Rome IV criteria, a clinically validated framework used by gastroenterologists worldwide to identify functional bowel disorders. Patterns are assessed over your last 90 days of logs."
           rows={INFO_ROWS}
+          footerLabel="Rome IV criteria"
+          footerUrl="https://theromefoundation.org/rome-iv/rome-iv-criteria/"
         />
 
-        {/* Current actionable findings */}
-        {actionableFindings.length > 0 && (
+        {/* LATEST — new, unacknowledged findings */}
+        {latest.length > 0 && (
           <>
             <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
-              CURRENT FINDINGS
+              LATEST
             </AppText>
             <View style={styles.section}>
-              {actionableFindings.map(f => (
-                <FindingCard
-                  key={f.id}
-                  finding={f}
-                  onSnooze1d={() => handleSnooze(f, 'snooze1d')}
-                  onDismiss={() => handleSnooze(f, 'dismiss')}
-                />
+              {latest.map(f => (
+                <LatestCard key={f.id} finding={f} onAcknowledge={() => handleAcknowledge(f)} />
               ))}
             </View>
           </>
         )}
 
-        {/* All clear / insufficient data status */}
-        {actionableFindings.length === 0 && infoFindings.length > 0 && (
+        {/* CURRENT — acknowledged, still active */}
+        {current.length > 0 && (
           <>
             <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
-              CURRENT STATUS
+              CURRENT
+            </AppText>
+            <View style={styles.section}>
+              {current.map(f => {
+                const record = recordFor(f.id);
+                if (!record) return null;
+                return <CurrentCard key={f.id} finding={f} record={record} />;
+              })}
+            </View>
+          </>
+        )}
+
+        {/* Info status (all clear / insufficient data) */}
+        {showInfoStatus && (
+          <>
+            <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
+              STATUS
             </AppText>
             <View style={styles.section}>
               {infoFindings.map(f => (
@@ -223,15 +261,15 @@ export default function HealthSignalsScreen() {
           </>
         )}
 
-        {/* Past signals history */}
-        {pastSignals.length > 0 && (
+        {/* PAST — resolved findings */}
+        {past.length > 0 && (
           <>
             <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
-              PAST SIGNALS
+              PAST
             </AppText>
             <View style={styles.section}>
-              {pastSignals.map(record => (
-                <PastSignalCard key={record.findingId + record.dismissedAt} record={record} />
+              {[...past].sort((a, b) => b.acknowledgedAt - a.acknowledgedAt).map(record => (
+                <PastCard key={record.findingId} record={record} />
               ))}
             </View>
           </>
@@ -260,14 +298,30 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     padding: 14,
   },
+  findingTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 },
   findingMain: { gap: 6 },
   findingBody: { lineHeight: 18 },
-  snoozeRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  snoozeBtn: {
+  gpNote: { fontSize: 12, fontWeight: '500' },
+  cleanCount: { fontSize: 12, fontWeight: '500' },
+  acknowledgeBtn: {
+    alignSelf: 'flex-start',
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
+    marginTop: 2,
+  },
+  severityPill: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  resolvedPill: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   pastCard: {
     borderRadius: 10,
@@ -276,16 +330,9 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 6,
   },
-  pastCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  severityPill: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
+  pastCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   pastCardTitle: { marginTop: 2 },
   pastCardBody: { lineHeight: 18 },
-  pastCardSnoozeLabel: { fontSize: 11, fontStyle: 'italic', marginTop: 2 },
   disclaimer: {
     marginTop: 8,
     lineHeight: 18,

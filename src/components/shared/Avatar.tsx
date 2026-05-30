@@ -5,11 +5,10 @@ interface AvatarProps {
   initials: string;
   colour: string;
   size?: number;
-  emoji?: string;
 }
 
-export default function Avatar({ initials, colour, size = 36, emoji }: AvatarProps) {
-  const fontSize = emoji ? Math.round(size * 0.55) : Math.round(size * 0.38);
+export default function Avatar({ initials, colour, size = 36 }: AvatarProps) {
+  const fontSize = Math.round(size * 0.38);
   return (
     <View
       style={[
@@ -17,8 +16,8 @@ export default function Avatar({ initials, colour, size = 36, emoji }: AvatarPro
         { backgroundColor: colour, width: size, height: size, borderRadius: size / 2 },
       ]}
     >
-      <AppText style={{ fontSize, lineHeight: size + (emoji ? 2 : 0), fontWeight: emoji ? '400' : '600', color: '#fff' }}>
-        {emoji ?? initials.slice(0, 2).toUpperCase()}
+      <AppText style={{ fontSize, lineHeight: size, fontWeight: '600', color: '#fff' }}>
+        {initials.slice(0, 2).toUpperCase()}
       </AppText>
     </View>
   );

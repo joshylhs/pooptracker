@@ -61,7 +61,7 @@ export default function FriendRow({ rank, entry, onPress }: FriendRowProps) {
       {entry.avatarConfig ? (
         <CatAvatarCircle config={entry.avatarConfig} size={48} />
       ) : (
-        <Avatar initials={entry.avatarInitials} colour={entry.avatarColour} emoji={entry.avatarEmoji} size={34} />
+        <Avatar initials={entry.avatarInitials} colour={entry.avatarColour} size={48} />
       )}
       <View style={styles.nameCol}>
         <View style={styles.nameRow}>

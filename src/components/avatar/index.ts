@@ -12,6 +12,7 @@ export const DEFAULT_AVATAR_CONFIG: import('./AvatarPicker').AvatarConfig = {
   eyeStyle:     'round',
   eyePrimary:   'dark',
   eyeSecondary: 'white',
+  cheekStyle:   'blush',
   headdress:    'none',
   wallColor:    'none',
 };

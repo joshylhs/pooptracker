@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { RefObject } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -11,6 +12,7 @@ import AppText from './Text';
 interface TextFieldProps extends TextInputProps {
   label?: string;
   error?: string | null;
+  inputRef?: RefObject<TextInput | null>;
 }
 
 export default function TextField({
@@ -19,6 +21,7 @@ export default function TextField({
   style,
   onFocus,
   onBlur,
+  inputRef,
   ...rest
 }: TextFieldProps) {
   const { colours, surface } = useTheme();
@@ -38,6 +41,7 @@ export default function TextField({
         </AppText>
       )}
       <TextInput
+        ref={inputRef}
         placeholderTextColor={surface.textPlaceholder}
         style={[
           styles.input,

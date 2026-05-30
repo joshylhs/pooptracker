@@ -135,7 +135,7 @@ export default function LeaderboardList({
       )}
 
       {loading && entries.length === 0 ? (
-        <ActivityIndicator style={styles.spinner} />
+        <ActivityIndicator style={styles.spinner} color={surface.textPrimary} />
       ) : entries.length === 0 ? (
         <AppText variant="body" colour="textSecondary" style={styles.empty}>
           No data yet — add friends to compete!

@@ -29,12 +29,12 @@ interface TileConfig {
 }
 
 const TILES: TileConfig[] = [
-  { key: 'blood',      label: 'blood',      icon: 'water-outline',          type: 'boolean' },
+  { key: 'blood',      label: 'blood',      icon: 'water',          type: 'boolean' },
   { key: 'pain',       label: 'pain',       icon: 'heart-pulse',            type: 'scale'   },
   { key: 'straining',  label: 'straining',  icon: 'arrow-collapse-down',    type: 'scale'   },
   { key: 'bloating',   label: 'bloating',   icon: 'circle-expand',          type: 'boolean' },
-  { key: 'incomplete', label: 'incomplete', icon: 'alert-circle-outline',   type: 'boolean' },
-  { key: 'assisted',   label: 'assisted',   icon: 'hand-front-left-outline', type: 'boolean' },
+  { key: 'incomplete', label: 'incomplete', icon: 'alert-circle',   type: 'boolean' },
+  { key: 'assisted',   label: 'assisted',   icon: 'hand-front-left', type: 'boolean' },
 ];
 
 // ─── State cycling ────────────────────────────────────────────────────────────

@@ -29,7 +29,7 @@ export const BRISTOL_TYPES: readonly BristolType[] = [
     label: 'Lumpy sausage',
     description: 'Still sausage-shaped but lumpy',
     category: 'constipated',
-    colour: '#854F0B',
+    colour: '#A06315',
   },
   {
     type: 3,

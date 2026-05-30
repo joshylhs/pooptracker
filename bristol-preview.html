@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bristol Visual Preview v4</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #2a2825; font-family: -apple-system, sans-serif; color: #e0d8cf; padding: 32px; }
+  h1 { font-size: 13px; letter-spacing: 1px; color: #7A6F60; text-transform: uppercase; margin-bottom: 24px; }
+  .chart { display: flex; flex-direction: column; gap: 8px; background: #3c3a38; border: 1px solid #4a4845; border-radius: 14px; padding: 16px; max-width: 360px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .type-num { width: 14px; font-size: 11px; font-weight: 700; text-align: center; flex-shrink: 0; }
+  .visual { width: 56px; height: 28px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .bar-track { flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .bar { height: 100%; border-radius: 4px; }
+  .pct { width: 28px; font-size: 11px; text-align: right; flex-shrink: 0; color: rgba(255,255,255,0.5); }
+  .footnote { font-size: 10px; color: #5a5350; margin-top: 6px; }
+</style>
+</head>
+<body>
+<h1>Bristol type visuals — v4</h1>
+
+<div class="chart">
+
+  <!-- TYPE 1 -->
+  <div class="row">
+    <span class="type-num" style="color:#854F0B">1</span>
+    <div class="visual">
+      <svg width="56" height="28" viewBox="0 0 56 28">
+        <defs>
+          <radialGradient id="g1" cx="38%" cy="32%" r="65%">
+            <stop offset="0%" stop-color="#c47a2a"/>
+            <stop offset="100%" stop-color="#5c3207"/>
+          </radialGradient>
+          <filter id="tex1">
+            <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" result="noise"/>
+            <feColorMatrix type="saturate" values="0" in="noise" result="grey"/>
+            <feBlend in="SourceGraphic" in2="grey" mode="multiply" result="blend"/>
+            <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+          </filter>
+        </defs>
+        <ellipse cx="7"  cy="26.5" rx="4.5" ry="1.1" fill="rgba(0,0,0,0.3)"/>
+        <ellipse cx="19" cy="26.5" rx="5"   ry="1.2" fill="rgba(0,0,0,0.3)"/>
+        <ellipse cx="31" cy="26.5" rx="4.2" ry="1.1" fill="rgba(0,0,0,0.3)"/>
+        <ellipse cx="42" cy="23"   rx="3.8" ry="1"   fill="rgba(0,0,0,0.25)"/>
+        <ellipse cx="51" cy="26"   rx="3.2" ry="0.9" fill="rgba(0,0,0,0.25)"/>
+        <circle cx="7"  cy="21"  r="5"   fill="url(#g1)" filter="url(#tex1)"/>
+        <circle cx="19" cy="20"  r="5.5" fill="url(#g1)" filter="url(#tex1)"/>
+        <circle cx="31" cy="21"  r="4.8" fill="url(#g1)" filter="url(#tex1)"/>
+        <circle cx="42" cy="17"  r="4"   fill="url(#g1)" filter="url(#tex1)"/>
+        <circle cx="51" cy="21"  r="3.5" fill="url(#g1)" filter="url(#tex1)"/>
+        <!-- pore dots -->
+        <circle cx="6"   cy="21.5" r="0.7" fill="rgba(0,0,0,0.35)"/>
+        <circle cx="8.5" cy="19.5" r="0.5" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="7.5" cy="23"   r="0.5" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="18"  cy="20.5" r="0.7" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="21"  cy="18.5" r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <circle cx="20"  cy="22"   r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <circle cx="30"  cy="21.5" r="0.6" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="32"  cy="19.5" r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <circle cx="41"  cy="17.5" r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <circle cx="43"  cy="16"   r="0.4" fill="rgba(0,0,0,0.25)"/>
+        <circle cx="50"  cy="21.5" r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <!-- specular -->
+        <circle cx="5.2"  cy="19.2" r="1.6" fill="rgba(255,255,255,0.22)"/>
+        <circle cx="17.2" cy="18.2" r="1.8" fill="rgba(255,255,255,0.22)"/>
+        <circle cx="29.5" cy="19.5" r="1.5" fill="rgba(255,255,255,0.2)"/>
+        <circle cx="40.5" cy="15.5" r="1.3" fill="rgba(255,255,255,0.18)"/>
+        <circle cx="49.5" cy="19.5" r="1.2" fill="rgba(255,255,255,0.18)"/>
+      </svg>
+    </div>
+    <div class="bar-track"><div class="bar" style="width:18%;background:#854F0B"></div></div>
+    <span class="pct">18%</span>
+  </div>
+
+  <!-- TYPE 2 -->
+  <div class="row">
+    <span class="type-num" style="color:#854F0B">2</span>
+    <div class="visual">
+      <svg width="56" height="28" viewBox="0 0 56 28">
+        <defs>
+          <radialGradient id="g2f" cx="38%" cy="30%" r="65%">
+            <stop offset="0%" stop-color="#b86e1e"/>
+            <stop offset="100%" stop-color="#5c3207"/>
+          </radialGradient>
+          <radialGradient id="g2b" cx="38%" cy="30%" r="65%">
+            <stop offset="0%" stop-color="#9a5a14"/>
+            <stop offset="100%" stop-color="#4a2805"/>
+          </radialGradient>
+          <filter id="tex2">
+            <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="4" result="noise"/>
+            <feBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend"/>
+            <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+          </filter>
+        </defs>
+        <ellipse cx="28" cy="27.5" rx="24" ry="1.3" fill="rgba(0,0,0,0.28)"/>
+        <!-- back row -->
+        <circle cx="11" cy="17" r="5.8" fill="url(#g2b)" filter="url(#tex2)"/>
+        <circle cx="22" cy="15" r="6.2" fill="url(#g2b)" filter="url(#tex2)"/>
+        <circle cx="33" cy="15" r="6.2" fill="url(#g2b)" filter="url(#tex2)"/>
+        <circle cx="44" cy="17" r="5.8" fill="url(#g2b)" filter="url(#tex2)"/>
+        <!-- front row -->
+        <circle cx="6"  cy="21" r="5.2" fill="url(#g2f)" filter="url(#tex2)"/>
+        <circle cx="16" cy="19.5" r="6.2" fill="url(#g2f)" filter="url(#tex2)"/>
+        <circle cx="28" cy="19"   r="6.8" fill="url(#g2f)" filter="url(#tex2)"/>
+        <circle cx="40" cy="19.5" r="6.2" fill="url(#g2f)" filter="url(#tex2)"/>
+        <circle cx="50" cy="21"   r="5.2" fill="url(#g2f)" filter="url(#tex2)"/>
+        <!-- pore dots -->
+        <circle cx="5"   cy="22"   r="0.6" fill="rgba(0,0,0,0.32)"/>
+        <circle cx="7"   cy="20"   r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <circle cx="15"  cy="20.5" r="0.6" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="17.5"cy="18.5" r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <circle cx="27"  cy="20"   r="0.7" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="29.5"cy="17.5" r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <circle cx="30"  cy="21"   r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <circle cx="39"  cy="20.5" r="0.6" fill="rgba(0,0,0,0.28)"/>
+        <circle cx="41"  cy="18.5" r="0.5" fill="rgba(0,0,0,0.25)"/>
+        <circle cx="49"  cy="21.5" r="0.5" fill="rgba(0,0,0,0.28)"/>
+        <!-- specular highlights -->
+        <circle cx="4.5"  cy="19.5" r="1.7" fill="rgba(255,255,255,0.18)"/>
+        <circle cx="14.5" cy="18"   r="2"   fill="rgba(255,255,255,0.18)"/>
+        <circle cx="26.5" cy="17"   r="2.2" fill="rgba(255,255,255,0.18)"/>
+        <circle cx="38.5" cy="18"   r="2"   fill="rgba(255,255,255,0.16)"/>
+        <circle cx="48.5" cy="19.5" r="1.7" fill="rgba(255,255,255,0.16)"/>
+      </svg>
+    </div>
+    <div class="bar-track"><div class="bar" style="width:10%;background:#854F0B"></div></div>
+    <span class="pct">10%</span>
+  </div>
+
+  <!-- TYPE 3: symmetric sausage top and bottom, cracked surface -->
+  <div class="row">
+    <span class="type-num" style="color:#639922">3</span>
+    <div class="visual">
+      <svg width="56" height="28" viewBox="0 0 56 28">
+        <defs>
+          <radialGradient id="g3" cx="50%" cy="30%" r="68%">
+            <stop offset="0%" stop-color="#85cc30"/>
+            <stop offset="100%" stop-color="#3a5a0a"/>
+          </radialGradient>
+          <filter id="tex3">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="4" result="noise"/>
+            <feBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend"/>
+            <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+          </filter>
+        </defs>
+        <ellipse cx="28" cy="27" rx="21" ry="1.3" fill="rgba(0,0,0,0.22)"/>
+        <!-- symmetric sausage — scalloped equally top and bottom -->
+        <path d="
+          M5,14
+          Q8,8  14,8
+          Q17,5  20,8
+          Q23,5  26,8
+          Q29,5  32,8
+          Q35,5  38,8
+          Q41,5  44,8
+          Q49,8  51,14
+          Q49,20 44,20
+          Q41,23 38,20
+          Q35,23 32,20
+          Q29,23 26,20
+          Q23,23 20,20
+          Q17,23 14,20
+          Q8,20 5,14 Z"
+          fill="url(#g3)" filter="url(#tex3)"/>
+        <!-- vertical cracks — 3 main -->
+        <polyline points="17,8.5 15.5,13.5 17.5,15 16,19.5" fill="none" stroke="#2e4a07" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+        <polyline points="27,8  25.5,13 27.5,15 26,20"       fill="none" stroke="#2e4a07" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+        <polyline points="38,8  36.5,13 38.5,15 37,19.5"     fill="none" stroke="#2e4a07" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+        <!-- surface texture dots -->
+        <circle cx="11" cy="12" r="0.6" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="22" cy="10" r="0.6" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="33" cy="10" r="0.6" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="44" cy="11" r="0.6" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="13" cy="17" r="0.5" fill="rgba(0,0,0,0.25)"/>
+        <circle cx="23" cy="18" r="0.5" fill="rgba(0,0,0,0.25)"/>
+        <circle cx="34" cy="18" r="0.5" fill="rgba(0,0,0,0.25)"/>
+        <circle cx="44" cy="17" r="0.5" fill="rgba(0,0,0,0.25)"/>
+        <!-- highlight -->
+        <path d="M11,10 Q28,8 45,10" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="bar-track"><div class="bar" style="width:22%;background:#639922"></div></div>
+    <span class="pct">22%</span>
+  </div>
+
+  <!-- TYPE 4: smooth torpedo -->
+  <div class="row">
+    <span class="type-num" style="color:#3B6D11">4</span>
+    <div class="visual">
+      <svg width="56" height="28" viewBox="0 0 56 28">
+        <defs>
+          <radialGradient id="g4" cx="50%" cy="28%" r="65%">
+            <stop offset="0%" stop-color="#56a81e"/>
+            <stop offset="100%" stop-color="#1e430a"/>
+          </radialGradient>
+          <radialGradient id="g4s" cx="50%" cy="20%" r="55%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.2)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </radialGradient>
+          <filter id="tex4">
+            <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="4" result="noise"/>
+            <feBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend"/>
+            <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+          </filter>
+        </defs>
+        <ellipse cx="28" cy="25" rx="16" ry="1" fill="rgba(0,0,0,0.2)"/>
+        <!-- slimmer torpedo — less height, more tapered ends -->
+        <path d="M7,17 Q10,12 16,10 Q22,9 28,9 Q34,9 40,10 Q46,12 49,17 Q46,22 40,23 Q34,24 28,24 Q22,24 16,23 Q10,22 7,17 Z" fill="url(#g4)" filter="url(#tex4)"/>
+        <path d="M7,17 Q10,12 16,10 Q22,9 28,9 Q34,9 40,10 Q46,12 49,17 Q46,22 40,23 Q34,24 28,24 Q22,24 16,23 Q10,22 7,17 Z" fill="url(#g4s)"/>
+        <!-- subtle texture dots -->
+        <circle cx="16" cy="13" r="0.6" fill="rgba(0,0,0,0.22)"/>
+        <circle cx="23" cy="10.5" r="0.6" fill="rgba(0,0,0,0.2)"/>
+        <circle cx="33" cy="10.5" r="0.6" fill="rgba(0,0,0,0.2)"/>
+        <circle cx="40" cy="13" r="0.6" fill="rgba(0,0,0,0.2)"/>
+        <circle cx="20" cy="22" r="0.5" fill="rgba(0,0,0,0.18)"/>
+        <circle cx="28" cy="23" r="0.5" fill="rgba(0,0,0,0.18)"/>
+        <circle cx="36" cy="22" r="0.5" fill="rgba(0,0,0,0.18)"/>
+        <!-- gloss stripe -->
+        <path d="M16,11.5 Q28,9.5 40,11.5" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="bar-track"><div class="bar" style="width:45%;background:#3B6D11"></div></div>
+    <span class="pct">45%</span>
+  </div>
+
+  <!-- TYPE 5: flat irregular scattered blobs -->
+  <div class="row">
+    <span class="type-num" style="color:#BA7517">5</span>
+    <div class="visual">
+      <svg width="56" height="28" viewBox="0 0 56 28">
+        <defs>
+          <radialGradient id="g5" cx="38%" cy="32%" r="64%">
+            <stop offset="0%" stop-color="#d9901e"/>
+            <stop offset="100%" stop-color="#7a4a09"/>
+          </radialGradient>
+          <filter id="tex5">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
+            <feBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend"/>
+            <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+          </filter>
+        </defs>
+        <!-- shadows -->
+        <ellipse cx="6"  cy="28"   rx="5"   ry="0.7" fill="rgba(0,0,0,0.22)"/>
+        <ellipse cx="19" cy="27"   rx="6"   ry="0.7" fill="rgba(0,0,0,0.2)"/>
+        <ellipse cx="33" cy="28"   rx="5"   ry="0.7" fill="rgba(0,0,0,0.2)"/>
+        <ellipse cx="45" cy="24.5" rx="4"   ry="0.6" fill="rgba(0,0,0,0.18)"/>
+        <ellipse cx="53" cy="27"   rx="2.5" ry="0.5" fill="rgba(0,0,0,0.15)"/>
+        <!-- scattered flat blobs — staggered vertically, not in a line -->
+        <!-- blob A: left, lower -->
+        <path d="M1,26 Q0,24.5 1,23 Q3,21.5 5,22 Q7,21 9,22.5 Q10,21.5 11,23.5 Q11,26 8,27.5 Q5,28 2,27 Z" fill="url(#g5)" filter="url(#tex5)"/>
+        <!-- blob B: centre-left, higher up -->
+        <path d="M13,24.5 Q12,22.5 14,21 Q17,19.5 20,20.5 Q22,19.5 24,21.5 Q25,23.5 23,25.5 Q20,27 17,26.5 Q13,26 13,24.5 Z" fill="url(#g5)" filter="url(#tex5)"/>
+        <!-- blob C: centre-right, lower -->
+        <path d="M27,26.5 Q26,24.5 27,23 Q29,21.5 32,22 Q35,21.5 36,23.5 Q37,25.5 35,27 Q32,28 29,27.5 Z" fill="url(#g5)" filter="url(#tex5)"/>
+        <!-- blob D: upper right — noticeably higher -->
+        <path d="M39,22 Q38,20 40,19 Q42,18 44,19 Q46,18.5 47,20.5 Q47,22.5 45,23.5 Q42,24 40,23 Z" fill="url(#g5)" filter="url(#tex5)"/>
+        <!-- blob E: far right, low -->
+        <path d="M49,26 Q48,24.5 49.5,23.5 Q51.5,23 53,24 Q54,23.5 54,25 Q54,26.5 52,27 Q50,27.5 49,26 Z" fill="url(#g5)" filter="url(#tex5)"/>
+        <!-- pore dots -->
+        <circle cx="4"  cy="24"   r="0.55" fill="rgba(0,0,0,0.32)"/>
+        <circle cx="7"  cy="26"   r="0.5"  fill="rgba(0,0,0,0.28)"/>
+        <circle cx="16" cy="22"   r="0.55" fill="rgba(0,0,0,0.3)"/>
+        <circle cx="21" cy="24.5" r="0.5"  fill="rgba(0,0,0,0.28)"/>
+        <circle cx="30" cy="23.5" r="0.5"  fill="rgba(0,0,0,0.28)"/>
+        <circle cx="34" cy="25.5" r="0.5"  fill="rgba(0,0,0,0.25)"/>
+        <circle cx="42" cy="20.5" r="0.5"  fill="rgba(0,0,0,0.25)"/>
+        <circle cx="51" cy="25"   r="0.45" fill="rgba(0,0,0,0.22)"/>
+        <!-- specular -->
+        <circle cx="2"  cy="23"   r="1"   fill="rgba(255,255,255,0.18)"/>
+        <circle cx="15" cy="21"   r="1.2" fill="rgba(255,255,255,0.18)"/>
+        <circle cx="28" cy="23"   r="1"   fill="rgba(255,255,255,0.16)"/>
+        <circle cx="40" cy="19.5" r="0.9" fill="rgba(255,255,255,0.16)"/>
+        <circle cx="50" cy="24"   r="0.8" fill="rgba(255,255,255,0.14)"/>
+      </svg>
+    </div>
+    <div class="bar-track"><div class="bar" style="width:10%;background:#BA7517"></div></div>
+    <span class="pct">10%</span>
+  </div>
+
+  <!-- TYPE 6: very flat mushy spread -->
+  <div class="row">
+    <span class="type-num" style="color:#D85A30">6</span>
+    <div class="visual">
+      <svg width="56" height="28" viewBox="0 0 56 28">
+        <defs>
+          <radialGradient id="g6" cx="50%" cy="50%" r="62%">
+            <stop offset="0%" stop-color="#e06038"/>
+            <stop offset="100%" stop-color="#7a2a0f"/>
+          </radialGradient>
+          <filter id="tex6">
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" result="noise"/>
+            <feBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend"/>
+            <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+          </filter>
+        </defs>
+        <!-- main lobe — taller, left of centre -->
+        <path d="M4,27
+          Q3,25 4,22.5
+          Q5,20.5 8,19.5
+          Q11,18.5 14,19.5
+          Q17,18.5 19,20.5
+          Q21,22 20,25
+          Q19,27.5 14,28
+          Q8,28 4,27 Z"
+          fill="url(#g6)" filter="url(#tex6)"/>
+        <!-- centre-right lobe — slightly lower, wider -->
+        <path d="M17,27.5
+          Q16,25.5 18,23.5
+          Q20,22 24,21.5
+          Q28,21 32,22
+          Q35,21.5 37,23.5
+          Q38,25.5 36,27.5
+          Q32,29 26,28.5
+          Q20,28.5 17,27.5 Z"
+          fill="url(#g6)" filter="url(#tex6)" opacity="0.9"/>
+        <!-- right tendril — mid-height, spreading rightward -->
+        <path d="M34,26
+          Q33,24 35,22.5
+          Q38,21 42,21.5
+          Q46,22 49,23.5
+          Q51,25 50,27
+          Q47,28 42,27.5
+          Q37,27.5 34,26 Z"
+          fill="url(#g6)" filter="url(#tex6)" opacity="0.75"/>
+        <!-- elevated chunk top-left of main lobe — gives vertical scatter -->
+        <path d="M6,19.5 Q5,18 7,17 Q10,16 13,17.5 Q15,18.5 13,20.5 Q10,21.5 7,20.5 Z"
+          fill="url(#g6)" filter="url(#tex6)" opacity="0.85"/>
+        <!-- elevated chunk top-right — breaks up the silhouette -->
+        <path d="M28,21.5 Q27,19.5 30,18.5 Q33,18 35,19.5 Q36,21 34,22 Q31,22.5 28,21.5 Z"
+          fill="url(#g6)" filter="url(#tex6)" opacity="0.8"/>
+        <!-- connecting bridge, mushy merge between main lobes -->
+        <path d="M19,25 Q20,23.5 22,23.5 Q24,23.5 25,25 Q24,26.5 22,26.5 Q20,26.5 19,25 Z"
+          fill="url(#g6)" opacity="0.55"/>
+        <!-- fissure lines -->
+        <path d="M9,21  Q10,23.5 9,27"   fill="none" stroke="rgba(0,0,0,0.2)"  stroke-width="0.8" stroke-linecap="round"/>
+        <path d="M16,20 Q17,23 16,27.5"  fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="0.8" stroke-linecap="round"/>
+        <path d="M27,22 Q28,25 27,28.5"  fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="0.8" stroke-linecap="round"/>
+        <path d="M40,22.5 Q41,24.5 40,27" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="0.8" stroke-linecap="round"/>
+        <!-- texture dots -->
+        <circle cx="8"  cy="22"   r="0.5"  fill="rgba(0,0,0,0.26)"/>
+        <circle cx="13" cy="20"   r="0.5"  fill="rgba(0,0,0,0.24)"/>
+        <circle cx="24" cy="23"   r="0.5"  fill="rgba(0,0,0,0.24)"/>
+        <circle cx="32" cy="22.5" r="0.5"  fill="rgba(0,0,0,0.22)"/>
+        <circle cx="43" cy="23.5" r="0.5"  fill="rgba(0,0,0,0.2)"/>
+        <circle cx="11" cy="26"   r="0.45" fill="rgba(0,0,0,0.2)"/>
+        <circle cx="29" cy="27"   r="0.45" fill="rgba(0,0,0,0.18)"/>
+        <circle cx="45" cy="26"   r="0.45" fill="rgba(0,0,0,0.16)"/>
+        <!-- edge flecks -->
+        <path d="M2,22 Q1,20.5 3,20 Q5,20 5.5,21.5 Q5,23 3,22.5 Z"      fill="#c04e25" opacity="0.6" filter="url(#tex6)"/>
+        <path d="M50,21.5 Q49,20 51.5,19.5 Q54,20 54,21.5 Q53,23 50,21.5 Z" fill="#c04e25" opacity="0.5" filter="url(#tex6)"/>
+        <circle cx="47" cy="27.5" r="1.3" fill="#c04e25" opacity="0.42"/>
+      </svg>
+    </div>
+    <div class="bar-track"><div class="bar" style="width:8%;background:#D85A30"></div></div>
+    <span class="pct">8%</span>
+  </div>
+
+  <!-- TYPE 7: realistic puddle — thin, spreading, irregular edge, no solid form -->
+  <div class="row">
+    <span class="type-num" style="color:#993C1D">7</span>
+    <div class="visual">
+      <svg width="56" height="28" viewBox="0 0 56 28">
+        <defs>
+          <radialGradient id="g7" cx="45%" cy="55%" r="60%">
+            <stop offset="0%" stop-color="#b84820"/>
+            <stop offset="100%" stop-color="#3d1206"/>
+          </radialGradient>
+          <filter id="tex7">
+            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" result="noise"/>
+            <feBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend"/>
+            <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+          </filter>
+        </defs>
+        <!-- thin irregular puddle — very low, spreading edge -->
+        <path d="M3,25
+          Q1,23  3,22
+          Q5,20  8,21
+          Q10,19 13,20
+          Q15,18 18,20
+          Q20,18 23,20
+          Q25,18 28,20
+          Q30,18 33,20
+          Q35,19 38,20
+          Q40,19 43,21
+          Q46,20 49,21
+          Q52,22 54,24
+          Q53,26 49,26
+          Q43,27 36,27
+          Q28,28 21,27
+          Q14,27  8,26
+          Q4,26   3,25 Z"
+          fill="url(#g7)" filter="url(#tex7)" opacity="0.95"/>
+        <!-- ripple rings — very subtle, low -->
+        <ellipse cx="27" cy="23.5" rx="17" ry="2"   fill="none" stroke="#993C1D" stroke-width="0.9" opacity="0.45"/>
+        <ellipse cx="27" cy="21.8" rx="10" ry="1.3" fill="none" stroke="#993C1D" stroke-width="0.7" opacity="0.28"/>
+        <ellipse cx="27" cy="20.5" rx="5"  ry="0.8" fill="none" stroke="#993C1D" stroke-width="0.5" opacity="0.16"/>
+        <!-- surface sheen patch -->
+        <ellipse cx="19" cy="23.5" rx="6" ry="1.2" fill="rgba(255,255,255,0.09)" transform="rotate(-6,19,23.5)"/>
+        <!-- satellite splashes — irregular droplets at edges -->
+        <path d="M5,21  Q4,19.5 5.5,19 Q7,18.5 7.5,20 Q7,21.5 5,21 Z"    fill="#993C1D" opacity="0.6" filter="url(#tex7)"/>
+        <path d="M49,22 Q48,20.5 50,20 Q52,19.5 52,21 Q51.5,22.5 49,22 Z" fill="#993C1D" opacity="0.5" filter="url(#tex7)"/>
+        <path d="M27,19 Q26,18 27.5,17.5 Q29,17 29,18.5 Q28.5,19.5 27,19 Z" fill="#993C1D" opacity="0.45"/>
+        <circle cx="15" cy="20" r="1"   fill="#993C1D" opacity="0.4"/>
+        <circle cx="40" cy="21" r="0.9" fill="#993C1D" opacity="0.38"/>
+        <circle cx="9"  cy="24" r="0.7" fill="#993C1D" opacity="0.35"/>
+        <circle cx="47" cy="25" r="0.6" fill="#993C1D" opacity="0.3"/>
+      </svg>
+    </div>
+    <div class="bar-track"><div class="bar" style="width:3%;background:#993C1D"></div></div>
+    <span class="pct" style="color:#5a5350">—</span>
+  </div>
+
+  <p class="footnote">Last 90 days · 20 recorded types</p>
+</div>
+
+</body>
+</html>

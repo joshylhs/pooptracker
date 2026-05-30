@@ -4,7 +4,7 @@ import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from '../shared/Text';
 import BristolDistributionChart from './BristolDistributionChart';
-import WeeklyFrequencyChart from './WeeklyFrequencyChart';
+import WeeklyFrequencyChart, { deriveWeeklyInsight } from './WeeklyFrequencyChart';
 import { LogEntry } from '../../database/logRepository';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
 
 export default function InsightsSection({ logs }: Props) {
   const { surface } = useTheme();
+  const weeklyInsight = deriveWeeklyInsight(logs);
   const [expanded, setExpanded] = useState(true);
   const rotateAnim = useRef(new Animated.Value(1)).current;
 
@@ -29,12 +30,20 @@ export default function InsightsSection({ logs }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor: surface.surface, borderColor: surface.border }]}>
-      <Pressable onPress={toggle} style={styles.header}>
-        <AppText variant="sectionHeading">Insights</AppText>
-        <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-          <MCI name="chevron-down" size={20} color={surface.textSecondary} />
-        </Animated.View>
-      </Pressable>
+      <View style={styles.header}>
+        <Pressable onPress={toggle} style={styles.headerPressable}>
+          <AppText variant="sectionHeading">Insights</AppText>
+        </Pressable>
+        <Pressable onPress={toggle} hitSlop={8}>
+          {({ pressed }) => (
+            <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
+              <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
+                <MCI name="chevron-down" size={20} color={surface.textSecondary} />
+              </Animated.View>
+            </View>
+          )}
+        </Pressable>
+      </View>
 
       {expanded && (
         <View style={styles.body}>
@@ -49,8 +58,9 @@ export default function InsightsSection({ logs }: Props) {
 
           <View style={styles.chartBlock}>
             <AppText variant="caption" colour="textSecondary" style={styles.chartTitle}>
-              FREQUENCY · LAST 8 WEEKS
+              WEEKLY FREQUENCY · LAST 6 WEEKS
             </AppText>
+            {weeklyInsight && <AppText style={styles.insight}>{weeklyInsight}</AppText>}
             <WeeklyFrequencyChart logs={logs} />
           </View>
         </View>
@@ -72,8 +82,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
+  headerPressable: { flex: 1 },
+  chevronCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chevronCirclePressed: { opacity: 0.4 },
   body: { paddingBottom: 16 },
-  divider: { height: StyleSheet.hairlineWidth, marginHorizontal: 16, marginVertical: 12 },
+  divider: { height: 1, marginHorizontal: 16, marginVertical: 14 },
   chartBlock: { paddingHorizontal: 16, gap: 10 },
   chartTitle: { letterSpacing: 0.5 },
+  insight: { fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 17, fontStyle: 'italic' },
 });

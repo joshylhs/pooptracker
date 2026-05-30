@@ -136,9 +136,11 @@ export default function DayLogCard({ date, logs, onEditLog }: DayLogCardProps) {
               </View>
 
 <Pressable onPress={() => onEditLog(log)} hitSlop={8}>
-                <AppText style={[styles.editBtn, { color: colours.primary400 }]}>
-                  edit
-                </AppText>
+                {({ pressed }) => (
+                  <AppText style={[styles.editBtn, { color: colours.primary400 }, pressed && styles.editBtnPressed]}>
+                    edit
+                  </AppText>
+                )}
               </Pressable>
             </View>
           );
@@ -183,4 +185,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textDecorationLine: 'underline',
   },
+  editBtnPressed: { opacity: 0.4 },
 });

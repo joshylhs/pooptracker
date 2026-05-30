@@ -4,7 +4,6 @@ import {
   Symptoms,
   insertLog as repoInsertLog,
   listLogsForUser as repoListLogsForUser,
-  listLogsForDate as repoListLogsForDate,
   deleteLog as repoDeleteLog,
   updateLog as repoUpdateLog,
 } from '../database/logRepository';
@@ -58,10 +57,6 @@ export async function saveDetailedLog(details: LogDetails): Promise<LogEntry> {
 
 export async function listAllLogs(): Promise<LogEntry[]> {
   return repoListLogsForUser(requireUserId());
-}
-
-export async function listLogsForDate(date: string): Promise<LogEntry[]> {
-  return repoListLogsForDate(requireUserId(), date);
 }
 
 export async function editLog(logId: string, patch: LogDetails): Promise<void> {

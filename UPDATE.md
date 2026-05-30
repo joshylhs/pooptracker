@@ -30,19 +30,20 @@ Auth state drives routing: unauthenticated → AuthStack, no onboarding → Onbo
 ### State (Zustand)
 - `useAuthStore` — Firebase Auth user, onboarding flag
 - `useLogStore` — all logs for the current user; any mutation calls `invalidateLeaderboard()` on the friends store so the self-row count stays fresh
-- `useFriendsStore` — friends list, pending requests, leaderboard; 5-minute TTL cache; `force: true` bypasses cache (used on pull-to-refresh and after write actions)
-- `useSignalsStore` — dismissedSignals cache; loaded once per session from Firestore; `dismiss()` writes to Firestore and updates in-place immediately so UI reacts without a round-trip; `clear()` called on sign-out
+- `useFriendsStore` — friends list, pending requests, leaderboard, `trustedFriendIds`; 5-minute TTL cache; `force: true` bypasses cache; `loadTrustedFriends()` fetches own trusted list; `toggleTrust(friendUid)` adds/removes and writes to Firestore
+- `useSignalsStore` — acknowledged signals cache; loaded once per session from Firestore; `acknowledge()` writes to Firestore and updates in-place; `onLogSaved(uid, hasBlood)` tracks blood clean log count and auto-resolves at 3; `clear()` called on sign-out
 
 ### Hooks
-- `useHealthFindings()` — derives active Rome IV findings by combining `useLogStore.logs` + `useSignalsStore.dismissals`. Returns `{ active, all, dismissals, status }`. Used in HomeScreen (banner), AppTabs (badge), and HealthSignalsScreen (findings list). Single source of truth for health state.
+- `useHealthFindings()` — derives LATEST/CURRENT/PAST signal state from `useLogStore.logs` + `useSignalsStore.acknowledged`. Returns `{ latest, current, past, all, status, latestCount }`. Status driven by LATEST only (red → amber → green → grey). Single source of truth for health state.
 - `useTheme()` — single dark theme, not system-adaptive
 
 ### Data Layer
 - `src/database/logRepository.ts` — all Firestore log read/write; batched writes keep denormalised counters (`dailySummaries`, `monthlyTotals`, `yearlyTotals`) in sync
 - `src/services/friends.ts` — friend CRUD, leaderboard fetch (reads the counter docs, not raw logs)
 - `src/services/pokes.ts` — FCM token registration + Cloud Function call for sending pokes
-- `src/services/users.ts` — user profile reads/writes; includes `avatarEmoji` field
-- `src/services/signals.ts` — read/write `dismissedSignals` subcollection; 7-day snooze duration
+- `src/services/users.ts` — user profile reads/writes; includes `avatarConfig` field (pixel avatar)
+- `src/services/signals.ts` — read/write `dismissedSignals` subcollection (path unchanged); `AcknowledgedSignal` with `state: 'latest' | 'current' | 'resolved'`; blood auto-resolves after 3 consecutive non-blood logs via `incrementBloodCleanCount`
+- `src/services/users.ts` — includes `trustedFriendIds: string[]` on `UserProfile`; `checkTrusted(subjectUid, viewerUid)` checks if viewer is in subject's trusted list; `setTrustedFriend(uid, friendUid, trusted)` adds/removes from own list
 
 ### Firestore schema (relevant paths)
 ```
@@ -50,8 +51,8 @@ users/{uid}/logs/{logId}
 users/{uid}/dailySummaries/{YYYY-MM-DD}        { count }
 users/{uid}/monthlyTotals/{YYYY-MM}            { count }
 users/{uid}/yearlyTotals/{YYYY}                { count }
-users/{uid}/dismissedSignals/{findingId}       { findingId, plainTitle, severity, dismissedAt, snoozedUntil }
-users/{uid}                                    { username, avatarInitials, avatarColour, avatarEmoji?, allowPokes, fcmToken }
+users/{uid}/dismissedSignals/{findingId}       { findingId, plainTitle, severity, acknowledgedAt, state, cleanLogCount? }
+users/{uid}                                    { username, avatarInitials, avatarColour, avatarConfig?, allowPokes, trustedFriendIds[], fcmToken }
 friendships/{uid}/friends/{friendUid}          { status, initiatedBy, createdAt, acceptedAt }
 usernameIndex/{hash}                           { userId }   ← for username search
 pokes/{senderId_recipientId}                   { sentAt }   ← rate limit record
@@ -77,11 +78,15 @@ Colours are in `src/constants/colours.ts`. Typography in `src/constants/typograp
 
 **Poke rate limit is on the Cloud Function** — 5-minute cooldown enforced server-side in `functions/src/index.ts`. The client also hides the button for 30 minutes after a successful poke (local state only, not persisted).
 
-**Rome IV assessment is pure and derived** — `assessRomeIV(logs)` in `src/utils/romeIV.ts` takes the full log array and returns findings. It is never stored — everything is recomputed from logs + dismissals via `useHealthFindings()`. Snooze (dismiss) is the only thing persisted; findings themselves are always live-derived.
+**Rome IV assessment is pure and derived** — `assessRomeIV(logs)` in `src/utils/romeIV.ts` takes the full log array and returns `{ id, severity }` pairs only — no copy. Display copy lives exclusively in `src/utils/signalCopy.ts` (`getSignalCopy(id)`). Findings are never stored — everything recomputed from logs + acknowledged signals via `useHealthFindings()`.
 
-**Health signal popup fires once per finding ID** — `SignalPopup` stores seen finding IDs in AsyncStorage (`@pooptracker/signals_popup_seen`). A `useRef` guard also prevents re-showing within the same session. All new finding IDs found in one check are marked seen together, so only one popup fires per session regardless of how many new patterns emerge simultaneously.
+**Health signals use LATEST / CURRENT / PAST model** — LATEST = unacknowledged active findings; CURRENT = acknowledged but still active; PAST = resolved. Status stripe on Home driven by LATEST only. Blood moves to CURRENT on acknowledge, auto-resolves after 3 consecutive non-blood logs (tracked via `cleanLogCount` on `AcknowledgedSignal`). Other patterns move to CURRENT on acknowledge and auto-clear to PAST when Rome IV criteria no longer met.
 
-**`signalsStore.dismiss()` updates in-place** — after writing to Firestore it immediately splices the new `DismissedSignal` into the in-memory array. This means the finding disappears from the banner, badge, and Health Signals list instantly without waiting for a Firestore round-trip.
+**Health signal popup has two variants** — warning (new LATEST finding, amber/red accent, "Acknowledge" secondary button) and resolved (green accent, "Got it"). Two separate AsyncStorage keys track seen IDs. `shownThisSession` ref prevents multiple popups per session.
+
+**`signalsStore.acknowledge()` updates in-place** — after writing to Firestore it immediately updates the in-memory `acknowledged` array. UI reacts instantly without a Firestore round-trip.
+
+**Trusted friends are one-directional** — `trustedFriendIds` on your own user doc lists friends you trust with your data. To see a friend's deep stats in Compare, *they* must have *you* in their trusted list (checked via `checkTrusted`). You can grant trust from Profile → FRIENDS section.
 
 ---
 
@@ -156,29 +161,32 @@ cd functions && npm run deploy
 - `src/components/shared/InfoModal.tsx` — exports `InfoModal`, `InfoButton`, `InfoRow`. Used for all in-app info/help modals (Bristol types, symptoms, day streak, Health Signals legend). Replaces the old `Alert.alert` pattern.
 - `src/components/shared/StatCard.tsx` — `icon?` prop renders an MCI icon above the value; always reserves 20px icon slot so cards stay vertically aligned even without an icon.
 - `src/components/shared/Button.tsx` — `icon?` prop renders MCI icon inline with label text.
-- `src/components/shared/Avatar.tsx` — accepts `emoji?` prop; renders emoji character at scaled font size instead of initials when set.
-- `src/components/shared/AvatarPickerModal.tsx` — bottom-sheet grid of 24 preset emoji avatars. Tap to select, "Remove" to revert to initials. Saves `avatarEmoji` to Firestore via `updateUserProfile`.
+- `src/components/shared/Avatar.tsx` — initials-only fallback circle; used when no `avatarConfig` is set.
+- `src/components/shared/AvatarPickerModal.tsx` — wraps the pixel avatar picker in a bottom sheet. Saves `avatarConfig` to Firestore via `updateUserProfile`.
 
 ---
 
 ## Home Screen Features
 
-- **Status banner** — full-width tappable card between title and stat cards. Four states: urgent (red, blood), GP flag (amber, N patterns), all-clear (green), insufficient data (grey). Transparent fill when no actionable findings.
+- **Status bar tab** — tappable card with a coloured left stripe (4px, full height) following the latest signal severity. Replaces the old full-width banner. Taps through to Health Signals.
 - **Tab badge** — coloured dot on the Home tab icon (rendered in `HomeTabIcon` inside `AppTabs.tsx`) when urgent or GP findings are active. Updates reactively via `useHealthFindings()`.
 - **SignalPopup** — fires once per finding ID (AsyncStorage tracking). Shows the most severe new finding in a bottom-sheet modal with "View Health Signals" and "Got it" buttons. One popup per session max.
 - **InsightsSection** — collapsible card below the day log card. Contains:
-  - Bristol type distribution chart (horizontal bars, last 90 days, colour-coded by type)
-  - Weekly frequency chart (8-week vertical bars, current week highlighted)
+  - Bristol type distribution chart (SVG donut, last 90 days). 7 arc segments coloured by type; type numbers rendered on each segment (omitted if sweep < 22°). Centre shows grouped stats: `X% hard` (types 1–2), `X% healthy` (3–5), `X% loose` (6–7). Hold any segment to expand it, dim others, and show type number + percentage + label in the centre. No legend — identification is on the arcs. Built with `react-native-svg`, centre text is a native `View` overlay (not SVG text).
+  - Weekly frequency chart (6-week stacked bar chart): segments per bar — Below (1–2, brown), Ideal (3–4, green), Over (5–7, orange), Untyped (grey). Fixed 120px height, y-axis with auto-stepped gridlines. Current week has a subtle purple tint. Long-press any bar for a floating tooltip (date range + breakdown). Dynamic insight sentence below chart.
 
 ---
 
 ## Health Signals Screen
 
-Accessible via the status banner on Home. Not a tab.
+Accessible via the status bar tab on Home. Not a tab.
 
-- **? button** next to title → `InfoModal` explaining what's monitored + flag legend.
-- **Current findings** — left-bordered cards (3px: red/amber/green). Plain-English copy only — no clinical terminology. Each card has a "Snooze 7d" button that writes to `dismissedSignals` in Firestore and removes the finding from view for 7 days.
-- **Past signals** — all-time history of dismissed findings, sorted newest-first with relative timestamps.
+- **Inline legend** — Urgent / GP flag / Info coloured pills sit below the title, always visible.
+- **? button** next to title → `InfoModal` explaining Rome IV and the 6 monitored criteria. Includes a tappable link to the Rome IV foundation reference.
+- **LATEST section** — new unacknowledged findings. Left-bordered cards with severity pill. Blood cards show a GP recommendation note. Each card has an **Acknowledge** button (moves to CURRENT).
+- **CURRENT section** — acknowledged, still-active findings. Blood cards show `X/3 clean logs recorded` progress. Auto-clears to PAST when criteria no longer met (blood: 3 consecutive clean logs; others: Rome IV no longer triggered).
+- **STATUS section** — shown when no LATEST/CURRENT findings; displays all_clear or insufficient_data info card.
+- **PAST section** — resolved findings as full cards with severity pill, resolved pill, relative date, and body copy.
 - **Disclaimer** at bottom.
 
 ---
@@ -192,7 +200,73 @@ Accessible via the status banner on Home. Not a tab.
 **LeaderboardList** (`src/components/friends/LeaderboardList.tsx`):
 - Sliding tab indicator: absolutely-positioned `Animated.View` springs between tab positions
 - "updated just now / Xm ago / Xh ago" pill — green when < 60s old, purple otherwise
+- `ActivityIndicator` uses `color={surface.textPrimary}` (inline loading spinner, shown before first load)
+- Pull-to-refresh `RefreshControl` in `FriendsScreen.tsx` uses `tintColor={surface.textPrimary}` so the iOS system spinner matches the text colour
 
 **FriendRow** (`src/components/friends/FriendRow.tsx`):
 - Poke button inline with username; scale animation on press
-- Renders `avatarEmoji` if set on the friend's profile
+- Renders `CatAvatarCircle` (pixel avatar) if `avatarConfig` is set; falls back to `Avatar` (initials circle)
+- Both avatar types render at size 48 so all rows have consistent height
+
+**CompareSection** (`src/components/friends/CompareSection.tsx`):
+- Lives above the leaderboard on FriendsScreen
+- `+` pill button opens a friend picker modal; selection persisted to AsyncStorage
+- Horizontal FlatList carousel, paginated; vertical dots on the right indicate position
+- Non-trusted friends: 3 cards (today, weekly avg, streak)
+- Trusted by them (checked via `checkTrusted`): unlocks a 4th card (most common Bristol type this week)
+- Each card (`CompareCard`) shows avatar + name side by side, big value, label, thin vertical divider
+
+**Trusted friends (Profile → FRIENDS section)**:
+- Per-friend toggle rows under "Allow pokes"
+- Writes to `trustedFriendIds[]` on own user doc via `setTrustedFriend`
+- Trust is one-directional: granting trust lets that friend see your deep stats in Compare
+
+---
+
+## App Name
+
+Display name: **Sit On It** (set in `app.json` and `ios/PoopTracker/Info.plist` `CFBundleDisplayName`). Internal Xcode target remains `PoopTracker`.
+
+---
+
+## In Progress — Compare Tab + Trusted Friends
+
+The foundation is built (services, store, ProfileScreen toggle, CompareCard, CompareSection wired into FriendsScreen) and TypeScript is clean. What still needs work / testing:
+
+### Known gaps to address next session
+
+**CompareSection carousel**
+- Card 5 (weekly frequency chart side by side) not yet implemented — agreed it should show two mini stacked bar charts with a thin vertical divider between them, full width, no x-axis labels (rely on visual shape). This is the richest trusted card and replaces the need for an expand entirely.
+- Card 6 (health signal status — colour dot + label) not yet implemented. Shows their status if trusted, "Private" with a lock icon if not. Their signal status requires reading their `dismissedSignals` subcollection — needs a `fetchFriendSignalStatus(uid)` service function.
+- Card 4 (Bristol type) currently shows `--` for the friend's value — needs their logs. Trusted friends' logs are readable via Firestore rules (`knowsUser` rule), so `fetchFriendLogs(uid, days)` service function needed.
+
+**Firestore rules**
+- `trustedFriendIds` write rule needed: only the owner can write their own `trustedFriendIds` field. Currently no rule explicitly covers this — relies on the general user doc write rule.
+- `dismissedSignals` subcollection read rule: trusted friends should be able to read it. Currently only the owner can read. Needs `isTrustedBy(request.auth.uid, userId)` helper in rules.
+
+**Profile screen trusted friends**
+- `loadAll()` is called on mount to populate `friends` list — but if the user has no friends yet, the trusted section correctly doesn't render (guarded by `friends.length > 0`). Works as expected.
+- Currently no loading state shown while trust toggle is saving — fine for now, the optimistic update (set state immediately, then write) makes it feel instant.
+
+**CompareSection card width**
+- `SCREEN_W - 32 - 24` assumes 16px horizontal padding on FriendsScreen scroll + 12px for dots. May need tuning once tested on device — if cards clip or leave gaps, adjust the constant.
+
+**Friend picker persistence**
+- Selected friend is stored in AsyncStorage by UID. If that friend is later removed, the UID won't match any friend in the list and `setSelectedFriend` will silently stay null — the section will show "Choose friend" as if nothing was selected. This is correct behaviour, no fix needed.
+
+### Agreed full card set (6 cards for trusted)
+1. Today — yours vs theirs
+2. Weekly avg — yours vs theirs
+3. Streak — yours vs theirs
+4. Most common Bristol type this week — requires friend's logs (trusted only)
+5. Weekly frequency chart side by side — mini stacked bars, thin divider (trusted only)
+6. Health signal status — colour dot + label (trusted only; "Private" if not trusted)
+
+### Files involved
+- `src/components/friends/CompareSection.tsx` — main carousel, friend picker, data fetching
+- `src/components/friends/CompareCard.tsx` — individual card layout
+- `src/services/users.ts` — `checkTrusted`, `setTrustedFriend` (done)
+- `src/store/friendsStore.ts` — `trustedFriendIds`, `toggleTrust`, `loadTrustedFriends` (done)
+- `src/screens/profile/ProfileScreen.tsx` — trusted friends toggle list (done)
+- `src/screens/friends/FriendsScreen.tsx` — CompareSection wired in (done)
+- `firestore.rules` — needs update for `trustedFriendIds` write + `dismissedSignals` read by trusted friends

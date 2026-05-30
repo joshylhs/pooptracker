@@ -38,7 +38,8 @@ src/
 │   │   ├── LoginScreen.tsx
 │   │   └── OnboardingScreen.tsx       # notification preferences setup
 │   ├── home/
-│   │   └── HomeScreen.tsx             # heatmap + quick log + day detail
+│   │   ├── HomeScreen.tsx             # heatmap + quick log + day detail + insights
+│   │   └── HealthSignalsScreen.tsx    # Rome IV findings + past signals history
 │   ├── friends/
 │   │   ├── FriendsScreen.tsx          # leaderboard + collapsed friend list
 │   │   └── FriendDetailScreen.tsx     # friend's heatmap + stats
@@ -57,12 +58,16 @@ src/
 │   ├── friends/
 │   │   ├── LeaderboardList.tsx        # ranked list with day/week/month/year tabs
 │   │   ├── FriendListCollapsed.tsx    # collapsed friend management row
-│   │   └── FriendRow.tsx             # single friend row in leaderboard
+│   │   └── FriendRow.tsx             # single friend row; renders CatAvatarCircle or Avatar fallback
+│   ├── home/
+│   │   ├── InsightsSection.tsx        # collapsible Bristol distribution + weekly frequency charts
+│   │   └── SignalPopup.tsx            # one-time bottom-sheet popup for new Rome IV findings
 │   └── shared/
 │       ├── StatCard.tsx               # reusable metric card (streak, today, avg); icon prop reserves slot even when unused
-│       ├── Avatar.tsx                 # initials circle avatar
+│       ├── Avatar.tsx                 # initials circle avatar (fallback when no avatarConfig)
+│       ├── AvatarPickerModal.tsx      # pixel avatar picker bottom sheet; saves avatarConfig to Firestore
 │       ├── Button.tsx                 # primary / secondary / destructive variants; icon prop adds MCI icon inline
-│       ├── InfoModal.tsx              # shared info/help modal + InfoButton + InfoRow types; used by Bristol, symptoms, streak
+│       ├── InfoModal.tsx              # shared info/help modal + InfoButton + InfoRow types; footerLabel/footerUrl props for tappable links
 │       ├── ScreenContainer.tsx        # safe-area aware scroll wrapper
 │       ├── Text.tsx                   # themed AppText with variant prop
 │       ├── TextField.tsx              # labelled input with error state
@@ -71,7 +76,8 @@ src/
 ├── navigation/
 │   ├── RootNavigator.tsx              # switches between Auth, Onboarding, and App; renders OnboardingScreen directly (not inside AuthStack)
 │   ├── AuthStack.tsx                  # Welcome, Signup, Login
-│   ├── AppTabs.tsx                    # Home, Friends, Profile bottom tabs
+│   ├── AppTabs.tsx                    # Home, Friends, Profile bottom tabs; HomeTabIcon shows coloured badge dot for urgent/gp findings
+│   ├── HomeStack.tsx                  # stack: HomeMain → HealthSignals
 │   └── FriendsStack.tsx              # stack navigator wrapping FriendsScreen + FriendDetailScreen
 │
 ├── database/
@@ -90,12 +96,11 @@ src/
 ├── store/
 │   ├── authStore.ts                   # current user, auth state
 │   ├── logStore.ts                    # log entries for current user
-│   └── friendsStore.ts               # friends list, leaderboard data
+│   ├── friendsStore.ts               # friends list, leaderboard data
+│   └── signalsStore.ts               # dismissedSignals cache; loaded once per session; dismiss() updates in-place
 │
 ├── hooks/
-│   ├── useLogEntries.ts               # fetch + subscribe to user's logs
-│   ├── useFriendStats.ts              # fetch friend aggregate stats
-│   ├── useLeaderboard.ts             # compute leaderboard from friend data
+│   ├── useHealthFindings.ts           # derives active Rome IV findings from logs + dismissals; single source of truth for health state
 │   └── useTheme.ts                   # returns colour tokens + surface palette for current colour scheme
 │
 ├── utils/
@@ -104,6 +109,8 @@ src/
 │   ├── streakUtils.ts                 # calculate current streak and personal best
 │   ├── dateUtils.ts                   # date formatting helpers
 │   ├── statsUtils.ts                  # weekly avg, monthly avg, all-time stats
+│   ├── romeIV.ts                      # assessRomeIV(logs) → RomeFinding[] ({ id, severity } only — no copy)
+│   ├── signalCopy.ts                  # getSignalCopy(id) → { title, body } — sole source of truth for finding display text
 │   └── encryption.ts                  # username normalisation + SHA-256 hash for the usernameIndex doc ID. No other cryptography.
 │
 └── constants/
@@ -131,6 +138,9 @@ src/
   avatarColour: string,                // hex, assigned on signup
   createdAt: number,                   // ms since epoch (client clock)
   updatedAt: serverTimestamp,
+
+  // pixel avatar (optional — falls back to initials circle if absent)
+  avatarConfig?: AvatarConfig,         // stored as plain object; rendered by CatAvatarCircle
 
   // notification preferences (set during onboarding, editable in profile)
   notifications: {
@@ -329,8 +339,10 @@ RootNavigator
 │   # Rendered directly by RootNavigator — not inside AuthStack
 │
 └── AppTabs (shown when authenticated + onboarding complete)
-    ├── HomeScreen
-    │   └── LogEntryModal             # slides up over home, detailed entry
+    ├── HomeStack
+    │   ├── HomeScreen                # heatmap + quick log + insights + health bar tab
+    │   │   └── LogEntryModal         # slides up over home, detailed entry
+    │   └── HealthSignalsScreen       # Rome IV findings + past signals history
     ├── FriendsStack
     │   ├── FriendsScreen
     │   └── FriendDetailScreen        # pushed screen, friend's heatmap + stats
@@ -344,6 +356,9 @@ RootNavigator
 ### HomeScreen
 
 **Displays:**
+- Title: "Homepage"
+- Health status bar tab — coloured left stripe (4px) + status text + chevron; colour follows highest-severity active finding (urgent=red, gp=amber, info=green, none=muted). Taps to HealthSignalsScreen.
+- Stat cards row: current streak / today's count / monthly avg
 - Calendar heatmap (current month, navigable by month)
   - Colour intensity: 0 logs = white/empty, 1 = light green, 2 = medium, 3 = dark, 4+ = darkest
   - Today highlighted with purple outline
@@ -352,17 +367,42 @@ RootNavigator
   - Shows each log as a row: time | Bristol type | duration | notes | edit link
   - Tapping edit opens LogEntryModal pre-filled with that log's data
   - Tapping empty day: shows "no logs" + quick log prompt
-- Stat cards row: current streak / today's count / monthly avg
+- InsightsSection — collapsible card below day log card; Bristol distribution chart + 8-week frequency chart
+- SignalPopup — fires once per finding ID (AsyncStorage); shows most severe new finding; one popup per session max
 - Quick log button (primary CTA, always visible)
   - One tap saves a log at current timestamp with no details
   - "Add details instead" link below opens LogEntryModal
 
 **Actions:**
+- Tap health bar tab → navigate to HealthSignalsScreen
 - Tap "+" quick log → save log, update heatmap, update stat cards
 - Tap "add details instead" → open LogEntryModal (empty)
 - Tap heatmap day → expand/collapse day log card
 - Tap edit on a log entry → open LogEntryModal (pre-filled)
 - Navigate calendar month → prev/next month arrows
+
+### HealthSignalsScreen
+
+Pushed from HomeScreen via the health bar tab. Not a bottom tab.
+
+**Displays:**
+- Back button → "Home"
+- Title: "Health Signals" + `?` InfoButton
+- Inline legend: Urgent / GP flag / Info coloured pills (always visible, not behind the `?`)
+- `?` InfoModal: explains Rome IV criteria + lists the 6 monitored signals + tappable link to Rome IV journal (Gastroenterology, 2016)
+- CURRENT FINDINGS — left-bordered cards (3px) for urgent/gp findings; each has **Snooze 1d** and **Dismiss** buttons
+  - Snooze 1d: hides for 1 day
+  - Dismiss: hides for 90 days (matches assessment window; re-surfaces if pattern resolves and re-emerges)
+- CURRENT STATUS — shown when no actionable findings (all_clear or insufficient_data)
+- PAST SIGNALS — expanded cards: severity pill + date, title, body text, snooze type label
+- Disclaimer at bottom (italic)
+
+**Actions:**
+- Tap Snooze 1d / Dismiss → writes to `dismissedSignals`, immediately removes from active list
+- Tap `?` → InfoModal
+- Tap Rome IV link → opens journal article in browser (Linking.openURL)
+
+---
 
 ### LogEntryModal
 
@@ -544,12 +584,10 @@ export const INTENSITY_COLOURS = {
 ## v1 Scope Boundaries (explicitly out of scope)
 
 - Food / lifestyle tagging (future ML feature)
-- ML insights and pattern detection
-- Push notifications via server (all notifications are local in v1)
+- ML-based pattern detection (Rome IV rule-based assessment is in scope; ML is not)
 - Full log detail sharing with friends (privacy gating in place, UI deferred)
 - Games / challenges
 - Apple Health / Google Fit integration
-- Profile photos (initials avatar only in v1)
 - Export to PDF / CSV
 
 ---
@@ -694,7 +732,7 @@ export const typography = {
 - Selected: coral outline (2px)
 
 ### Avatar System
-Each user is assigned one of 5 colour pairs at signup (purple, amber, teal, coral, blue). Stored as a string on the user profile. Initials are first letter of display name + first letter of last word. Displayed as 36px circle throughout the app.
+Users can create a customisable pixel avatar via `AvatarPickerModal` on the profile screen. The config is stored as `avatarConfig` on the user profile and rendered via `CatAvatarCircle`. If no `avatarConfig` is set, `Avatar` (initials circle, one of 8 assigned colours) is shown as a fallback.
 
 ### Theme
 Currently a single warm dark palette (not system-adaptive). `useTheme()` returns fixed surface colours (`warmDarkSurface`) regardless of `useColorScheme()`. Never hardcode colours in component files — always reference through the theme hook. Light mode support is deferred post-v1.

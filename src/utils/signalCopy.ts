@@ -6,7 +6,15 @@ export interface SignalCopy {
 export const SIGNAL_COPY: Record<string, SignalCopy> = {
   blood: {
     title: 'Rectal bleeding',
-    body: "You've recorded blood in your stool recently. This needs to be checked by a GP — it requires evaluation regardless of other symptoms.",
+    body: "You've recorded blood in your stool recently. This should be checked by a GP — it requires evaluation regardless of other symptoms. Tap Acknowledge once you've noted this and plan to follow up.",
+  },
+  blood_acknowledged: {
+    title: 'Rectal bleeding — monitoring',
+    body: "You've acknowledged this flag. Blood was detected in your recent logs. This will clear once you log 3 consecutive entries without blood.",
+  },
+  blood_resolved: {
+    title: 'Rectal bleeding — resolved',
+    body: "Your last 3 logged entries showed no blood. This pattern has been cleared from your active signals.",
   },
   functional_constipation: {
     title: 'Constipation pattern',

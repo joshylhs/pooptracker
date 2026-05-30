@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Animated, LayoutAnimation, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -35,9 +35,11 @@ export default function HomeScreen() {
   const logs = useLogStore(s => s.logs);
   const refresh = useLogStore(s => s.refresh);
   const quickLog = useLogStore(s => s.quickLog);
-  const loadDismissals = useSignalsStore(s => s.loadDismissals);
+  const loadAcknowledged = useSignalsStore(s => s.loadAcknowledged);
+  const onLogSaved = useSignalsStore(s => s.onLogSaved);
   const clearSignals = useSignalsStore(s => s.clear);
-  const { active, status } = useHealthFindings();
+  const acknowledge = useSignalsStore(s => s.acknowledge);
+  const { latest, past, status } = useHealthFindings();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,6 +47,29 @@ export default function HomeScreen() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dayCardScale = useRef(new Animated.Value(0)).current;
+  const [dayCardVisible, setDayCardVisible] = useState(false);
+  const dayCardShowingRef = useRef(false);
+
+  useEffect(() => {
+    if (selectedDate !== null) {
+      if (!dayCardShowingRef.current) {
+        dayCardShowingRef.current = true;
+        dayCardScale.setValue(0);
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setDayCardVisible(true);
+      }
+      Animated.spring(dayCardScale, { toValue: 1, useNativeDriver: true, friction: 10, tension: 70 }).start();
+    } else {
+      dayCardShowingRef.current = false;
+      Animated.spring(dayCardScale, { toValue: 0, useNativeDriver: true, friction: 20, tension: 200 }).start(({ finished }) => {
+        if (finished) {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setDayCardVisible(false);
+        }
+      });
+    }
+  }, [selectedDate]);
 
   useEffect(() => {
     if (!userId) {
@@ -52,8 +77,8 @@ export default function HomeScreen() {
       return;
     }
     refresh();
-    loadDismissals(userId);
-  }, [userId, refresh, loadDismissals, clearSignals]);
+    loadAcknowledged(userId);
+  }, [userId, refresh, loadAcknowledged, clearSignals]);
 
   const showToast = (message: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -62,16 +87,24 @@ export default function HomeScreen() {
     toastTimer.current = setTimeout(() => setToastVisible(false), TOAST_DURATION);
   };
 
+  const todayString = formatDate(new Date());
+
   const handleQuickLog = () => {
-    const ts = selectedDate ? new Date(selectedDate + 'T12:00:00').getTime() : undefined;
+    const ts = selectedDate && selectedDate !== todayString
+      ? new Date(selectedDate + 'T12:00:00').getTime()
+      : undefined;
     quickLog(ts);
     showToast('Logged!');
+    if (userId) onLogSaved(userId, false);
   };
 
-  const handleModalClose = (saved: boolean, wasEditing: boolean) => {
+  const handleModalClose = (saved: boolean, wasEditing: boolean, hadBlood?: boolean) => {
     setIsModalOpen(false);
     setEditingLog(null);
-    if (saved) showToast(wasEditing ? 'Changes saved' : 'Logged!');
+    if (saved) {
+      showToast(wasEditing ? 'Changes saved' : 'Logged!');
+      if (userId) onLogSaved(userId, hadBlood ?? false);
+    }
   };
 
   const summaries: DailySummary[] = useMemo(() => {
@@ -104,7 +137,12 @@ export default function HomeScreen() {
     <ScreenContainer>
       <Toast visible={toastVisible} message={toastMessage} />
 
-      <SignalPopup findings={active} onViewSignals={navigateToSignals} />
+      <SignalPopup
+        latest={latest}
+        recentlyResolved={past}
+        onViewSignals={navigateToSignals}
+        onAcknowledge={f => userId && acknowledge(userId, f, f.id)}
+      />
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <AppText variant="screenTitle">Homepage</AppText>
@@ -130,6 +168,7 @@ export default function HomeScreen() {
             value={currentStreak}
             label="day streak"
             icon="fire"
+            iconColor="#E8734A"
             infoTitle="Day streak"
             infoIntro="Counts consecutive days you logged at least once."
             infoRows={[
@@ -137,8 +176,8 @@ export default function HomeScreen() {
               { label: 'Backdating', body: "Logging for a past date won't extend your streak." },
             ]}
           />
-          <StatCard value={today} label="today" icon="toilet" />
-          <StatCard value={monthly.toFixed(1)} label="monthly avg" icon="chart-bar" />
+          <StatCard value={today} label="today" icon="toilet" iconColor="#7F77DD" />
+          <StatCard value={monthly.toFixed(1)} label="monthly avg" icon="chart-bar" iconColor="#1D9E75" />
         </View>
 
         <CalendarHeatmap
@@ -147,15 +186,17 @@ export default function HomeScreen() {
           onDayPress={d => setSelectedDate(d === selectedDate ? null : d)}
         />
 
-        {selectedDate && (
-          <DayLogCard
-            date={selectedDate}
-            logs={logs.filter(l => l.date === selectedDate)}
-            onEditLog={log => {
-              setEditingLog(log);
-              setIsModalOpen(true);
-            }}
-          />
+        {dayCardVisible && (
+          <Animated.View style={{ transform: [{ scale: dayCardScale }] }}>
+            <DayLogCard
+              date={selectedDate ?? ''}
+              logs={selectedDate ? logs.filter(l => l.date === selectedDate) : []}
+              onEditLog={log => {
+                setEditingLog(log);
+                setIsModalOpen(true);
+              }}
+            />
+          </Animated.View>
         )}
 
         <InsightsSection logs={logs} />
@@ -172,8 +213,8 @@ export default function HomeScreen() {
       <LogEntryModal
         visible={isModalOpen}
         existingLog={editingLog}
-        initialTimestamp={selectedDate ? new Date(selectedDate + 'T12:00:00').getTime() : undefined}
-        onClose={(saved) => handleModalClose(saved ?? false, editingLog !== null)}
+        initialTimestamp={selectedDate && selectedDate !== todayString ? new Date(selectedDate + 'T12:00:00').getTime() : undefined}
+        onClose={(saved, hadBlood) => handleModalClose(saved ?? false, editingLog !== null, hadBlood)}
       />
     </ScreenContainer>
   );

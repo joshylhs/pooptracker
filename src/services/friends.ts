@@ -30,7 +30,6 @@ export interface FriendProfile {
   username: string;
   avatarInitials: string;
   avatarColour: string;
-  avatarEmoji?: string;
   avatarConfig?: AvatarConfig;
   allowPokes: boolean;
 }
@@ -40,7 +39,6 @@ export interface PendingFriend {
   username: string;
   avatarInitials: string;
   avatarColour: string;
-  avatarEmoji?: string;
 }
 
 export interface LeaderboardEntry {
@@ -48,7 +46,6 @@ export interface LeaderboardEntry {
   username: string;
   avatarInitials: string;
   avatarColour: string;
-  avatarEmoji?: string;
   avatarConfig?: AvatarConfig;
   count: number;
   isSelf: boolean;
@@ -60,7 +57,6 @@ export interface UserSearchResult {
   username: string;
   avatarInitials: string;
   avatarColour: string;
-  avatarEmoji?: string;
 }
 
 const AVATAR_PALETTE = [
@@ -175,7 +171,6 @@ async function loadOtherProfile(uid: string): Promise<FriendProfile> {
       username: profile.username,
       avatarInitials: profile.avatarInitials,
       avatarColour: profile.avatarColour,
-      avatarEmoji: profile.avatarEmoji,
       avatarConfig: profile.avatarConfig,
       allowPokes: profile.allowPokes,
     };
@@ -265,7 +260,7 @@ export async function fetchLeaderboardWindow(
   window: LeaderboardWindow,
   myUid: string,
   friends: FriendProfile[],
-  myDisplayProfile: { username: string; avatarInitials: string; avatarColour: string; avatarEmoji?: string; avatarConfig?: AvatarConfig },
+  myDisplayProfile: { username: string; avatarInitials: string; avatarColour: string; avatarConfig?: AvatarConfig },
 ): Promise<LeaderboardEntry[]> {
   const [selfCount, friendEntries] = await Promise.all([
     fetchUserCountForWindow(myUid, window),
@@ -275,7 +270,6 @@ export async function fetchLeaderboardWindow(
         username: f.username,
         avatarInitials: f.avatarInitials,
         avatarColour: f.avatarColour,
-        avatarEmoji: f.avatarEmoji,
         avatarConfig: f.avatarConfig,
         count: await fetchUserCountForWindow(f.uid, window),
         isSelf: false,

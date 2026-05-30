@@ -1,6 +1,5 @@
 import {
   todayCount,
-  totalLogs,
   averagePerDay,
   weeklyAverage,
   monthlyAverage,
@@ -25,21 +24,6 @@ describe('todayCount', () => {
       { date: '2026-04-28', count: 3 },
     ];
     expect(todayCount(summaries, today)).toBe(3);
-  });
-});
-
-describe('totalLogs', () => {
-  it('sums counts across all summaries', () => {
-    const summaries: DailySummary[] = [
-      { date: '2026-04-26', count: 2 },
-      { date: '2026-04-27', count: 1 },
-      { date: '2026-04-28', count: 3 },
-    ];
-    expect(totalLogs(summaries)).toBe(6);
-  });
-
-  it('returns 0 for an empty list', () => {
-    expect(totalLogs([])).toBe(0);
   });
 });
 

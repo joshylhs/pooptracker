@@ -152,17 +152,21 @@ export default function CalendarHeatmap({
       {/* Header: ‹ Month YYYY › */}
       <View style={styles.header}>
         <Pressable onPress={prevMonth} hitSlop={12} style={styles.arrowBtn}>
-          <View style={styles.chevronCircle}>
-            <MCI name="chevron-left" size={22} color={surface.textPrimary} />
-          </View>
+          {({ pressed }) => (
+            <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
+              <MCI name="chevron-left" size={22} color={surface.textPrimary} />
+            </View>
+          )}
         </Pressable>
         <AppText variant="sectionHeading">
           {monthName} {viewYear}
         </AppText>
         <Pressable onPress={nextMonth} hitSlop={12} style={styles.arrowBtn} disabled={isCurrentMonth}>
-          <View style={styles.chevronCircle}>
-            <MCI name="chevron-right" size={22} color={isCurrentMonth ? surface.textPlaceholder : surface.textPrimary} />
-          </View>
+          {({ pressed }) => (
+            <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
+              <MCI name="chevron-right" size={22} color={isCurrentMonth ? surface.textPlaceholder : surface.textPrimary} />
+            </View>
+          )}
         </Pressable>
       </View>
 
@@ -291,6 +295,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  chevronCirclePressed: { opacity: 0.4 },
   dowRow: {
     paddingHorizontal: GAP,
     paddingBottom: 4,

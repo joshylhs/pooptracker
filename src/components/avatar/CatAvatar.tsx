@@ -2,7 +2,7 @@ import React from 'react';
 import Svg, { Rect } from 'react-native-svg';
 import CatBody from './CatBody';
 import CatEyes, { EyeStyle, EyeColor, EyeSecondary } from './CatEyes';
-import CatBlush from './CatBlush';
+import CatBlush, { CheekStyle } from './CatBlush';
 import CatHeaddress, { HeaddressStyle } from './CatHeaddress';
 
 export const BODY_COLORS = {
@@ -37,6 +37,7 @@ interface Props {
   eyes?: EyeStyle;
   eyePrimary?: EyeColor;
   eyeSecondary?: EyeSecondary;
+  cheekStyle?: CheekStyle;
   headdress?: HeaddressStyle;
   wallColor?: WallColor | string;
   size?: number;
@@ -48,6 +49,7 @@ export default function CatAvatar({
   eyes = 'round',
   eyePrimary = 'dark',
   eyeSecondary = 'white',
+  cheekStyle = 'blush',
   headdress = 'none',
   wallColor = 'none',
   size = 128,
@@ -65,7 +67,7 @@ export default function CatAvatar({
       {wall !== 'transparent' && <Rect x={0} y={0} width={32} height={32} fill={wall} />}
       <CatBody color={resolveFill(bodyColor)} snoutColor={resolveFill(snoutColor)} />
       <CatEyes style={eyes} primaryColor={eyePrimary} secondaryColor={eyeSecondary} />
-      <CatBlush />
+      <CatBlush style={cheekStyle} />
       <CatHeaddress style={headdress} />
     </Svg>
   );

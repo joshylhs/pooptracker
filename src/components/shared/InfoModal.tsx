@@ -1,4 +1,4 @@
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from './Text';
 
@@ -14,9 +14,11 @@ interface InfoModalProps {
   title: string;
   intro?: string;
   rows: InfoRow[];
+  footerLabel?: string;
+  footerUrl?: string;
 }
 
-export default function InfoModal({ visible, onClose, title, intro, rows }: InfoModalProps) {
+export default function InfoModal({ visible, onClose, title, intro, rows, footerLabel, footerUrl }: InfoModalProps) {
   const { surface, colours } = useTheme();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -42,6 +44,16 @@ export default function InfoModal({ visible, onClose, title, intro, rows }: Info
               <AppText variant="caption" colour="textSecondary">{r.body}</AppText>
             </View>
           ))}
+          {footerLabel && footerUrl && (
+            <Pressable
+              onPress={() => Linking.openURL(footerUrl)}
+              style={({ pressed }) => [styles.footerLink, { opacity: pressed ? 0.5 : 1 }]}
+            >
+              <AppText variant="caption" style={[styles.footerText, { color: colours.primary400 }]}>
+                {footerLabel} ↗
+              </AppText>
+            </Pressable>
+          )}
           <Pressable
             onPress={onClose}
             style={({ pressed }) => [styles.closeBtn, { backgroundColor: surface.border, opacity: pressed ? 0.5 : 1 }]}
@@ -71,6 +83,8 @@ const styles = StyleSheet.create({
   row:         { gap: 3 },
   labelRow:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tag:         { borderWidth: 1, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
+  footerLink:  { alignItems: 'center', paddingVertical: 4 },
+  footerText:  { textDecorationLine: 'underline' },
   closeBtn:    { borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 4 },
   infoButton:  { width: 16, height: 16, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   infoText:    { lineHeight: 16, fontSize: 11 },

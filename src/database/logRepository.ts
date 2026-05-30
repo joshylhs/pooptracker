@@ -153,7 +153,7 @@ export async function listLogsForUser(userId: string): Promise<LogEntry[]> {
   return snap.docs.map(d => docToEntry(userId, d.id, d.data() as LogDoc));
 }
 
-export async function getLogById(userId: string, logId: string): Promise<LogEntry | null> {
+async function getLogById(userId: string, logId: string): Promise<LogEntry | null> {
   const snap = await getDoc(logRef(userId, logId));
   if (!snap.exists()) return null;
   return docToEntry(userId, snap.id, snap.data() as LogDoc);

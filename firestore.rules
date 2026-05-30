@@ -34,6 +34,13 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/friendships/$(request.auth.uid)/friends/$(otherId)).data.status == 'accepted';
     }
 
+    // The subject (userId) has explicitly added the requester to their
+    // trustedFriendIds list — grants access to deep data (raw logs, signals).
+    function isTrustedBy(userId) {
+      return isSignedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/users/$(userId)).data.trustedFriendIds;
+    }
+
     // User profile (username, avatar, prefs). Plaintext.
     // Self always; anyone in a friendship (pending or accepted) for display.
     match /users/{userId} {
@@ -41,9 +48,10 @@ service cloud.firestore {
       allow write: if isOwner(userId);
     }
 
-    // Individual logs — strictly owner-only. Friends never see raw logs.
+    // Individual logs — owner always; trusted friends can read (for Compare).
     match /users/{userId}/logs/{logId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId) || isTrustedBy(userId);
+      allow write: if isOwner(userId);
     }
 
     // Daily / monthly / yearly summary rollups — readable by accepted friends
@@ -63,10 +71,10 @@ service cloud.firestore {
       allow write: if isOwner(userId);
     }
 
-    // Health signal dismissals — strictly owner-only. Stores snooze records for
-    // the Rome IV assessment findings the user has acknowledged.
+    // Health signal dismissals — owner always; trusted friends can read (for Compare).
     match /users/{userId}/dismissedSignals/{findingId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId) || isTrustedBy(userId);
+      allow write: if isOwner(userId);
     }
 
     // Username hash index. Lets friend search resolve username → uid via a

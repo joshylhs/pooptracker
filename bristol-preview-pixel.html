@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bristol Visual Preview — Pixel Art v4</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #2a2825; font-family: -apple-system, sans-serif; color: #e0d8cf; padding: 32px; }
+  h1 { font-size: 13px; letter-spacing: 1px; color: #7A6F60; text-transform: uppercase; margin-bottom: 24px; }
+  .chart { display: flex; flex-direction: column; gap: 8px; background: #3c3a38; border: 1px solid #4a4845; border-radius: 14px; padding: 16px; max-width: 360px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .type-num { width: 14px; font-size: 11px; font-weight: 700; text-align: center; flex-shrink: 0; color: #7A6F60; }
+  .visual { width: 56px; height: 28px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .bar { height: 100%; border-radius: 4px; background: #7A6F60; }
+  .pct { width: 28px; font-size: 11px; text-align: right; flex-shrink: 0; color: rgba(255,255,255,0.5); }
+  .footnote { font-size: 10px; color: #5a5350; margin-top: 6px; }
+  svg { display: block; shape-rendering: crispEdges; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<h1>Bristol type visuals — pixel art v4 (reference-matched)</h1>
+
+<!--
+  1×1px pixels. Canvas 56×28.
+  Palette:
+    hi  = #DEB887  highlight
+    lt  = #C19A5A  light
+    ml  = #A8784A  mid-light
+    md  = #8B6340  mid
+    dk  = #5C3E20  dark
+    sh  = #2E1A08  shadow
+    tx  = #3A2210  texture (crosshatch dots)
+
+  Key insight from reference image:
+  ALL types have a dense crosshatch/stipple texture filling the whole shape.
+  The texture is rendered as alternating dark dots on a lighter base.
+-->
+
+<div class="chart">
+
+<!-- ══════════════════════════════════
+     TYPE 1 — Separate hard lumps
+     5 oval pebbles, scattered at different heights
+     All heavily textured (stipple dots every 2px)
+     ══════════════════════════════════ -->
+<div class="row">
+  <span class="type-num">1</span>
+  <div class="visual"><svg width="56" height="28" viewBox="0 0 56 28">
+
+    <!-- Pebble 1: cx≈6, cy≈18, 8×6 -->
+    <rect x="3"  y="14" width="7" height="1" fill="#A8784A"/>
+    <rect x="2"  y="15" width="9" height="1" fill="#C19A5A"/>
+    <rect x="3"  y="15" width="2" height="1" fill="#DEB887"/>
+    <rect x="2"  y="16" width="9" height="1" fill="#A8784A"/>
+    <rect x="2"  y="17" width="9" height="1" fill="#8B6340"/>
+    <rect x="3"  y="18" width="7" height="1" fill="#5C3E20"/>
+    <rect x="4"  y="19" width="5" height="1" fill="#2E1A08" opacity="0.4"/>
+    <!-- texture -->
+    <rect x="4"  y="15" width="1" height="1" fill="#3A2210" opacity="0.6"/>
+    <rect x="6"  y="15" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="8"  y="15" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="3"  y="16" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="5"  y="16" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="7"  y="16" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="9"  y="16" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="4"  y="17" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="6"  y="17" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="8"  y="17" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+    <!-- Pebble 2: cx≈16, cy≈13, 10×7 (larger) -->
+    <rect x="12" y="9"  width="9" height="1" fill="#A8784A"/>
+    <rect x="11" y="10" width="11" height="1" fill="#C19A5A"/>
+    <rect x="12" y="10" width="2" height="1" fill="#DEB887"/>
+    <rect x="11" y="11" width="11" height="1" fill="#C19A5A"/>
+    <rect x="11" y="12" width="11" height="1" fill="#A8784A"/>
+    <rect x="11" y="13" width="11" height="1" fill="#8B6340"/>
+    <rect x="12" y="14" width="9" height="1" fill="#5C3E20"/>
+    <rect x="13" y="15" width="7" height="1" fill="#2E1A08" opacity="0.4"/>
+    <!-- texture -->
+    <rect x="13" y="10" width="1" height="1" fill="#3A2210" opacity="0.6"/>
+    <rect x="15" y="10" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="17" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="19" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="12" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="14" y="11" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="16" y="11" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="18" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="20" y="11" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="13" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="15" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="17" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="19" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="12" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="14" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="16" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="18" y="13" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+    <!-- Pebble 3: cx≈27, cy≈19, 8×6 (lower right of cluster) -->
+    <rect x="24" y="15" width="7" height="1" fill="#A8784A"/>
+    <rect x="23" y="16" width="9" height="1" fill="#C19A5A"/>
+    <rect x="24" y="16" width="2" height="1" fill="#DEB887"/>
+    <rect x="23" y="17" width="9" height="1" fill="#A8784A"/>
+    <rect x="23" y="18" width="9" height="1" fill="#8B6340"/>
+    <rect x="24" y="19" width="7" height="1" fill="#5C3E20"/>
+    <rect x="25" y="20" width="5" height="1" fill="#2E1A08" opacity="0.4"/>
+    <!-- texture -->
+    <rect x="25" y="16" width="1" height="1" fill="#3A2210" opacity="0.6"/>
+    <rect x="27" y="16" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="29" y="16" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="24" y="17" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="26" y="17" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="28" y="17" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="30" y="17" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="25" y="18" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="27" y="18" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="29" y="18" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+    <!-- Pebble 4: cx≈38, cy≈15, 9×7 -->
+    <rect x="34" y="11" width="8" height="1" fill="#A8784A"/>
+    <rect x="33" y="12" width="10" height="1" fill="#C19A5A"/>
+    <rect x="34" y="12" width="2" height="1" fill="#DEB887"/>
+    <rect x="33" y="13" width="10" height="1" fill="#A8784A"/>
+    <rect x="33" y="14" width="10" height="1" fill="#8B6340"/>
+    <rect x="34" y="15" width="8" height="1" fill="#5C3E20"/>
+    <rect x="35" y="16" width="6" height="1" fill="#2E1A08" opacity="0.4"/>
+    <!-- texture -->
+    <rect x="35" y="12" width="1" height="1" fill="#3A2210" opacity="0.6"/>
+    <rect x="37" y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="39" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="34" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="36" y="13" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="38" y="13" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="40" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="35" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="37" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="39" y="14" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+    <!-- Pebble 5: cx≈49, cy≈18, 7×5 (smaller) -->
+    <rect x="46" y="14" width="6" height="1" fill="#A8784A"/>
+    <rect x="45" y="15" width="8" height="1" fill="#C19A5A"/>
+    <rect x="46" y="15" width="2" height="1" fill="#DEB887"/>
+    <rect x="45" y="16" width="8" height="1" fill="#A8784A"/>
+    <rect x="45" y="17" width="8" height="1" fill="#8B6340"/>
+    <rect x="46" y="18" width="6" height="1" fill="#5C3E20"/>
+    <rect x="47" y="19" width="4" height="1" fill="#2E1A08" opacity="0.4"/>
+    <!-- texture -->
+    <rect x="47" y="15" width="1" height="1" fill="#3A2210" opacity="0.6"/>
+    <rect x="49" y="15" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="51" y="15" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="46" y="16" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="48" y="16" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="50" y="16" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="47" y="17" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="49" y="17" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+  </svg></div>
+  <div class="bar-track"><div class="bar" style="width:18%"></div></div>
+  <span class="pct">18%</span>
+</div>
+
+<!-- ══════════════════════════════════
+     TYPE 2 — Lumpy sausage
+     5 solid balls side-by-side, varying heights, NO gaps between them.
+     x layout: B1(2-10) | groove(11) | B2(12-22) | groove(23) | B3(24-34) | groove(35) | B4(36-46) | groove(47) | B5(48-55)
+     Heights: B1 cy=16, B2 cy=14, B3 cy=12 (tallest), B4 cy=14, B5 cy=16
+     Each ball sphere-shaded: DEB887 highlight top-left → dark #2E1A08 bottom
+     Groove = 1px #2E1A08 column between adjacent balls
+     ══════════════════════════════════ -->
+<div class="row">
+  <span class="type-num">2</span>
+  <div class="visual"><svg width="56" height="28" viewBox="0 0 56 28">
+
+
+    <!-- overall shadow -->
+    <rect x="4" y="22" width="46" height="1" fill="#2E1A08" opacity="0.4"/>
+
+    <!-- ═══ BALL 1: x=2-10 (w=9), top_y=10, cy=15 ═══ -->
+    <rect x="4" y="10" width="5" height="1" fill="#8B6340"/>
+    <rect x="3" y="11" width="7" height="1" fill="#A8784A"/>
+    <rect x="2" y="12" width="9" height="1" fill="#C19A5A"/>
+    <rect x="2" y="12" width="2" height="1" fill="#DEB887"/>
+    <rect x="2" y="13" width="9" height="1" fill="#C19A5A"/>
+    <rect x="2" y="14" width="9" height="1" fill="#A8784A"/>
+    <rect x="2" y="15" width="9" height="1" fill="#A8784A"/>
+    <rect x="2" y="16" width="9" height="1" fill="#8B6340"/>
+    <rect x="2" y="17" width="9" height="1" fill="#8B6340"/>
+    <rect x="2" y="18" width="9" height="1" fill="#5C3E20"/>
+    <rect x="2" y="19" width="9" height="1" fill="#5C3E20"/>
+    <rect x="3" y="20" width="7" height="1" fill="#5C3E20"/>
+    <rect x="4" y="21" width="5" height="1" fill="#2E1A08"/>
+    <!-- B1 texture -->
+    <rect x="5" y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="8" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="4" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="7" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="5" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="8" y="14" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="4" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="7" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="5" y="16" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="8" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="4" y="17" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="7" y="17" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+
+    <!-- ═══ GROOVE 1: x=11, fills the gap between B1 and B2 ═══ -->
+    <rect x="11" y="10" width="1" height="11" fill="#2E1A08"/>
+
+    <!-- ═══ BALL 2: x=12-22 (w=11), top_y=8, cy=13 ═══ -->
+    <rect x="14" y="8"  width="7"  height="1" fill="#8B6340"/>
+    <rect x="13" y="9"  width="9"  height="1" fill="#A8784A"/>
+    <rect x="12" y="10" width="11" height="1" fill="#C19A5A"/>
+    <rect x="12" y="10" width="2"  height="1" fill="#DEB887"/>
+    <rect x="12" y="11" width="11" height="1" fill="#C19A5A"/>
+    <rect x="12" y="12" width="11" height="1" fill="#A8784A"/>
+    <rect x="12" y="13" width="11" height="1" fill="#A8784A"/>
+    <rect x="12" y="14" width="11" height="1" fill="#8B6340"/>
+    <rect x="12" y="15" width="11" height="1" fill="#8B6340"/>
+    <rect x="12" y="16" width="11" height="1" fill="#5C3E20"/>
+    <rect x="12" y="17" width="11" height="1" fill="#5C3E20"/>
+    <rect x="13" y="18" width="9"  height="1" fill="#5C3E20"/>
+    <rect x="14" y="19" width="7"  height="1" fill="#2E1A08"/>
+    <!-- B2 texture -->
+    <rect x="15" y="10" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="18" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="21" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="14" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="17" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="20" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="15" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="18" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="21" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="14" y="13" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="17" y="13" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="20" y="13" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="15" y="14" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="18" y="14" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="14" y="15" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="17" y="15" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+
+    <!-- ═══ GROOVE 2: x=23 ═══ -->
+    <rect x="23" y="8" width="1" height="11" fill="#2E1A08"/>
+
+    <!-- ═══ BALL 3: x=24-34 (w=11), top_y=6, cy=11 (tallest) ═══ -->
+    <rect x="26" y="6"  width="7"  height="1" fill="#8B6340"/>
+    <rect x="25" y="7"  width="9"  height="1" fill="#A8784A"/>
+    <rect x="24" y="8"  width="11" height="1" fill="#C19A5A"/>
+    <rect x="24" y="8"  width="2"  height="1" fill="#DEB887"/>
+    <rect x="24" y="9"  width="11" height="1" fill="#C19A5A"/>
+    <rect x="24" y="10" width="11" height="1" fill="#A8784A"/>
+    <rect x="24" y="11" width="11" height="1" fill="#A8784A"/>
+    <rect x="24" y="12" width="11" height="1" fill="#8B6340"/>
+    <rect x="24" y="13" width="11" height="1" fill="#8B6340"/>
+    <rect x="24" y="14" width="11" height="1" fill="#5C3E20"/>
+    <rect x="24" y="15" width="11" height="1" fill="#5C3E20"/>
+    <rect x="25" y="16" width="9"  height="1" fill="#5C3E20"/>
+    <rect x="26" y="17" width="7"  height="1" fill="#2E1A08"/>
+    <!-- B3 texture -->
+    <rect x="27" y="8"  width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="30" y="8"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="33" y="8"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="26" y="9"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="29" y="9"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="32" y="9"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="27" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="30" y="10" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="33" y="10" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="26" y="11" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="29" y="11" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="32" y="11" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="27" y="12" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="30" y="12" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="33" y="12" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="26" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="29" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+
+    <!-- ═══ GROOVE 3: x=35 ═══ -->
+    <rect x="35" y="8" width="1" height="11" fill="#2E1A08"/>
+
+    <!-- ═══ BALL 4: x=36-46 (w=11), top_y=8, cy=13 (mirror of B2) ═══ -->
+    <rect x="38" y="8"  width="7"  height="1" fill="#8B6340"/>
+    <rect x="37" y="9"  width="9"  height="1" fill="#A8784A"/>
+    <rect x="36" y="10" width="11" height="1" fill="#C19A5A"/>
+    <rect x="36" y="10" width="2"  height="1" fill="#DEB887"/>
+    <rect x="36" y="11" width="11" height="1" fill="#C19A5A"/>
+    <rect x="36" y="12" width="11" height="1" fill="#A8784A"/>
+    <rect x="36" y="13" width="11" height="1" fill="#A8784A"/>
+    <rect x="36" y="14" width="11" height="1" fill="#8B6340"/>
+    <rect x="36" y="15" width="11" height="1" fill="#8B6340"/>
+    <rect x="36" y="16" width="11" height="1" fill="#5C3E20"/>
+    <rect x="36" y="17" width="11" height="1" fill="#5C3E20"/>
+    <rect x="37" y="18" width="9"  height="1" fill="#5C3E20"/>
+    <rect x="38" y="19" width="7"  height="1" fill="#2E1A08"/>
+    <!-- B4 texture -->
+    <rect x="39" y="10" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="42" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="45" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="38" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="41" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="44" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="39" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="42" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="45" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="38" y="13" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="41" y="13" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="44" y="13" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="39" y="14" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="42" y="14" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="38" y="15" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="41" y="15" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+
+    <!-- ═══ GROOVE 4: x=47 ═══ -->
+    <rect x="47" y="10" width="1" height="11" fill="#2E1A08"/>
+
+    <!-- ═══ BALL 5: x=48-55 (w=8), top_y=10, cy=15 (mirror of B1) ═══ -->
+    <rect x="50" y="10" width="4" height="1" fill="#8B6340"/>
+    <rect x="49" y="11" width="6" height="1" fill="#A8784A"/>
+    <rect x="48" y="12" width="8" height="1" fill="#C19A5A"/>
+    <rect x="48" y="12" width="2" height="1" fill="#DEB887"/>
+    <rect x="48" y="13" width="8" height="1" fill="#C19A5A"/>
+    <rect x="48" y="14" width="8" height="1" fill="#A8784A"/>
+    <rect x="48" y="15" width="8" height="1" fill="#A8784A"/>
+    <rect x="48" y="16" width="8" height="1" fill="#8B6340"/>
+    <rect x="48" y="17" width="8" height="1" fill="#8B6340"/>
+    <rect x="48" y="18" width="8" height="1" fill="#5C3E20"/>
+    <rect x="48" y="19" width="8" height="1" fill="#5C3E20"/>
+    <rect x="49" y="20" width="6" height="1" fill="#5C3E20"/>
+    <rect x="50" y="21" width="4" height="1" fill="#2E1A08"/>
+    <!-- B5 texture -->
+    <rect x="51" y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="54" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="50" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="53" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="51" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="54" y="14" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="50" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="53" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="51" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="54" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="50" y="17" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="53" y="17" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+
+  </svg></div>
+  <div class="bar-track"><div class="bar" style="width:10%"></div></div>
+  <span class="pct">10%</span>
+</div>
+
+<!-- ══════════════════════════════════
+     TYPE 3 — Cracked sausage
+     Longer, wider sausage. Bumpy top. 3 vertical cracks.
+     Very dense crosshatch texture throughout (heavier than type 4)
+     ══════════════════════════════════ -->
+<div class="row">
+  <span class="type-num">3</span>
+  <div class="visual"><svg width="56" height="28" viewBox="0 0 56 28">
+    <!-- shadow -->
+    <rect x="4" y="21" width="49" height="1" fill="#2E1A08" opacity="0.4"/>
+
+    <!-- top bumpy outline: 5 bumps -->
+    <rect x="5"  y="5" width="5"  height="1" fill="#8B6340"/>
+    <rect x="4"  y="6" width="2"  height="1" fill="#8B6340"/>
+    <rect x="6"  y="6" width="3"  height="1" fill="#C19A5A"/>
+    <rect x="9"  y="6" width="2"  height="1" fill="#8B6340"/>
+    <!-- valley -->
+    <rect x="11" y="7" width="2"  height="1" fill="#8B6340"/>
+    <!-- bump 2 -->
+    <rect x="13" y="5" width="7"  height="1" fill="#8B6340"/>
+    <rect x="13" y="6" width="2"  height="1" fill="#8B6340"/>
+    <rect x="15" y="6" width="3"  height="1" fill="#C19A5A"/>
+    <rect x="18" y="6" width="2"  height="1" fill="#8B6340"/><!-- valley -->
+    <rect x="20" y="7" width="2"  height="1" fill="#8B6340"/>
+    <!-- bump 3 -->
+    <rect x="22" y="5" width="8"  height="1" fill="#8B6340"/>
+    <rect x="22" y="6" width="2"  height="1" fill="#8B6340"/>
+    <rect x="24" y="6" width="4"  height="1" fill="#C19A5A"/>
+    <rect x="28" y="6" width="2"  height="1" fill="#8B6340"/><!-- valley -->
+    <rect x="30" y="7" width="2"  height="1" fill="#8B6340"/>
+    <!-- bump 4 -->
+    <rect x="32" y="5" width="7"  height="1" fill="#8B6340"/>
+    <rect x="32" y="6" width="2"  height="1" fill="#8B6340"/>
+    <rect x="34" y="6" width="3"  height="1" fill="#C19A5A"/>
+    <rect x="37" y="6" width="2"  height="1" fill="#8B6340"/><!-- valley -->
+    <rect x="39" y="7" width="2"  height="1" fill="#8B6340"/>
+    <!-- bump 5 -->
+    <rect x="41" y="5" width="7"  height="1" fill="#8B6340"/>
+    <rect x="41" y="6" width="2"  height="1" fill="#8B6340"/>
+    <rect x="43" y="6" width="3"  height="1" fill="#C19A5A"/>
+    <rect x="46" y="6" width="2"  height="1" fill="#8B6340"/>
+    <rect x="48" y="7" width="4"  height="1" fill="#8B6340"/>
+
+    <!-- body rows -->
+    <rect x="3"  y="7"  width="51" height="1" fill="#C19A5A"/>
+    <rect x="2"  y="8"  width="53" height="1" fill="#C19A5A"/>
+    <rect x="2"  y="9"  width="53" height="1" fill="#C19A5A"/>
+    <rect x="2"  y="10" width="53" height="1" fill="#A8784A"/>
+    <rect x="2"  y="11" width="53" height="1" fill="#A8784A"/>
+    <rect x="2"  y="12" width="53" height="1" fill="#8B6340"/>
+    <rect x="2"  y="13" width="53" height="1" fill="#8B6340"/>
+    <rect x="2"  y="14" width="53" height="1" fill="#8B6340"/>
+    <rect x="3"  y="15" width="51" height="1" fill="#5C3E20"/>
+    <rect x="4"  y="16" width="49" height="1" fill="#5C3E20"/>
+    <!-- bumpy bottom -->
+    <rect x="4"  y="17" width="3"  height="1" fill="#5C3E20"/>
+    <rect x="8"  y="17" width="6"  height="1" fill="#5C3E20"/>
+    <rect x="15" y="17" width="8"  height="1" fill="#5C3E20"/>
+    <rect x="24" y="17" width="8"  height="1" fill="#5C3E20"/>
+    <rect x="33" y="17" width="8"  height="1" fill="#5C3E20"/>
+    <rect x="42" y="17" width="7"  height="1" fill="#5C3E20"/>
+    <rect x="50" y="17" width="3"  height="1" fill="#5C3E20"/>
+    <rect x="5"  y="18" width="5"  height="1" fill="#5C3E20"/>
+    <rect x="16" y="18" width="6"  height="1" fill="#5C3E20"/>
+    <rect x="25" y="18" width="6"  height="1" fill="#5C3E20"/>
+    <rect x="34" y="18" width="6"  height="1" fill="#5C3E20"/>
+    <rect x="43" y="18" width="5"  height="1" fill="#5C3E20"/>
+
+    <!-- cracks (vertical zigzag dark lines) -->
+    <!-- crack 1 at x≈14 -->
+    <rect x="14" y="6"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="13" y="7"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="14" y="8"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="13" y="9"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="14" y="10" width="1" height="1" fill="#2E1A08"/>
+    <rect x="13" y="11" width="1" height="1" fill="#2E1A08"/>
+    <rect x="14" y="12" width="1" height="1" fill="#2E1A08"/>
+    <rect x="13" y="13" width="1" height="1" fill="#2E1A08"/>
+    <rect x="14" y="14" width="1" height="1" fill="#2E1A08"/>
+    <rect x="13" y="15" width="1" height="1" fill="#2E1A08"/>
+    <!-- crack 2 at x≈29 -->
+    <rect x="29" y="6"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="28" y="7"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="29" y="8"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="28" y="9"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="29" y="10" width="1" height="1" fill="#2E1A08"/>
+    <rect x="28" y="11" width="1" height="1" fill="#2E1A08"/>
+    <rect x="29" y="12" width="1" height="1" fill="#2E1A08"/>
+    <rect x="28" y="13" width="1" height="1" fill="#2E1A08"/>
+    <rect x="29" y="14" width="1" height="1" fill="#2E1A08"/>
+    <rect x="28" y="15" width="1" height="1" fill="#2E1A08"/>
+    <!-- crack 3 at x≈43 -->
+    <rect x="43" y="6"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="42" y="7"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="43" y="8"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="42" y="9"  width="1" height="1" fill="#2E1A08"/>
+    <rect x="43" y="10" width="1" height="1" fill="#2E1A08"/>
+    <rect x="42" y="11" width="1" height="1" fill="#2E1A08"/>
+    <rect x="43" y="12" width="1" height="1" fill="#2E1A08"/>
+    <rect x="42" y="13" width="1" height="1" fill="#2E1A08"/>
+    <rect x="43" y="14" width="1" height="1" fill="#2E1A08"/>
+    <rect x="42" y="15" width="1" height="1" fill="#2E1A08"/>
+
+    <!-- Dense crosshatch texture (every 2px, offset each row) -->
+    <rect x="5"  y="7" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="9"  y="7" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="17" y="7" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="21" y="7" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="25" y="7" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="33" y="7" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="37" y="7" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="45" y="7" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="49" y="7" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+
+    <rect x="4"  y="8" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="8"  y="8" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="10" y="8" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="16" y="8" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="20" y="8" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="24" y="8" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="26" y="8" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="32" y="8" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="36" y="8" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="40" y="8" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="44" y="8" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="48" y="8" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="52" y="8" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+
+    <rect x="5"  y="9" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="9"  y="9" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="11" y="9" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="17" y="9" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="21" y="9" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="25" y="9" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="27" y="9" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="33" y="9" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="37" y="9" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="41" y="9" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="45" y="9" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="49" y="9" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="53" y="9" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+
+    <rect x="4"  y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="8"  y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="10" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="16" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="20" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="24" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="26" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="32" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="36" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="40" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="44" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="48" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="52" y="10" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+    <rect x="5"  y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="9"  y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="11" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="17" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="21" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="25" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="27" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="33" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="37" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="41" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="45" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="49" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+
+    <rect x="4"  y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="8"  y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="12" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="16" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="20" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="24" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="30" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="34" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="38" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="44" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="48" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="52" y="12" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+
+    <rect x="5"  y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="9"  y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="15" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="19" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="23" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="27" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="31" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="35" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="39" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="45" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="49" y="13" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="53" y="13" width="1" height="1" fill="#3A2210" opacity="0.35"/>
+
+  </svg></div>
+  <div class="bar-track"><div class="bar" style="width:22%"></div></div>
+  <span class="pct">22%</span>
+</div>
+
+<!-- ══════════════════════════════════
+     TYPE 4 — Smooth sausage (snake)
+     Tapered torpedo, gently curved — one end slightly higher
+     Crosshatch texture, but lighter/sparser than type 3
+     Clean smooth silhouette
+     ══════════════════════════════════ -->
+<div class="row">
+  <span class="type-num">4</span>
+  <div class="visual"><svg width="56" height="28" viewBox="0 0 56 28">
+    <!-- shadow -->
+    <rect x="8" y="21" width="40" height="1" fill="#2E1A08" opacity="0.35"/>
+
+    <!-- top edge — tapered, left end slightly higher -->
+    <rect x="10" y="5"  width="10" height="1" fill="#8B6340"/><!-- left taper top -->
+    <rect x="8"  y="6"  width="4"  height="1" fill="#8B6340"/>
+    <rect x="12" y="6"  width="32" height="1" fill="#A8784A"/><!-- main top edge -->
+    <rect x="44" y="6"  width="6"  height="1" fill="#8B6340"/><!-- right taper -->
+    <rect x="50" y="7"  width="4"  height="1" fill="#8B6340"/>
+
+    <!-- highlight stripe -->
+    <rect x="6"  y="7"  width="2"  height="1" fill="#8B6340"/>
+    <rect x="8"  y="7"  width="36" height="1" fill="#DEB887"/>
+    <rect x="44" y="7"  width="6"  height="1" fill="#A8784A"/>
+
+    <!-- body -->
+    <rect x="5"  y="8"  width="2"  height="1" fill="#A8784A"/>
+    <rect x="7"  y="8"  width="37" height="1" fill="#C19A5A"/>
+    <rect x="44" y="8"  width="5"  height="1" fill="#A8784A"/>
+    <rect x="49" y="8"  width="3"  height="1" fill="#8B6340"/>
+
+    <rect x="4"  y="9"  width="2"  height="1" fill="#A8784A"/>
+    <rect x="6"  y="9"  width="38" height="1" fill="#C19A5A"/>
+    <rect x="44" y="9"  width="4"  height="1" fill="#A8784A"/>
+    <rect x="48" y="9"  width="4"  height="1" fill="#8B6340"/>
+
+    <rect x="3"  y="10" width="2"  height="1" fill="#A8784A"/>
+    <rect x="5"  y="10" width="39" height="1" fill="#A8784A"/>
+    <rect x="44" y="10" width="4"  height="1" fill="#8B6340"/>
+    <rect x="48" y="10" width="4"  height="1" fill="#5C3E20"/>
+
+    <rect x="3"  y="11" width="41" height="1" fill="#A8784A"/>
+    <rect x="44" y="11" width="4"  height="1" fill="#8B6340"/>
+    <rect x="48" y="11" width="3"  height="1" fill="#5C3E20"/>
+
+    <rect x="3"  y="12" width="41" height="1" fill="#8B6340"/>
+    <rect x="44" y="12" width="3"  height="1" fill="#5C3E20"/>
+
+    <rect x="4"  y="13" width="40" height="1" fill="#8B6340"/>
+    <rect x="44" y="13" width="2"  height="1" fill="#5C3E20"/>
+
+    <rect x="5"  y="14" width="39" height="1" fill="#5C3E20"/>
+
+    <rect x="7"  y="15" width="37" height="1" fill="#5C3E20"/>
+    <rect x="10" y="16" width="33" height="1" fill="#5C3E20"/>
+    <rect x="14" y="17" width="28" height="1" fill="#2E1A08" opacity="0.4"/>
+
+    <!-- Crosshatch texture — lighter/more sparse than type 3 -->
+    <rect x="10" y="7"  width="1" height="1" fill="#3A2210" opacity="0.35"/>
+    <rect x="16" y="7"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="22" y="7"  width="1" height="1" fill="#3A2210" opacity="0.35"/>
+    <rect x="28" y="7"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="34" y="7"  width="1" height="1" fill="#3A2210" opacity="0.35"/>
+    <rect x="40" y="7"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+
+    <rect x="7"  y="8"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="13" y="8"  width="1" height="1" fill="#3A2210" opacity="0.35"/>
+    <rect x="19" y="8"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="25" y="8"  width="1" height="1" fill="#3A2210" opacity="0.35"/>
+    <rect x="31" y="8"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="37" y="8"  width="1" height="1" fill="#3A2210" opacity="0.35"/>
+    <rect x="43" y="8"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+
+    <rect x="6"  y="9"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="12" y="9"  width="1" height="1" fill="#3A2210" opacity="0.35"/>
+    <rect x="18" y="9"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="24" y="9"  width="1" height="1" fill="#3A2210" opacity="0.35"/>
+    <rect x="30" y="9"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="36" y="9"  width="1" height="1" fill="#3A2210" opacity="0.35"/>
+    <rect x="42" y="9"  width="1" height="1" fill="#3A2210" opacity="0.3"/>
+
+    <rect x="5"  y="10" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="11" y="10" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="17" y="10" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="23" y="10" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="29" y="10" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="35" y="10" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="41" y="10" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+
+    <rect x="6"  y="11" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="12" y="11" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="18" y="11" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="24" y="11" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="30" y="11" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="36" y="11" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+    <rect x="42" y="11" width="1" height="1" fill="#3A2210" opacity="0.3"/>
+
+    <rect x="5"  y="12" width="1" height="1" fill="#3A2210" opacity="0.28"/>
+    <rect x="11" y="12" width="1" height="1" fill="#3A2210" opacity="0.28"/>
+    <rect x="17" y="12" width="1" height="1" fill="#3A2210" opacity="0.28"/>
+    <rect x="23" y="12" width="1" height="1" fill="#3A2210" opacity="0.28"/>
+    <rect x="29" y="12" width="1" height="1" fill="#3A2210" opacity="0.28"/>
+    <rect x="35" y="12" width="1" height="1" fill="#3A2210" opacity="0.28"/>
+    <rect x="41" y="12" width="1" height="1" fill="#3A2210" opacity="0.28"/>
+
+  </svg></div>
+  <div class="bar-track"><div class="bar" style="width:45%"></div></div>
+  <span class="pct">45%</span>
+</div>
+
+<!-- ══════════════════════════════════
+     TYPE 5 — Soft blobs
+     3–4 irregular blobs of varying sizes and heights
+     One large central mass, smaller satellite pieces
+     Dense crosshatch texture, ragged edges
+     ══════════════════════════════════ -->
+<div class="row">
+  <span class="type-num">5</span>
+  <div class="visual"><svg width="56" height="28" viewBox="0 0 56 28">
+
+    <!-- Blob A: large, x=4–24, y=9–20 -->
+    <!-- ragged top outline -->
+    <rect x="6"  y="9"  width="4" height="1" fill="#A8784A"/>
+    <rect x="10" y="8"  width="5" height="1" fill="#A8784A"/>
+    <rect x="15" y="7"  width="4" height="1" fill="#A8784A"/><!-- peak -->
+    <rect x="19" y="8"  width="4" height="1" fill="#A8784A"/>
+    <rect x="23" y="9"  width="2" height="1" fill="#A8784A"/>
+    <!-- body -->
+    <rect x="4"  y="10" width="2"  height="1" fill="#A8784A"/>
+    <rect x="6"  y="10" width="20" height="1" fill="#C19A5A"/>
+    <rect x="7"  y="10" width="4"  height="1" fill="#DEB887"/>
+    <rect x="4"  y="11" width="22" height="1" fill="#C19A5A"/>
+    <rect x="4"  y="12" width="22" height="1" fill="#A8784A"/>
+    <rect x="4"  y="13" width="22" height="1" fill="#A8784A"/>
+    <rect x="4"  y="14" width="22" height="1" fill="#8B6340"/>
+    <rect x="5"  y="15" width="20" height="1" fill="#8B6340"/>
+    <rect x="5"  y="16" width="19" height="1" fill="#5C3E20"/>
+    <!-- ragged bottom -->
+    <rect x="5"  y="17" width="3"  height="1" fill="#5C3E20"/>
+    <rect x="9"  y="17" width="4"  height="1" fill="#5C3E20"/>
+    <rect x="14" y="17" width="5"  height="1" fill="#5C3E20"/>
+    <rect x="20" y="17" width="4"  height="1" fill="#5C3E20"/>
+    <rect x="5"  y="18" width="19" height="1" fill="#2E1A08" opacity="0.35"/>
+    <!-- texture dots, dense grid -->
+    <rect x="8"  y="10" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="12" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="16" y="10" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="20" y="10" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="7"  y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="11" y="11" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="15" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="19" y="11" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="23" y="11" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="6"  y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="10" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="14" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="18" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="22" y="12" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="7"  y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="11" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="15" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="19" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="6"  y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="10" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="14" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="18" y="14" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="22" y="14" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="7"  y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="13" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="19" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+    <!-- Blob B: medium, upper-right, x=26–44, y=7–17 -->
+    <rect x="28" y="6"  width="5" height="1" fill="#A8784A"/>
+    <rect x="33" y="5"  width="5" height="1" fill="#A8784A"/><!-- peak -->
+    <rect x="38" y="6"  width="5" height="1" fill="#A8784A"/>
+    <rect x="26" y="7"  width="2" height="1" fill="#A8784A"/>
+    <rect x="28" y="7"  width="16" height="1" fill="#C19A5A"/>
+    <rect x="29" y="7"  width="4"  height="1" fill="#DEB887"/>
+    <rect x="26" y="8"  width="18" height="1" fill="#C19A5A"/>
+    <rect x="26" y="9"  width="18" height="1" fill="#A8784A"/>
+    <rect x="26" y="10" width="18" height="1" fill="#8B6340"/>
+    <rect x="27" y="11" width="16" height="1" fill="#8B6340"/>
+    <rect x="27" y="12" width="16" height="1" fill="#5C3E20"/>
+    <!-- ragged bottom -->
+    <rect x="27" y="13" width="3"  height="1" fill="#5C3E20"/>
+    <rect x="31" y="13" width="4"  height="1" fill="#5C3E20"/>
+    <rect x="36" y="13" width="5"  height="1" fill="#5C3E20"/>
+    <rect x="42" y="13" width="3"  height="1" fill="#5C3E20"/>
+    <rect x="27" y="14" width="18" height="1" fill="#2E1A08" opacity="0.35"/>
+    <!-- texture -->
+    <rect x="30" y="7"  width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="34" y="7"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="38" y="7"  width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="42" y="7"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="27" y="8"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="31" y="8"  width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="35" y="8"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="39" y="8"  width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="43" y="8"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="28" y="9"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="32" y="9"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="36" y="9"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="40" y="9"  width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="27" y="10" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="31" y="10" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="35" y="10" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="39" y="10" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="43" y="10" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="28" y="11" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="32" y="11" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="36" y="11" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="40" y="11" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+    <!-- Blob C: small, far right, x=47–55, y=13–20 -->
+    <rect x="49" y="12" width="5" height="1" fill="#A8784A"/>
+    <rect x="47" y="13" width="8" height="1" fill="#C19A5A"/>
+    <rect x="48" y="13" width="3" height="1" fill="#DEB887"/>
+    <rect x="47" y="14" width="8" height="1" fill="#A8784A"/>
+    <rect x="47" y="15" width="8" height="1" fill="#8B6340"/>
+    <rect x="48" y="16" width="6" height="1" fill="#5C3E20"/>
+    <rect x="47" y="17" width="8" height="1" fill="#2E1A08" opacity="0.35"/>
+    <rect x="49" y="13" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="52" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="48" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="51" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="54" y="14" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="50" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="53" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+  </svg></div>
+  <div class="bar-track"><div class="bar" style="width:10%"></div></div>
+  <span class="pct">10%</span>
+</div>
+
+<!-- ══════════════════════════════════
+     TYPE 6 — Fluffy mushy pieces
+     Wide flat spread with very jagged/ragged top edge
+     Wider and flatter than type 5, almost full-width
+     Dense crosshatch texture throughout
+     ══════════════════════════════════ -->
+<div class="row">
+  <span class="type-num">6</span>
+  <div class="visual"><svg width="56" height="28" viewBox="0 0 56 28">
+
+    <!-- Top edge — very jagged, multiple peaks and valleys spanning full width -->
+    <rect x="2"  y="11" width="2" height="1" fill="#A8784A"/>
+    <rect x="4"  y="10" width="3" height="1" fill="#A8784A"/><!-- peak 1 -->
+    <rect x="7"  y="11" width="2" height="1" fill="#A8784A"/>
+    <rect x="9"  y="12" width="2" height="1" fill="#A8784A"/><!-- valley dip -->
+    <rect x="11" y="10" width="4" height="1" fill="#A8784A"/><!-- peak 2 -->
+    <rect x="15" y="9"  width="3" height="1" fill="#A8784A"/><!-- tallest peak -->
+    <rect x="18" y="10" width="3" height="1" fill="#A8784A"/>
+    <rect x="21" y="11" width="2" height="1" fill="#A8784A"/><!-- valley -->
+    <rect x="23" y="10" width="4" height="1" fill="#A8784A"/><!-- peak 3 -->
+    <rect x="27" y="11" width="2" height="1" fill="#A8784A"/>
+    <rect x="29" y="12" width="2" height="1" fill="#A8784A"/><!-- valley dip -->
+    <rect x="31" y="10" width="5" height="1" fill="#A8784A"/><!-- peak 4 -->
+    <rect x="36" y="11" width="3" height="1" fill="#A8784A"/>
+    <rect x="39" y="12" width="2" height="1" fill="#A8784A"/><!-- valley -->
+    <rect x="41" y="10" width="4" height="1" fill="#A8784A"/><!-- peak 5 -->
+    <rect x="45" y="11" width="3" height="1" fill="#A8784A"/>
+    <rect x="48" y="12" width="3" height="1" fill="#A8784A"/>
+    <rect x="51" y="13" width="3" height="1" fill="#A8784A"/>
+
+    <!-- Full-width body rows -->
+    <rect x="1"  y="12" width="50" height="1" fill="#C19A5A"/>
+    <rect x="3"  y="12" width="8"  height="1" fill="#DEB887"/><!-- highlight patch left -->
+    <rect x="25" y="12" width="6"  height="1" fill="#DEB887"/><!-- highlight patch centre -->
+    <rect x="1"  y="13" width="53" height="1" fill="#C19A5A"/>
+    <rect x="1"  y="14" width="54" height="1" fill="#A8784A"/>
+    <rect x="1"  y="15" width="54" height="1" fill="#8B6340"/>
+    <rect x="2"  y="16" width="53" height="1" fill="#8B6340"/>
+    <rect x="2"  y="17" width="52" height="1" fill="#5C3E20"/>
+
+    <!-- ragged bottom edge -->
+    <rect x="2"  y="18" width="4"  height="1" fill="#5C3E20"/>
+    <rect x="7"  y="18" width="5"  height="1" fill="#5C3E20"/>
+    <rect x="13" y="18" width="7"  height="1" fill="#5C3E20"/>
+    <rect x="21" y="18" width="6"  height="1" fill="#5C3E20"/>
+    <rect x="28" y="18" width="8"  height="1" fill="#5C3E20"/>
+    <rect x="37" y="18" width="7"  height="1" fill="#5C3E20"/>
+    <rect x="45" y="18" width="6"  height="1" fill="#5C3E20"/>
+    <rect x="52" y="18" width="3"  height="1" fill="#5C3E20"/>
+
+    <!-- shadow -->
+    <rect x="3"  y="19" width="51" height="1" fill="#2E1A08" opacity="0.35"/>
+
+    <!-- Stray crumb pixels at edges / below bottom -->
+    <rect x="1"  y="19" width="1" height="1" fill="#5C3E20" opacity="0.6"/>
+    <rect x="54" y="17" width="1" height="1" fill="#5C3E20" opacity="0.6"/>
+    <rect x="0"  y="16" width="1" height="1" fill="#8B6340" opacity="0.5"/>
+    <rect x="55" y="15" width="1" height="1" fill="#8B6340" opacity="0.5"/>
+
+    <!-- Dense crosshatch texture -->
+    <rect x="3"  y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="7"  y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="11" y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="15" y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="19" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="23" y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="27" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="31" y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="35" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="39" y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="43" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="47" y="12" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="51" y="12" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+
+    <rect x="2"  y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="6"  y="13" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="10" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="14" y="13" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="18" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="22" y="13" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="26" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="30" y="13" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="34" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="38" y="13" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="42" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="46" y="13" width="1" height="1" fill="#3A2210" opacity="0.55"/>
+    <rect x="50" y="13" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="54" y="13" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+    <rect x="3"  y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="7"  y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="11" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="15" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="19" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="23" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="27" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="31" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="35" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="39" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="43" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="47" y="14" width="1" height="1" fill="#3A2210" opacity="0.5"/>
+    <rect x="51" y="14" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+
+    <rect x="2"  y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="6"  y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="10" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="14" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="18" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="22" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="26" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="30" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="34" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="38" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="42" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="46" y="15" width="1" height="1" fill="#3A2210" opacity="0.45"/>
+    <rect x="50" y="15" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="54" y="15" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+
+    <rect x="3"  y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="7"  y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="11" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="15" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="19" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="23" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="27" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="31" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="35" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="39" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="43" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="47" y="16" width="1" height="1" fill="#3A2210" opacity="0.4"/>
+    <rect x="51" y="16" width="1" height="1" fill="#3A2210" opacity="0.35"/>
+
+  </svg></div>
+  <div class="bar-track"><div class="bar" style="width:8%"></div></div>
+  <span class="pct">8%</span>
+</div>
+
+<!-- ══════════════════════════════════
+     TYPE 7 — Watery / liquid
+     Large flat rounded puddle + small detached satellite puddle
+     Dense stipple texture throughout
+     Flat/wide silhouette, gently rounded edges
+     ══════════════════════════════════ -->
+<div class="row">
+  <span class="type-num">7</span>
+  <div class="visual"><svg width="56" height="28" viewBox="0 0 56 28">
+
+    <!-- Main puddle: cx≈28, cy≈16, roughly oval rx≈22 ry≈7
+         Gentle, mostly smooth outline (unlike types 5/6) -->
+
+    <!-- top edge — gently irregular -->
+    <rect x="12" y="8"  width="32" height="1" fill="#7A3A18"/>
+    <rect x="10" y="9"  width="2"  height="1" fill="#7A3A18"/>
+    <rect x="44" y="9"  width="2"  height="1" fill="#7A3A18"/>
+    <!-- slight wave irregularity -->
+    <rect x="16" y="7"  width="6"  height="1" fill="#7A3A18"/><!-- small lobe up -->
+    <rect x="28" y="7"  width="5"  height="1" fill="#7A3A18"/><!-- centre lobe -->
+    <rect x="38" y="7"  width="4"  height="1" fill="#7A3A18"/><!-- right lobe -->
+
+    <!-- upper body -->
+    <rect x="9"  y="9"  width="1"  height="1" fill="#7A3A18"/>
+    <rect x="10" y="9"  width="36" height="1" fill="#9B5228"/>
+    <rect x="12" y="9"  width="5"  height="1" fill="#BF7040"/><!-- sheen left -->
+    <rect x="30" y="9"  width="4"  height="1" fill="#BF7040"/><!-- sheen right -->
+    <rect x="46" y="9"  width="1"  height="1" fill="#7A3A18"/>
+
+    <rect x="8"  y="10" width="1"  height="1" fill="#7A3A18"/>
+    <rect x="9"  y="10" width="38" height="1" fill="#9B5228"/>
+    <rect x="20" y="10" width="4"  height="1" fill="#BF7040"/>
+    <rect x="47" y="10" width="1"  height="1" fill="#7A3A18"/>
+
+    <!-- widest rows -->
+    <rect x="7"  y="11" width="1"  height="1" fill="#7A3A18"/>
+    <rect x="8"  y="11" width="40" height="1" fill="#9B5228"/>
+    <rect x="25" y="11" width="5"  height="1" fill="#BF7040"/>
+    <rect x="48" y="11" width="1"  height="1" fill="#7A3A18"/>
+
+    <rect x="6"  y="12" width="1"  height="1" fill="#7A3A18"/>
+    <rect x="7"  y="12" width="42" height="1" fill="#9B5228"/>
+    <rect x="13" y="12" width="3"  height="1" fill="#BF7040"/>
+    <rect x="36" y="12" width="4"  height="1" fill="#BF7040"/>
+    <rect x="49" y="12" width="1"  height="1" fill="#7A3A18"/>
+
+    <rect x="6"  y="13" width="1"  height="1" fill="#7A3A18"/>
+    <rect x="7"  y="13" width="42" height="1" fill="#9B5228"/>
+    <rect x="49" y="13" width="1"  height="1" fill="#7A3A18"/>
+
+    <rect x="7"  y="14" width="1"  height="1" fill="#7A3A18"/>
+    <rect x="8"  y="14" width="40" height="1" fill="#9B5228"/>
+    <rect x="22" y="14" width="4"  height="1" fill="#BF7040"/>
+    <rect x="48" y="14" width="1"  height="1" fill="#7A3A18"/>
+
+    <!-- lower body narrowing -->
+    <rect x="8"  y="15" width="1"  height="1" fill="#7A3A18"/>
+    <rect x="9"  y="15" width="38" height="1" fill="#9B5228"/>
+    <rect x="47" y="15" width="1"  height="1" fill="#7A3A18"/>
+
+    <rect x="10" y="16" width="1"  height="1" fill="#7A3A18"/>
+    <rect x="11" y="16" width="34" height="1" fill="#9B5228"/>
+    <rect x="45" y="16" width="1"  height="1" fill="#7A3A18"/>
+
+    <!-- bottom edge — gently irregular -->
+    <rect x="12" y="17" width="32" height="1" fill="#7A3A18"/>
+    <rect x="14" y="18" width="6"  height="1" fill="#7A3A18"/><!-- lingering tongue left -->
+    <rect x="22" y="18" width="4"  height="1" fill="#7A3A18"/>
+    <rect x="30" y="18" width="6"  height="1" fill="#7A3A18"/><!-- tongue right -->
+    <rect x="38" y="18" width="4"  height="1" fill="#7A3A18"/>
+
+    <!-- shadow -->
+    <rect x="13" y="19" width="30" height="1" fill="#2E1A08" opacity="0.3"/>
+
+    <!-- Satellite puddle: small, bottom-left detached -->
+    <rect x="3"  y="20" width="8"  height="1" fill="#7A3A18"/>
+    <rect x="2"  y="21" width="10" height="1" fill="#9B5228"/>
+    <rect x="3"  y="21" width="3"  height="1" fill="#BF7040"/>
+    <rect x="2"  y="22" width="10" height="1" fill="#9B5228"/>
+    <rect x="3"  y="23" width="8"  height="1" fill="#7A3A18"/>
+    <rect x="4"  y="24" width="6"  height="1" fill="#2E1A08" opacity="0.3"/>
+    <!-- satellite texture -->
+    <rect x="4"  y="21" width="1"  height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="7"  y="21" width="1"  height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="5"  y="22" width="1"  height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="9"  y="22" width="1"  height="1" fill="#7A3A18" opacity="0.45"/>
+
+    <!-- Dense stipple texture on main puddle -->
+    <rect x="12" y="9"  width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="16" y="9"  width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="20" y="9"  width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="24" y="9"  width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="28" y="9"  width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="32" y="9"  width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="36" y="9"  width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="40" y="9"  width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="44" y="9"  width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+
+    <rect x="11" y="10" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="15" y="10" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="19" y="10" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="23" y="10" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="27" y="10" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="31" y="10" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="35" y="10" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="39" y="10" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="43" y="10" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+
+    <rect x="10" y="11" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="14" y="11" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="18" y="11" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="22" y="11" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="26" y="11" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="30" y="11" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="34" y="11" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="38" y="11" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="42" y="11" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="46" y="11" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+
+    <rect x="9"  y="12" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="13" y="12" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="17" y="12" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="21" y="12" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="25" y="12" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="29" y="12" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="33" y="12" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="37" y="12" width="1" height="1" fill="#7A3A18" opacity="0.5"/>
+    <rect x="41" y="12" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="45" y="12" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="49" y="12" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+
+    <rect x="9"  y="13" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="13" y="13" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="17" y="13" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="21" y="13" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="25" y="13" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="29" y="13" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="33" y="13" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="37" y="13" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="41" y="13" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="45" y="13" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+
+    <rect x="10" y="14" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="14" y="14" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="18" y="14" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="22" y="14" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="26" y="14" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="30" y="14" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="34" y="14" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="38" y="14" width="1" height="1" fill="#7A3A18" opacity="0.45"/>
+    <rect x="42" y="14" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="46" y="14" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+
+    <rect x="11" y="15" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="15" y="15" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="19" y="15" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="23" y="15" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="27" y="15" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="31" y="15" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="35" y="15" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="39" y="15" width="1" height="1" fill="#7A3A18" opacity="0.4"/>
+    <rect x="43" y="15" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+
+    <rect x="13" y="16" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+    <rect x="17" y="16" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+    <rect x="21" y="16" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+    <rect x="25" y="16" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+    <rect x="29" y="16" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+    <rect x="33" y="16" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+    <rect x="37" y="16" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+    <rect x="41" y="16" width="1" height="1" fill="#7A3A18" opacity="0.35"/>
+
+  </svg></div>
+  <div class="bar-track"><div class="bar" style="width:3%"></div></div>
+  <span class="pct" style="color:#5a5350">—</span>
+</div>
+
+<p class="footnote">Last 90 days · 20 recorded types</p>
+</div>
+</body>
+</html>

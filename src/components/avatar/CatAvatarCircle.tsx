@@ -20,6 +20,7 @@ export default function CatAvatarCircle({ config, size, shiftDown = 10 }: Props)
           eyes={config.eyeStyle}
           eyePrimary={config.eyePrimary}
           eyeSecondary={config.eyeSecondary}
+          cheekStyle={config.cheekStyle}
           headdress={config.headdress}
           wallColor={config.wallColor}
           size={size}

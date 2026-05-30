@@ -25,6 +25,7 @@ export default function OnboardingScreen() {
   const completeOnboarding = useAuthStore(s => s.completeOnboarding);
 
   const [username, setUsername] = useState('');
+  const [useAvatar, setUseAvatar] = useState(true);
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>(DEFAULT_AVATAR_CONFIG);
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const [isSaving, setIsSaving] = useState(false);
@@ -70,7 +71,7 @@ export default function OnboardingScreen() {
         uid: user.uid,
         displayName: user.displayName ?? username.trim(),
         username: username.trim(),
-        avatarConfig,
+        avatarConfig: useAvatar ? avatarConfig : undefined,
         notifications: prefs,
       });
       await saveNotificationPrefs(prefs, user.uid);
@@ -112,15 +113,37 @@ export default function OnboardingScreen() {
         />
 
         <AppText variant="bodyEmphasis" style={styles.sectionTitle}>Your avatar</AppText>
-        <AppText variant="caption" colour="textSecondary" style={styles.sectionSubtitle}>
-          Customise it anytime from your profile.
-        </AppText>
-        <View style={styles.pickerContainer}>
-          <AvatarPicker
-            initial={avatarConfig}
-            onConfirm={setAvatarConfig}
-          />
+        <View
+          style={[
+            styles.card,
+            styles.avatarToggleCard,
+            { backgroundColor: surface.surface, borderColor: surface.border },
+          ]}
+        >
+          <View style={styles.row}>
+            <View style={styles.reminderLabel}>
+              <AppText variant="body">Use cat avatar</AppText>
+              <AppText variant="caption" colour="textSecondary">
+                Or we'll use your initials instead
+              </AppText>
+            </View>
+            <Switch
+              value={useAvatar}
+              onValueChange={setUseAvatar}
+              trackColor={{ false: surface.border, true: colours.primary400 }}
+              thumbColor="#fff"
+              style={styles.switch}
+            />
+          </View>
         </View>
+        {useAvatar && (
+          <View style={styles.pickerContainer}>
+            <AvatarPicker
+              initial={avatarConfig}
+              onConfirm={setAvatarConfig}
+            />
+          </View>
+        )}
 
         <View
           style={[
@@ -190,8 +213,8 @@ const styles = StyleSheet.create({
   scroll: { gap: 0 },
   title: { marginBottom: 8 },
   subtitle: { marginBottom: 24 },
-  sectionTitle: { marginTop: 24, marginBottom: 4 },
-  sectionSubtitle: { marginBottom: 12 },
+  sectionTitle: { marginTop: 24, marginBottom: 8 },
+  avatarToggleCard: { marginBottom: 8 },
   card: { borderWidth: 1, borderRadius: 12 },
   row: {
     flexDirection: 'row',
@@ -200,9 +223,9 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   divider: { height: 1, marginHorizontal: 14 },
-  reminderLabel: { flex: 1, paddingRight: 12, gap: 5 },
+  reminderLabel: { flex: 1, paddingRight: 12, gap: 3 },
   timePicker: { width: '100%' },
-  suppressLabel: { flex: 1, paddingRight: 12, gap: 5 },
+  suppressLabel: { flex: 1, paddingRight: 12, gap: 3 },
   switch: { transform: [{ scaleX: 0.9 }, { scaleY: 1 }] },
   cta: { marginTop: 24 },
   pickerContainer: { height: 520 },

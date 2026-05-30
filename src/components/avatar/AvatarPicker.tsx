@@ -11,6 +11,8 @@ import AppText from '../shared/Text';
 import Button from '../shared/Button';
 import CatAvatar, { BODY_COLORS, WALL_COLORS, BodyColor, WallColor } from './CatAvatar';
 import CatEyes, { EYE_COLORS, EYE_SECONDARY_COLORS, EyeColor, EyeSecondary, EyeStyle } from './CatEyes';
+import CatBody from './CatBody';
+import CatBlush, { CheekStyle } from './CatBlush';
 import CatHeaddress, { HeaddressStyle } from './CatHeaddress';
 
 export interface AvatarConfig {
@@ -19,9 +21,12 @@ export interface AvatarConfig {
   eyeStyle:     EyeStyle;
   eyePrimary:   EyeColor;
   eyeSecondary: EyeSecondary;
+  cheekStyle:   CheekStyle;
   headdress:    HeaddressStyle;
   wallColor:    WallColor;
 }
+
+const CHEEK_STYLES: CheekStyle[] = ['blush', 'freckles', 'none'];
 
 interface Props {
   initial: AvatarConfig;
@@ -100,10 +105,13 @@ function ScrollRow({ children, colours, itemHeight }: ScrollRowProps) {
     <View style={styles.scrollRowOuter}>
       {/* Left chevron */}
       {canLeft && (
-        <Pressable onPress={() => nudge('left')} style={[styles.edgeLeft, { height: itemHeight + 12 }]}>
-          <View style={styles.chevronCircle}>
-            <MCI name="chevron-left" size={22} color={chevronColor} />
-          </View>
+        <Pressable onPress={() => nudge('left')} style={[styles.edgeLeft, { height: itemHeight + 12 }]}
+          hitSlop={4}>
+          {({ pressed }) => (
+            <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
+              <MCI name="chevron-left" size={22} color={chevronColor} />
+            </View>
+          )}
         </Pressable>
       )}
 
@@ -122,10 +130,13 @@ function ScrollRow({ children, colours, itemHeight }: ScrollRowProps) {
 
       {/* Right chevron */}
       {canRight && (
-        <Pressable onPress={() => nudge('right')} style={[styles.edgeRight, { height: itemHeight + 12 }]}>
-          <View style={styles.chevronCircle}>
-            <MCI name="chevron-right" size={22} color={chevronColor} />
-          </View>
+        <Pressable onPress={() => nudge('right')} style={[styles.edgeRight, { height: itemHeight + 12 }]}
+          hitSlop={4}>
+          {({ pressed }) => (
+            <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
+              <MCI name="chevron-right" size={22} color={chevronColor} />
+            </View>
+          )}
         </Pressable>
       )}
     </View>
@@ -236,6 +247,16 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
             />
           </TraitRow>
 
+          <TraitRow label="Cheeks" divStyle={divStyle}>
+            <CheekStyleRow
+              selected={cfg.cheekStyle}
+              onSelect={s => set('cheekStyle', s)}
+              bodyColor={cfg.bodyColor}
+              snoutColor={cfg.snoutColor}
+              surface={surface} colours={colours}
+            />
+          </TraitRow>
+
           <TraitRow label="Headdress" divStyle={divStyle}>
             <HeaddressRow
               selected={cfg.headdress}
@@ -283,6 +304,7 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
             eyes={cfg.eyeStyle}
             eyePrimary={cfg.eyePrimary}
             eyeSecondary={cfg.eyeSecondary}
+            cheekStyle={cfg.cheekStyle}
             headdress={cfg.headdress}
             wallColor="none"
             size={128}
@@ -437,6 +459,51 @@ function HeaddressRow({
   );
 }
 
+// ── CheekStyleRow ─────────────────────────────────────────────────────────────
+
+const CHEEK_VB = '4 12 24 8';
+const CHEEK_H  = Math.round(PREVIEW_W * 8 / 24);
+
+function CheekStyleRow({
+  selected, onSelect, bodyColor, snoutColor, surface, colours,
+}: {
+  selected: CheekStyle; onSelect: (s: CheekStyle) => void;
+  bodyColor: BodyColor; snoutColor: BodyColor;
+  surface: ReturnType<typeof useTheme>['surface'];
+  colours: ReturnType<typeof useTheme>['colours'];
+}) {
+  const selectedIndex = CHEEK_STYLES.indexOf(selected);
+  const scales = useChipScales(CHEEK_STYLES.length, selectedIndex);
+
+  return (
+    <ScrollRow colours={colours} itemHeight={CHEEK_H + 20}>
+      {CHEEK_STYLES.map((s, i) => {
+        const isSel = s === selected;
+        return (
+          <Pressable
+            key={s}
+            onPress={() => onSelect(s)}
+            style={[styles.previewChip, {
+              backgroundColor: surface.surface,
+              borderColor: isSel ? colours.primary400 : surface.border,
+              borderWidth: 2,
+            }]}
+          >
+            <Animated.View style={{ transform: [{ scale: scales[i] }] }}>
+              <Svg width={PREVIEW_W} height={CHEEK_H} viewBox={CHEEK_VB}>
+                <SvgRect x={4} y={12} width={24} height={8} fill={surface.surface} />
+                <CatBody color={BODY_COLORS[bodyColor]} snoutColor={BODY_COLORS[snoutColor]} />
+                <CatBlush style={s} />
+              </Svg>
+            </Animated.View>
+            <AppText variant="caption" colour="textSecondary" style={styles.chipLabel}>{s}</AppText>
+          </Pressable>
+        );
+      })}
+    </ScrollRow>
+  );
+}
+
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const SWATCH_INNER  = 26;
@@ -546,6 +613,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.74)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  chevronCirclePressed: {
+    opacity: 0.4,
   },
 
   // ── Swatch chips ──

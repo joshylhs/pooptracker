@@ -17,7 +17,7 @@ function HomeTabIcon({ color, size }: { color: string; size: number }) {
   const showBadge = status.severity === 'urgent' || status.severity === 'gp';
   return (
     <View>
-      <MCI name="home-outline" size={size} color={color} />
+      <MCI name="home" size={size} color={color} />
       {showBadge && (
         <View style={[styles.badge, { backgroundColor: status.colour }]} />
       )}
@@ -49,12 +49,12 @@ export default function AppTabs() {
       <Tab.Screen
         name="Friends"
         component={FriendsStack}
-        options={{ tabBarIcon: ({ color, size }) => <MCI name="account-group-outline" size={size} color={color} /> }}
+        options={{ tabBarIcon: ({ color, size }) => <MCI name="account-group" size={size} color={color} /> }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ tabBarIcon: ({ color, size }) => <MCI name="account-outline" size={size} color={color} /> }}
+        options={{ tabBarIcon: ({ color, size }) => <MCI name="account" size={size} color={color} /> }}
       />
     </Tab.Navigator>
   );

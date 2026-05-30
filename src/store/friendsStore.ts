@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { useAuthStore } from './authStore';
-import { getUserProfile } from '../services/users';
+import { getUserProfile, setTrustedFriend } from '../services/users';
 import {
   loadFriends,
   loadPendingIncoming,
@@ -29,6 +29,7 @@ interface FriendsState {
   loading: boolean;
   leaderboardLoading: boolean;
   error: string | null;
+  trustedFriendIds: string[];
 
   // Cache freshness — null means "never fetched / invalidated".
   friendsFetchedAt: number | null;
@@ -36,6 +37,9 @@ interface FriendsState {
 
   loadAll: (opts?: { force?: boolean }) => Promise<void>;
   loadLeaderboard: (window: LeaderboardWindow, opts?: { force?: boolean }) => Promise<void>;
+  loadTrustedFriends: () => Promise<void>;
+  toggleTrust: (friendUid: string) => Promise<void>;
+  setAllTrusted: (friendUids: string[], trusted: boolean) => Promise<void>;
   sendRequest: (targetUid: string) => Promise<void>;
   accept: (uid: string) => Promise<void>;
   decline: (uid: string) => Promise<void>;
@@ -56,6 +60,7 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
   loading: false,
   leaderboardLoading: false,
   error: null,
+  trustedFriendIds: [],
   friendsFetchedAt: null,
   leaderboardFetchedAt: null,
 
@@ -91,7 +96,6 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
         username: myProfile.username,
         avatarInitials: myProfile.avatarInitials,
         avatarColour: myProfile.avatarColour,
-        avatarEmoji: myProfile.avatarEmoji,
         avatarConfig: myProfile.avatarConfig,
       });
       set({ leaderboard: { window, entries }, leaderboardFetchedAt: Date.now() });
@@ -100,6 +104,31 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
     } finally {
       set({ leaderboardLoading: false });
     }
+  },
+
+  loadTrustedFriends: async () => {
+    const uid = useAuthStore.getState().user?.uid;
+    if (!uid) return;
+    const profile = await getUserProfile(uid);
+    set({ trustedFriendIds: profile?.trustedFriendIds ?? [] });
+  },
+
+  toggleTrust: async friendUid => {
+    const uid = useAuthStore.getState().user?.uid;
+    if (!uid) return;
+    const current = get().trustedFriendIds;
+    const isTrusted = current.includes(friendUid);
+    const updated = isTrusted ? current.filter(id => id !== friendUid) : [...current, friendUid];
+    set({ trustedFriendIds: updated });
+    await setTrustedFriend(uid, friendUid, !isTrusted);
+  },
+
+  setAllTrusted: async (friendUids, trusted) => {
+    const uid = useAuthStore.getState().user?.uid;
+    if (!uid) return;
+    const updated = trusted ? [...friendUids] : [];
+    set({ trustedFriendIds: updated });
+    await Promise.all(friendUids.map(fid => setTrustedFriend(uid, fid, trusted)));
   },
 
   sendRequest: async targetUid => {
@@ -133,6 +162,7 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
     pendingOutgoing: [],
     leaderboard: null,
     error: null,
+    trustedFriendIds: [],
     friendsFetchedAt: null,
     leaderboardFetchedAt: null,
   }),

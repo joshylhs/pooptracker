@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, View, Alert } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Modal, ScrollView, StyleSheet, View, Alert, TextInput } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTheme } from '../../hooks/useTheme';
 import { BristolTypeNumber } from '../../utils/bristolData';
@@ -13,7 +13,7 @@ import AppText from '../shared/Text';
 
 interface LogEntryModalProps {
   visible: boolean;
-  onClose: (saved?: boolean) => void;
+  onClose: (saved?: boolean, hadBlood?: boolean) => void;
   /** When provided, the modal opens in edit mode for this log. */
   existingLog?: LogEntry | null;
   /** Pre-fill the datetime picker to this timestamp (used when logging for a past date). */
@@ -45,6 +45,20 @@ export default function LogEntryModal({
   const [bristolType, setBristolType] = useState<BristolTypeNumber | null>(null);
   const [symptoms, setSymptoms] = useState<Symptoms>({});
   const [notes, setNotes] = useState('');
+  const pillAnim = useRef(new Animated.Value(1)).current;
+  const prevIsToday = useRef(isToday(timestamp));
+  const scrollRef = useRef<ScrollView>(null);
+  const notesRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    const nowToday = isToday(timestamp);
+    if (nowToday === prevIsToday.current) return;
+    prevIsToday.current = nowToday;
+    Animated.sequence([
+      Animated.spring(pillAnim, { toValue: 0.7, useNativeDriver: true, friction: 10, tension: 200 }),
+      Animated.spring(pillAnim, { toValue: 1,   useNativeDriver: true, friction: 6,  tension: 80  }),
+    ]).start();
+  }, [timestamp]);
 
   useEffect(() => {
     if (!visible) return;
@@ -73,7 +87,7 @@ export default function LogEntryModal({
     } else {
       saveDetailedLog(details);
     }
-    onClose(true);
+    onClose(true, symptoms.blood === true);
   };
 
   const handleDelete = () => {
@@ -99,14 +113,20 @@ export default function LogEntryModal({
       onRequestClose={() => onClose()}
     >
       <View style={[styles.root, { backgroundColor: surface.background }]}>
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+        >
           <View style={styles.headerRow}>
             <AppText variant="caption" colour="textSecondary" style={styles.editLabel}>
               {existingLog ? 'EDITING LOG' : 'NEW LOG'}
             </AppText>
-            <View style={[
+            <Animated.View style={[
               styles.pill,
               { backgroundColor: isToday(timestamp) ? colours.idealBg : colours.primary50 },
+              { transform: [{ scale: pillAnim }] },
             ]}>
               <AppText
                 variant="caption"
@@ -114,7 +134,7 @@ export default function LogEntryModal({
               >
                 {isToday(timestamp) ? 'Today' : 'Backdated'}
               </AppText>
-            </View>
+            </Animated.View>
           </View>
           <View style={[styles.divider, { backgroundColor: surface.border }]} />
           <View style={styles.whenRow}>
@@ -134,19 +154,25 @@ export default function LogEntryModal({
           <SymptomsGrid value={symptoms} onChange={setSymptoms} />
 
           <TextField
-            label="Notes"
+            label="Notes (optional)"
             value={notes}
             onChangeText={setNotes}
             multiline
-            placeholder="optional"
+            placeholder="Any context e.g. pain, diet, stress, medication..."
             style={styles.notesInput}
+            inputRef={notesRef}
+            onFocus={() => {
+              notesRef.current?.measureInWindow((_, y, __, height) => {
+                scrollRef.current?.scrollTo({ y: y + height - 200, animated: true });
+              });
+            }}
           />
 
           <View style={styles.actions}>
-            <Button title={existingLog ? 'Save changes' : 'Save'} onPress={handleSave} />
-            <Button title="Cancel" variant="secondary" onPress={() => onClose()} />
+            <Button title={existingLog ? 'Save changes' : 'Save'} icon="content-save" onPress={handleSave} />
+            <Button title="Cancel" icon="close" variant="secondary" onPress={() => onClose()} />
             {existingLog && (
-              <Button title="Delete" variant="destructive" icon="trash-can-outline" onPress={handleDelete} />
+              <Button title="Delete" variant="destructive" icon="trash-can" onPress={handleDelete} />
             )}
           </View>
         </ScrollView>
@@ -174,6 +200,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 6,
   },
-  notesInput: { minHeight: 80, textAlignVertical: 'top' },
+  notesInput: { minHeight: 60, textAlignVertical: 'top' },
   actions: { gap: 12, marginTop: 8 },
 });

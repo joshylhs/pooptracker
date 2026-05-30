@@ -21,10 +21,6 @@ export function todayCount(
     .reduce((acc, s) => acc + s.count, 0);
 }
 
-export function totalLogs(summaries: readonly DailySummary[]): number {
-  return summaries.reduce((acc, s) => acc + s.count, 0);
-}
-
 export function averagePerDay(
   summaries: readonly DailySummary[],
   windowDays: number,

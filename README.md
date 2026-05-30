@@ -11,6 +11,9 @@ A social bowel movement tracker for iOS. Log your daily habits, visualise patter
 - **Quick log** — one tap to log at the current time, or add Bristol type, duration, and notes
 - **Calendar heatmap** — colour-coded intensity per day, navigable by month
 - **Streaks & stats** — current streak, daily count, monthly average
+- **Insights** — Bristol type distribution chart and 8-week frequency chart, collapsible on the home screen
+- **Health Signals** — Rome IV–based bowel health assessment over your last 90 days; flags patterns worth discussing with a GP; findings are snoozeable or dismissable with a history log
+- **Customisable avatar** — pixel avatar builder on your profile
 - **Friends & leaderboard** — compare counts with friends across day / week / month / year windows; raw log details stay private
 - **Daily reminders** — up to 5 configurable notification times with smart suppress (skips the reminder if you've already logged today)
 - **Privacy-first** — friends see counts only; individual logs, Bristol type, and notes are owner-only
@@ -80,6 +83,5 @@ firebase deploy --only firestore:rules
 
 ## Roadmap
 
-- [ ] Customisable avatar (driven by usage data)
-- [ ] Richer analytics and personal insights
-- [ ] App Store submission
+- [ ] App Store submission (screenshots + distribution cert needed)
+- [ ] Android support (deferred post-v1)

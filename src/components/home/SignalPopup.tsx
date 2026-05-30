@@ -5,15 +5,15 @@ import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from '../shared/Text';
 import { RomeFinding } from '../../utils/romeIV';
+import { AcknowledgedSignal } from '../../services/signals';
 import { getSignalCopy } from '../../utils/signalCopy';
 
-const SEEN_KEY = '@pooptracker/signals_popup_seen';
+const SEEN_WARN_KEY = '@pooptracker/signals_popup_seen';
+const SEEN_RESOLVED_KEY = '@pooptracker/signals_popup_resolved_seen';
 
-// IDs that should never trigger a popup
 const EXCLUDED_IDS = new Set(['all_clear', 'insufficient_data']);
 
-// Priority: urgent first, then gp. Info findings never trigger a popup.
-function pickFinding(findings: RomeFinding[]): RomeFinding | null {
+function pickLatest(findings: RomeFinding[]): RomeFinding | null {
   return (
     findings.find(f => f.severity === 'urgent') ??
     findings.find(f => f.severity === 'gp') ??
@@ -21,73 +21,101 @@ function pickFinding(findings: RomeFinding[]): RomeFinding | null {
   );
 }
 
-async function getSeenIds(): Promise<Set<string>> {
+async function getSeenIds(key: string): Promise<Set<string>> {
   try {
-    const raw = await AsyncStorage.getItem(SEEN_KEY);
+    const raw = await AsyncStorage.getItem(key);
     return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
   } catch {
     return new Set();
   }
 }
 
-async function markSeen(ids: string[]): Promise<void> {
+async function markSeen(key: string, ids: string[]): Promise<void> {
   try {
-    const existing = await getSeenIds();
+    const existing = await getSeenIds(key);
     ids.forEach(id => existing.add(id));
-    await AsyncStorage.setItem(SEEN_KEY, JSON.stringify([...existing]));
-  } catch {
-    // non-critical
-  }
+    await AsyncStorage.setItem(key, JSON.stringify([...existing]));
+  } catch {}
 }
 
-const SEVERITY_COLOUR: Record<RomeFinding['severity'], string> = {
-  urgent: '#D85A30',
-  gp: '#BA7517',
-  info: '#1D9E75',
-};
+type PopupMode = 'warning' | 'resolved';
+
+interface PopupState {
+  mode: PopupMode;
+  finding: RomeFinding | null;
+  resolved: AcknowledgedSignal | null;
+}
 
 interface Props {
-  findings: RomeFinding[];
+  latest: RomeFinding[];
+  recentlyResolved: AcknowledgedSignal[];
   onViewSignals: () => void;
+  onAcknowledge: (finding: RomeFinding) => void;
 }
 
-export default function SignalPopup({ findings, onViewSignals }: Props) {
-  const { surface, colours } = useTheme();
-  const [popupFinding, setPopupFinding] = useState<RomeFinding | null>(null);
-  // Guard so one session only ever shows one popup, even if findings change mid-session
+export default function SignalPopup({ latest, recentlyResolved, onViewSignals, onAcknowledge }: Props) {
+  const { surface } = useTheme();
+  const [popup, setPopup] = useState<PopupState | null>(null);
   const shownThisSession = useRef(false);
 
+  // Warning popup — fires for new unacknowledged findings
   useEffect(() => {
     if (shownThisSession.current) return;
-
-    const eligible = findings.filter(f => !EXCLUDED_IDS.has(f.id));
+    const eligible = latest.filter(f => !EXCLUDED_IDS.has(f.id));
     if (eligible.length === 0) return;
 
-    getSeenIds().then(seen => {
+    getSeenIds(SEEN_WARN_KEY).then(seen => {
       const newFindings = eligible.filter(f => !seen.has(f.id));
       if (newFindings.length === 0) return;
-
-      const toShow = pickFinding(newFindings);
+      const toShow = pickLatest(newFindings);
       if (!toShow) return;
-
       shownThisSession.current = true;
-      setPopupFinding(toShow);
-      // Mark all new finding IDs as seen so they don't re-trigger on next open
-      markSeen(newFindings.map(f => f.id));
+      setPopup({ mode: 'warning', finding: toShow, resolved: null });
+      markSeen(SEEN_WARN_KEY, newFindings.map(f => f.id));
     });
-  }, [findings]);
+  }, [latest]);
 
-  const dismiss = () => setPopupFinding(null);
+  // Resolved popup — fires when a signal moves to resolved state
+  useEffect(() => {
+    if (shownThisSession.current) return;
+    if (recentlyResolved.length === 0) return;
+
+    getSeenIds(SEEN_RESOLVED_KEY).then(seen => {
+      const newResolved = recentlyResolved.filter(r => !seen.has(r.findingId + '_resolved'));
+      if (newResolved.length === 0) return;
+      shownThisSession.current = true;
+      setPopup({ mode: 'resolved', finding: null, resolved: newResolved[0] });
+      markSeen(SEEN_RESOLVED_KEY, newResolved.map(r => r.findingId + '_resolved'));
+    });
+  }, [recentlyResolved]);
+
+  const dismiss = () => setPopup(null);
 
   const handleView = () => {
     dismiss();
     onViewSignals();
   };
 
-  if (!popupFinding) return null;
+  const handleAcknowledge = () => {
+    if (popup?.finding) onAcknowledge(popup.finding);
+    dismiss();
+  };
 
-  const copy = getSignalCopy(popupFinding.id);
-  const accentColour = SEVERITY_COLOUR[popupFinding.severity];
+  if (!popup) return null;
+
+  const isWarning = popup.mode === 'warning';
+  const accentColour = isWarning
+    ? (popup.finding?.severity === 'urgent' ? '#D85A30' : '#BA7517')
+    : '#1D9E75';
+
+  const copyId = isWarning
+    ? (popup.finding?.id ?? '')
+    : (popup.resolved?.findingId === 'blood' ? 'blood_resolved' : popup.resolved?.findingId ?? '');
+
+  const copy = getSignalCopy(copyId);
+  const icon = isWarning
+    ? (popup.finding?.severity === 'urgent' ? 'alert-circle' : 'stethoscope')
+    : 'check-circle';
 
   return (
     <Modal transparent animationType="fade" visible onRequestClose={dismiss}>
@@ -95,16 +123,11 @@ export default function SignalPopup({ findings, onViewSignals }: Props) {
         <Pressable
           style={[styles.sheet, { backgroundColor: surface.surface, borderColor: surface.border }]}
         >
-          {/* Coloured accent bar at top */}
           <View style={[styles.accentBar, { backgroundColor: accentColour }]} />
 
           <View style={styles.body}>
             <View style={styles.titleRow}>
-              <MCI
-                name={popupFinding.severity === 'urgent' ? 'alert-circle' : 'stethoscope'}
-                size={20}
-                color={accentColour}
-              />
+              <MCI name={icon} size={20} color={accentColour} />
               <AppText variant="bodyEmphasis" style={{ color: accentColour }}>
                 {copy.title}
               </AppText>
@@ -123,9 +146,15 @@ export default function SignalPopup({ findings, onViewSignals }: Props) {
               <MCI name="arrow-right" size={16} color="#fff" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={dismiss} style={styles.dismissBtn} activeOpacity={0.6}>
-              <AppText variant="caption" colour="textSecondary">Got it, dismiss</AppText>
-            </TouchableOpacity>
+            {isWarning ? (
+              <TouchableOpacity onPress={handleAcknowledge} style={styles.secondaryBtn} activeOpacity={0.6}>
+                <AppText variant="caption" colour="textSecondary">Acknowledge</AppText>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={dismiss} style={styles.secondaryBtn} activeOpacity={0.6}>
+                <AppText variant="caption" colour="textSecondary">Got it</AppText>
+              </TouchableOpacity>
+            )}
           </View>
         </Pressable>
       </Pressable>
@@ -160,5 +189,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   primaryBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
-  dismissBtn: { alignItems: 'center', paddingVertical: 4 },
+  secondaryBtn: { alignItems: 'center', paddingVertical: 4 },
 });
