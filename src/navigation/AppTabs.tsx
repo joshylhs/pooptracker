@@ -1,5 +1,7 @@
-import { StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useFocusEffect } from '@react-navigation/native';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import HomeStack from './HomeStack';
 import FriendsStack from './FriendsStack';
@@ -11,6 +13,17 @@ export type AppTabsParamList = {
   Friends: undefined;
   Profile: undefined;
 };
+
+function FadeTab({ children }: { children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useFocusEffect(
+    useCallback(() => {
+      opacity.setValue(0);
+      Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    }, [opacity]),
+  );
+  return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
+}
 
 function HomeTabIcon({ color, size }: { color: string; size: number }) {
   const { status } = useHealthFindings();
@@ -28,7 +41,13 @@ function HomeTabIcon({ color, size }: { color: string; size: number }) {
 const Tab = createBottomTabNavigator<AppTabsParamList>();
 
 export default function AppTabs() {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(opacity, { toValue: 1, duration: 320, useNativeDriver: true }).start();
+  }, []);
+
   return (
+  <Animated.View style={{ flex: 1, opacity }}>
     <Tab.Navigator
       initialRouteName="Home"
       screenOptions={{
@@ -43,20 +62,24 @@ export default function AppTabs() {
     >
       <Tab.Screen
         name="Home"
-        component={HomeStack}
         options={{ tabBarIcon: ({ color, size }) => <HomeTabIcon color={color} size={size} /> }}
-      />
+      >
+        {() => <FadeTab><HomeStack /></FadeTab>}
+      </Tab.Screen>
       <Tab.Screen
         name="Friends"
-        component={FriendsStack}
         options={{ tabBarIcon: ({ color, size }) => <MCI name="account-group" size={size} color={color} /> }}
-      />
+      >
+        {() => <FadeTab><FriendsStack /></FadeTab>}
+      </Tab.Screen>
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
         options={{ tabBarIcon: ({ color, size }) => <MCI name="account" size={size} color={color} /> }}
-      />
+      >
+        {() => <FadeTab><ProfileScreen /></FadeTab>}
+      </Tab.Screen>
     </Tab.Navigator>
+  </Animated.View>
   );
 }
 

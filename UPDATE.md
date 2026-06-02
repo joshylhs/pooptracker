@@ -20,12 +20,12 @@ Located at `~/pooptracker`. Running on iOS 26 simulator (iPhone 17 Pro) and phys
 ### Navigation
 ```
 RootNavigator
-  ├── AuthStack       (Welcome → Login / Signup → Onboarding)
-  └── AppTabs         (Home | Friends | Profile)
+  ├── AuthStack       (Welcome → Signup | Login)   ← fades in on mount
+  └── AppTabs         (Home | Friends | Profile)   ← fades in on mount
         ├── HomeStack         (HomeMain → HealthSignals)
         └── FriendsStack      (FriendsMain → FriendDetail)
 ```
-Auth state drives routing: unauthenticated → AuthStack, no onboarding → OnboardingScreen, else AppTabs.
+Auth state drives routing: unauthenticated → AuthStack, else AppTabs. **OnboardingScreen is gone** — signup + onboarding merged into SignupScreen (email, password, username, avatar, notification prefs all on one screen). Auth→App and App→Auth transitions both fade in (320ms) on navigator mount.
 
 ### State (Zustand)
 - `useAuthStore` — Firebase Auth user, onboarding flag
@@ -132,26 +132,35 @@ cd ios && pod install
 
 ## Cloud Functions
 
-Located at `functions/src/index.ts`. Single function: `sendPoke` (v1 API, `asia-southeast1` region).
+Located at `functions/src/index.ts`. Two functions, both `asia-southeast1`, Node 22.
 
-**Runtime:** Node 22 (updated from Node 20 — **needs a deploy to take effect**).
+| Function | Trigger | Purpose |
+|---|---|---|
+| `sendPoke` | HTTPS callable | Sends FCM push to a friend; enforces 5-min rate limit |
+| `onUserDeleted` | Auth `onDelete` | Cascades deletion: usernameIndex, subcollections, friendships, profile |
+
+**`onUserDeleted` — implementation note:** queries `usernameIndex` with `where('userId', '==', uid)` directly — does NOT recompute a hash from the profile. This means it works even if the profile doc was already deleted or the account never completed onboarding. The old `hashUsername` helper has been removed from the Cloud Function (no longer needed).
+
+**Runtime:** Node 22.
 ```bash
 cd functions && npm run deploy
 ```
-`skipLibCheck: true` added to `functions/tsconfig.json` — suppresses node_modules type conflicts between React Native globals and the DOM lib.
+`skipLibCheck: true` in `functions/tsconfig.json` suppresses node_modules type conflicts.
 
 ---
 
 ## Pending Deploys ⚠️
 
-Both of these need to be run before publishing:
-
 ```bash
-# 1. Firestore rules — adds dismissedSignals subcollection permission
+# 1. Firestore rules (already deployed — no pending changes as of last session)
 firebase deploy --only firestore:rules
 
-# 2. Cloud Functions — picks up Node 22 runtime
+# 2. Cloud Functions — deploy onUserDeleted (updated to query by userId, not hash)
 cd functions && npm run deploy
+
+# 3. One-time cleanup — delete orphaned usernameIndex entries from before onUserDeleted existed
+cd functions && npx ts-node src/cleanupUsernameIndex.ts
+# Then delete that script file — it's a one-off
 ```
 
 ---
@@ -171,9 +180,10 @@ cd functions && npm run deploy
 - **Status bar tab** — tappable card with a coloured left stripe (4px, full height) following the latest signal severity. Replaces the old full-width banner. Taps through to Health Signals.
 - **Tab badge** — coloured dot on the Home tab icon (rendered in `HomeTabIcon` inside `AppTabs.tsx`) when urgent or GP findings are active. Updates reactively via `useHealthFindings()`.
 - **SignalPopup** — fires once per finding ID (AsyncStorage tracking). Shows the most severe new finding in a bottom-sheet modal with "View Health Signals" and "Got it" buttons. One popup per session max.
-- **InsightsSection** — collapsible card below the day log card. Contains:
-  - Bristol type distribution chart (SVG donut, last 90 days). 7 arc segments coloured by type; type numbers rendered on each segment (omitted if sweep < 22°). Centre shows grouped stats: `X% hard` (types 1–2), `X% healthy` (3–5), `X% loose` (6–7). Hold any segment to expand it, dim others, and show type number + percentage + label in the centre. No legend — identification is on the arcs. Built with `react-native-svg`, centre text is a native `View` overlay (not SVG text).
-  - Weekly frequency chart (6-week stacked bar chart): segments per bar — Below (1–2, brown), Ideal (3–4, green), Over (5–7, orange), Untyped (grey). Fixed 120px height, y-axis with auto-stepped gridlines. Current week has a subtle purple tint. Long-press any bar for a floating tooltip (date range + breakdown). Dynamic insight sentence below chart.
+- **InsightsSection** — collapsible card below the day log card. Expands/collapses with `LayoutAnimation` (220ms) + chevron rotation; auto-scrolls to bring the header to the top of the viewport on expand, and restores the previous scroll position on collapse. Contains:
+  - **Shared legend** at the top of the expanded body: Too loose / Ideal / Too hard swatches (3 items); small italic note "lighter segments = untyped" beneath.
+  - **Bristol type distribution donut** (SVG, last 90 days). Four groups: Too hard (brown), Ideal (green), Too loose (orange), Untyped (translucent white `rgba(255,255,255,0.18)`). Segments have a 0.5° overlap to eliminate SVG anti-aliasing seams. Centre shows 3-line idle stats (hard/ideal/loose %). Untyped shown as a footnote ("N untyped") below the chart only when present. Hold a segment: others dim, held segment expands, floating tooltip shows group + type breakdown.
+  - **Weekly frequency chart** (6-week stacked bar, 120px fixed height). Segments: Below (brown), Ideal (green), Over (orange), Untyped (translucent). Y-axis auto-stepped. Current week has purple tint. Long-press for floating tooltip. Dynamic insight sentence.
 
 ---
 
@@ -188,6 +198,48 @@ Accessible via the status bar tab on Home. Not a tab.
 - **STATUS section** — shown when no LATEST/CURRENT findings; displays all_clear or insufficient_data info card.
 - **PAST section** — resolved findings as full cards with severity pill, resolved pill, relative date, and body copy.
 - **Disclaimer** at bottom.
+
+---
+
+## Animations
+
+All animations use `useNativeDriver: true` (transform/opacity) unless otherwise noted.
+
+| Location | Animation | Implementation |
+|---|---|---|
+| `AuthStack` | Fade in on mount (320ms) | `Animated.timing` in `useEffect` |
+| `AppTabs` | Fade in on mount (320ms) | `Animated.timing` in `useEffect` |
+| `AppTabs` — tab switch | Each tab fades in on focus (200ms) | `FadeTab` wrapper + `useFocusEffect` |
+| `InsightsSection` — expand/collapse | Height + opacity (220ms) | `LayoutAnimation.configureNext` |
+| `InsightsSection` — auto-scroll | Scrolls to section on expand; restores position on collapse | `scrollRef` + `insightsYRef` in HomeScreen |
+| `CalendarHeatmap` — month switch | Slide left/right (40px) + fade (160ms); rows spring-pop in staggered (45ms/row) | `Animated.parallel` + `Animated.stagger` |
+| `ProfileScreen` — reminder add/remove | Height + opacity (220ms) | `LayoutAnimation.configureNext` |
+| `LoginScreen` — forgot password link | Opacity dim on press (0.45) | Pressable `style={({ pressed }) => ...}` |
+
+---
+
+## Auth Error Handling
+
+`friendlyAuthError(e)` in `src/services/auth.ts` maps Firebase error codes to plain-English messages. Used in both LoginScreen and SignupScreen catches. Covers: `invalid-credential`, `wrong-password`, `user-not-found`, `email-already-in-use`, `weak-password`, `invalid-email`, `user-disabled`, `too-many-requests`, `network-request-failed`. Falls through to "Something went wrong — try again." for unknown codes. `operation-not-allowed` intentionally not mapped (developer misconfiguration, not a user-facing error).
+
+SignupScreen has a `generalError` slot (shown above submit button) for non-field errors (network, rate limit). Field-specific errors still attach to their field (`emailError`, `passwordError`, `usernameError`).
+
+---
+
+## Upcoming Work (next session)
+
+### Account deletion flow (replacing password re-auth)
+- Replace password confirmation with "type DELETE" text input
+- Add optional reason dropdown + free-text field
+- On confirm: submit feedback → delete account → AuthStack fades in
+- Reason dropdown options: TBD (to finalise)
+
+### Feedback collection
+- **Architecture:** App → Cloud Function (authenticated callable) → Google Sheets API directly (no Firestore intermediate step)
+- **Destination:** Google Sheet owned by developer; Cloud Function appends one row per submission: `[timestamp, uid, type, reason, freeText]`
+- **Setup needed:** Google Cloud service account with Sheets API access; sheet ID; service account key as Cloud Functions env secret; `googleapis` npm package in `functions/`
+- **Same pipeline** for independent general feedback form (Profile screen "Send feedback" button) — just `type: 'general'` vs `type: 'deletion'`
+- **Status:** Waiting on developer to create the Google Sheet and service account before coding begins
 
 ---
 

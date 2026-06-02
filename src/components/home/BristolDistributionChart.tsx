@@ -4,7 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from '../shared/Text';
 import { LogEntry } from '../../database/logRepository';
-import { BRISTOL_TYPES, BristolTypeNumber } from '../../utils/bristolData';
+import { BristolTypeNumber } from '../../utils/bristolData';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -13,9 +13,12 @@ interface Props {
   windowDays?: number;
 }
 
-const HARD_TYPES    = [1, 2];
-const HEALTHY_TYPES = [3, 4, 5];
-const LOOSE_TYPES   = [6, 7];
+const GROUPS = [
+  { key: 'hard',    label: 'Too hard',  types: [1, 2]    as number[], colour: '#854F0B' },
+  { key: 'ideal',   label: 'Ideal',     types: [3, 4]    as number[], colour: '#3B6D11' },
+  { key: 'loose',   label: 'Too loose', types: [5, 6, 7] as number[], colour: '#D85A30' },
+  { key: 'untyped', label: 'Untyped',   types: []        as number[], colour: '#6B7280' },
+];
 
 const SIZE    = 160;
 const CX      = SIZE / 2;
@@ -51,23 +54,24 @@ function arc(startDeg: number, endDeg: number, ro: number, ri: number): string {
   ].join(' ');
 }
 
+const SEAM = 0.5; // degrees each non-first segment overlaps under its predecessor
+
 export default function BristolDistributionChart({ logs, windowDays = 90 }: Props) {
   const { surface } = useTheme();
-  const [active, setActive] = useState<number | null>(null);
+  // Fill: untyped uses a translucent tint matching the bar chart's untyped bar colour
+  const groupFill = (i: number) => i === 3 ? 'rgba(255,255,255,0.18)' : GROUPS[i].colour;
+  // Text: untyped uses a readable muted tone for centre stat / tooltip
+  const groupText = (i: number) => i === 3 ? surface.textSecondary : GROUPS[i].colour;
+  const [tooltipGroupIndex, setTooltipGroupIndex] = useState<number | null>(null);
 
-  // Keep last active segment so tooltip content stays visible while fading out
-  const lastSeg = useRef<{ bt: typeof BRISTOL_TYPES[0]; i: number; pct: number } | null>(null);
+  const segOpacity = useRef(GROUPS.map(() => new Animated.Value(1))).current;
+  const segExpand  = useRef(GROUPS.map(() => new Animated.Value(0))).current;
 
-  // Per-segment animated values
-  const segOpacity = useRef(BRISTOL_TYPES.map(() => new Animated.Value(1))).current;
-  const segExpand  = useRef(BRISTOL_TYPES.map(() => new Animated.Value(0))).current;
-
-  // Centre text crossfade
   const statOpacity    = useRef(new Animated.Value(1)).current;
   const tooltipOpacity = useRef(new Animated.Value(0)).current;
 
   const handlePressIn = (i: number) => {
-    setActive(i);
+    setTooltipGroupIndex(i);
     Animated.parallel([
       ...segOpacity.map((a, j) => Animated.spring(a, { toValue: j === i ? 1 : 0.3, ...SPRING })),
       Animated.spring(segExpand[i], { toValue: 1, ...SPRING }),
@@ -82,19 +86,26 @@ export default function BristolDistributionChart({ logs, windowDays = 90 }: Prop
       Animated.spring(segExpand[i], { toValue: 0, ...SPRING }),
       Animated.timing(tooltipOpacity, { toValue: 0, ...FADE }),
       Animated.timing(statOpacity,    { toValue: 1, ...FADE }),
-    ]).start(() => setActive(null));
+    ]).start();
+    // Do NOT clear tooltipGroupIndex here — let it hold the last value so
+    // the tooltip content stays correct during the fade-out animation.
   };
 
   const distribution = useMemo(() => {
     const cutoff = Date.now() - windowDays * 24 * 60 * 60 * 1000;
-    const inWindow = logs.filter(l => l.timestamp >= cutoff && l.bristolType !== null);
+    const inWindow = logs.filter(l => l.timestamp >= cutoff);
     const total = inWindow.length;
     if (total === 0) return null;
     const counts = new Array(7).fill(0);
+    let untypedCount = 0;
     for (const log of inWindow) {
-      counts[(log.bristolType as BristolTypeNumber) - 1]++;
+      if (log.bristolType !== null) {
+        counts[(log.bristolType as BristolTypeNumber) - 1]++;
+      } else {
+        untypedCount++;
+      }
     }
-    return { counts, total };
+    return { counts, untypedCount, total };
   }, [logs, windowDays]);
 
   if (!distribution) {
@@ -105,35 +116,42 @@ export default function BristolDistributionChart({ logs, windowDays = 90 }: Prop
     );
   }
 
-  const { counts, total } = distribution;
-  const pcts = counts.map(c => Math.round((c / total) * 100));
+  const { counts, untypedCount, total } = distribution;
 
-  const hardPct    = HARD_TYPES.reduce((s, t) => s + pcts[t - 1], 0);
-  const healthyPct = HEALTHY_TYPES.reduce((s, t) => s + pcts[t - 1], 0);
-  const loosePct   = LOOSE_TYPES.reduce((s, t) => s + pcts[t - 1], 0);
+  const groupCounts = GROUPS.map((g, i) =>
+    i === 3 ? untypedCount : g.types.reduce((s, t) => s + counts[t - 1], 0),
+  );
+  const groupPcts = groupCounts.map(c => Math.round((c / total) * 100));
 
   let cursor = 0;
-  const segments = BRISTOL_TYPES.map((bt, i) => {
-    if (counts[i] === 0) return null;
-    const sweep    = (counts[i] / total) * 360;
-    const startDeg = cursor;
-    const endDeg   = cursor + sweep;
-    cursor = endDeg;
-    return { bt, i, startDeg, endDeg, pct: pcts[i] };
+  const segments = GROUPS.map((g, i) => {
+    if (groupCounts[i] === 0) return null;
+    const sweep    = Math.min((groupCounts[i] / total) * 360, 359.99);
+    const startDeg = cursor > 0 ? cursor - SEAM : cursor;
+    cursor += sweep;
+    return { group: g, i, startDeg, endDeg: cursor, pct: groupPcts[i] };
   });
 
-  const activeSeg = active !== null ? segments[active] : null;
-  if (activeSeg) lastSeg.current = activeSeg;
-  const displaySeg = activeSeg ?? lastSeg.current;
+  const tooltipRows: { label: string; pct: number }[] = tooltipGroupIndex !== null
+    ? GROUPS[tooltipGroupIndex].types
+        .map(t => ({
+          label: `Type ${t}`,
+          pct: total > 0 ? Math.round((counts[t - 1] / total) * 100) : 0,
+        }))
+        .filter(r => r.pct > 0)
+    : [];
+  const tooltipPct = tooltipGroupIndex !== null ? groupPcts[tooltipGroupIndex] : 0;
+  const tooltipColour = tooltipGroupIndex !== null ? groupText(tooltipGroupIndex) : '#fff';
+  const tooltipLabel  = tooltipGroupIndex !== null ? GROUPS[tooltipGroupIndex].label : '';
 
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
+      {/* Donut + floating tooltip wrapper */}
+      <View style={styles.donutWrapper}>
         <View style={styles.wrap}>
           <Svg width={SIZE} height={SIZE}>
             {segments.map(seg => {
               if (!seg) return null;
-              // Interpolate path d between normal and expanded using RN string interpolation
               const animD = segExpand[seg.i].interpolate({
                 inputRange:  [0, 1],
                 outputRange: [
@@ -143,9 +161,9 @@ export default function BristolDistributionChart({ logs, windowDays = 90 }: Prop
               });
               return (
                 <AnimatedPath
-                  key={seg.bt.type}
+                  key={seg.group.key}
                   d={animD}
-                  fill={seg.bt.colour}
+                  fill={groupFill(seg.i)}
                   opacity={segOpacity[seg.i]}
                   onPressIn={() => handlePressIn(seg.i)}
                   onPressOut={() => handlePressOut(seg.i)}
@@ -154,52 +172,41 @@ export default function BristolDistributionChart({ logs, windowDays = 90 }: Prop
             })}
           </Svg>
 
-          {/* Centre text overlay — two states crossfade */}
+          {/* Centre stats (idle state) */}
           <View style={styles.centre} pointerEvents="none">
             <Animated.View style={[styles.centreSlot, { opacity: statOpacity }]}>
-              <AppText style={styles.centreStatHard}>{hardPct}% hard</AppText>
-              <AppText style={styles.centreStatHealthy}>{healthyPct}% healthy</AppText>
-              <AppText style={styles.centreStatLoose}>{loosePct}% loose</AppText>
-            </Animated.View>
-
-            <Animated.View style={[styles.centreSlot, { opacity: tooltipOpacity }]}>
-              {displaySeg && (
-                <>
-                  <AppText style={[styles.centreType, { color: displaySeg.bt.colour }]}>
-                    Type {displaySeg.bt.type}
-                  </AppText>
-                  <AppText style={[styles.centrePct, { color: surface.textPrimary }]}>
-                    {displaySeg.pct}%
-                  </AppText>
-                  <AppText style={[styles.centreLabel, { color: surface.textSecondary }]}>
-                    {displaySeg.bt.label}
-                  </AppText>
-                </>
-              )}
+              <AppText style={[styles.centreStat, { color: GROUPS[0].colour }]}>{groupPcts[0]}% hard</AppText>
+              <AppText style={[styles.centreStatMain, { color: GROUPS[1].colour }]}>{groupPcts[1]}% ideal</AppText>
+              <AppText style={[styles.centreStat, { color: GROUPS[2].colour }]}>{groupPcts[2]}% loose</AppText>
             </Animated.View>
           </View>
         </View>
 
-        {/* Legend — no flex:1, naturally sized */}
-        <View style={styles.legend}>
-          {BRISTOL_TYPES.map((bt, i) => (
-            <View key={bt.type} style={styles.legendItem}>
-              <View style={[styles.swatch, { backgroundColor: bt.colour }]} />
-              <AppText style={[styles.legendText, {
-                color: counts[i] > 0 ? surface.textPrimary : surface.textSecondary,
-              }]}>
-                Type {bt.type}
-              </AppText>
+        {/* Floating tooltip — overlays the donut, centred above it */}
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.tooltip, { opacity: tooltipOpacity }]}
+        >
+          <AppText style={[styles.tooltipGroup, { color: tooltipColour }]}>
+            {tooltipLabel}
+          </AppText>
+          {tooltipRows.length > 0 ? tooltipRows.map(row => (
+            <View key={row.label} style={styles.tooltipRow}>
+              <AppText style={styles.tooltipTypeLabel}>{row.label}</AppText>
+              <AppText style={[styles.tooltipTypePct, { color: tooltipColour }]}>{row.pct}%</AppText>
             </View>
-          ))}
-        </View>
+          )) : (
+            <AppText style={[styles.tooltipTypePct, { color: tooltipColour }]}>{tooltipPct}%</AppText>
+          )}
+        </Animated.View>
       </View>
 
-      <AppText variant="caption" colour="textSecondary" style={styles.hint}>
-        Hold a segment to see the breakdown
-      </AppText>
+      <AppText style={styles.hint}>Hold a segment to see the breakdown</AppText>
+      {untypedCount > 0 && (
+        <AppText style={styles.untypedNote}>{untypedCount} untyped</AppText>
+      )}
       <AppText variant="caption" colour="textSecondary" style={styles.footnote}>
-        Last {windowDays} days · {total} recorded type{total !== 1 ? 's' : ''}
+        Last {windowDays} days · {total} log{total !== 1 ? 's' : ''}
       </AppText>
     </View>
   );
@@ -207,7 +214,13 @@ export default function BristolDistributionChart({ logs, windowDays = 90 }: Prop
 
 const styles = StyleSheet.create({
   container: { alignItems: 'center', gap: 10 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+
+  donutWrapper: {
+    width: SIZE,
+    height: SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   wrap: { width: SIZE, height: SIZE, flexShrink: 0 },
   centre: {
     position: 'absolute',
@@ -220,17 +233,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 1,
   },
-  centreType:        { fontSize: 11, fontWeight: '600', textAlign: 'center' },
-  centrePct:         { fontSize: 22, fontWeight: '700', textAlign: 'center', lineHeight: 26 },
-  centreLabel:       { fontSize: 9, textAlign: 'center' },
-  centreStatHard:    { fontSize: 10, fontWeight: '500', color: '#854F0B', textAlign: 'center' },
-  centreStatHealthy: { fontSize: 11, fontWeight: '700', color: '#3B6D11', textAlign: 'center' },
-  centreStatLoose:   { fontSize: 10, fontWeight: '500', color: '#D85A30', textAlign: 'center' },
-  legend:     { gap: 5 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  swatch:     { width: 8, height: 8, borderRadius: 2, flexShrink: 0 },
-  legendText: { fontSize: 12 },
-  empty:    { textAlign: 'center', paddingVertical: 8 },
-  hint:     { textAlign: 'center' },
-  footnote: { textAlign: 'center' },
+  centreStat:     { fontSize: 10, fontWeight: '500', textAlign: 'center' },
+  centreStatMain: { fontSize: 11, fontWeight: '700', textAlign: 'center' },
+
+  tooltip: {
+    position: 'absolute',
+    alignSelf: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2A1F30',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    gap: 4,
+    // shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  tooltipGroup:    { fontSize: 11, fontWeight: '700', textAlign: 'center', marginBottom: 2 },
+  tooltipRow:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tooltipTypeLabel:{ fontSize: 11, color: 'rgba(255,255,255,0.6)', width: 44 },
+  tooltipTypePct:  { fontSize: 13, fontWeight: '600' },
+
+  empty:       { textAlign: 'center', paddingVertical: 8 },
+  hint:        { fontSize: 10, color: 'rgba(255,255,255,0.35)', fontStyle: 'italic', textAlign: 'center' },
+  untypedNote: { fontSize: 10, color: 'rgba(255,255,255,0.35)', textAlign: 'center' },
+  footnote:    { textAlign: 'center' },
 });

@@ -2,7 +2,6 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useAuthStore } from '../store/authStore';
 import AuthStack from './AuthStack';
 import AppTabs from './AppTabs';
-import OnboardingScreen from '../screens/auth/OnboardingScreen';
 
 export default function RootNavigator() {
   const isInitialised = useAuthStore(s => s.isInitialised);
@@ -17,8 +16,7 @@ export default function RootNavigator() {
     );
   }
 
-  if (user === null) return <AuthStack />;
-  if (!hasCompletedOnboarding) return <OnboardingScreen />;
+  if (user === null || !hasCompletedOnboarding) return <AuthStack />;
   return <AppTabs />;
 }
 

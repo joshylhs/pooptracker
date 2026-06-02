@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useUIPrefs } from '../../hooks/useUIPrefs';
 import {
   BRISTOL_TYPES,
   BristolTypeNumber,
@@ -24,6 +25,7 @@ const BRISTOL_INFO_ROWS = [
 
 export default function BristolSelector({ value, onChange }: BristolSelectorProps) {
   const { surface, colours } = useTheme();
+  const { prefs, update } = useUIPrefs();
   const [showInfo, setShowInfo] = useState(false);
   const selectedEntry = BRISTOL_TYPES.find(e => e.type === value) ?? null;
 
@@ -76,6 +78,11 @@ export default function BristolSelector({ value, onChange }: BristolSelectorProp
         title="Bristol Stool Scale"
         intro="A medical scale classifying stool into 7 types by shape and consistency."
         rows={BRISTOL_INFO_ROWS}
+        toggles={[{
+          label: 'Show illustrations',
+          value: prefs.showIllustrations,
+          onValueChange: v => update({ showIllustrations: v }),
+        }]}
       />
       <View style={styles.labelRow}>
         <AppText variant="caption" colour="textSecondary" style={styles.label}>
@@ -115,7 +122,9 @@ export default function BristolSelector({ value, onChange }: BristolSelectorProp
             { transform: [{ scale: scaleAnim }] },
           ]}
         >
-          <BristolIllustration type={displayEntry.type} width={56} height={28} />
+          {prefs.showIllustrations && (
+            <BristolIllustration type={displayEntry.type} width={56} height={28} />
+          )}
           <View style={styles.detailText}>
             <View style={styles.detailHeader}>
               <AppText variant="bodyEmphasis">{displayEntry.label}</AppText>

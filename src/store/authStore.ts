@@ -29,14 +29,10 @@ export const useAuthStore = create<AuthState>(set => ({
 
   signUp: async input => {
     await signUpService(input);
-    // The auth listener will set `user`. We just mark this as a fresh signup
-    // so the user lands on Onboarding rather than skipping straight to AppTabs.
-    set({ hasCompletedOnboarding: false });
   },
 
   logIn: async input => {
     await logInService(input);
-    // Returning users skip onboarding.
     set({ hasCompletedOnboarding: true });
   },
 
@@ -55,9 +51,6 @@ export function startAuthListener(): void {
   unsubscribe = subscribeToAuthState(user => {
     const previousUid = useAuthStore.getState().user?.uid ?? null;
     const nextUid = user?.uid ?? null;
-    // Clear per-user stores whenever the identity changes (sign-out, sign-in,
-    // account switch). Prevents stale heatmap / leaderboard data from leaking
-    // between accounts during the brief window before fresh data loads.
     if (previousUid !== nextUid) {
       useLogStore.getState().clear();
       useFriendsStore.getState().clear();
@@ -66,8 +59,8 @@ export function startAuthListener(): void {
     useAuthStore.setState(state => ({
       user,
       isInitialised: true,
-      // If a session is restored on app launch (user !== null and we're moving
-      // from un-initialised to initialised), assume onboarding was already done.
+      // Restored session (app relaunch with existing Firebase session) means
+      // onboarding was completed — Firebase account only exists post-onboarding.
       hasCompletedOnboarding:
         user !== null && !state.isInitialised ? true : state.hasCompletedOnboarding,
     }));

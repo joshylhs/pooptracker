@@ -1,4 +1,4 @@
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import { useRef, useState } from 'react';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
@@ -7,20 +7,34 @@ import BristolDistributionChart from './BristolDistributionChart';
 import WeeklyFrequencyChart, { deriveWeeklyInsight } from './WeeklyFrequencyChart';
 import { LogEntry } from '../../database/logRepository';
 
+const LEGEND = [
+  { colour: '#D85A30', label: 'Too loose' },
+  { colour: '#3B6D11', label: 'Ideal' },
+  { colour: '#854F0B', label: 'Too hard' },
+];
+
 interface Props {
   logs: LogEntry[];
+  onToggle?: (expanded: boolean) => void;
 }
 
-export default function InsightsSection({ logs }: Props) {
+export default function InsightsSection({ logs, onToggle }: Props) {
   const { surface } = useTheme();
   const weeklyInsight = deriveWeeklyInsight(logs);
   const [expanded, setExpanded] = useState(true);
   const rotateAnim = useRef(new Animated.Value(1)).current;
 
   const toggle = () => {
-    const toValue = expanded ? 0 : 1;
-    Animated.timing(rotateAnim, { toValue, duration: 200, useNativeDriver: true }).start();
-    setExpanded(v => !v);
+    const newExpanded = !expanded;
+    LayoutAnimation.configureNext({
+      duration: 220,
+      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      update: { type: LayoutAnimation.Types.easeInEaseOut },
+      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    });
+    Animated.timing(rotateAnim, { toValue: newExpanded ? 1 : 0, duration: 220, useNativeDriver: true }).start();
+    setExpanded(newExpanded);
+    onToggle?.(newExpanded);
   };
 
   const chevronRotate = rotateAnim.interpolate({
@@ -47,6 +61,19 @@ export default function InsightsSection({ logs }: Props) {
 
       {expanded && (
         <View style={styles.body}>
+          {/* Shared legend for both charts */}
+          <View style={styles.legendBlock}>
+            <View style={styles.legend}>
+              {LEGEND.map(item => (
+                <View key={item.label} style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: item.colour }]} />
+                  <AppText style={styles.legendLabel}>{item.label}</AppText>
+                </View>
+              ))}
+            </View>
+            <AppText style={styles.legendNote}>lighter segments = untyped</AppText>
+          </View>
+
           <View style={styles.chartBlock}>
             <AppText variant="caption" colour="textSecondary" style={styles.chartTitle}>
               STOOL TYPE DISTRIBUTION · LAST 90 DAYS
@@ -93,6 +120,12 @@ const styles = StyleSheet.create({
   },
   chevronCirclePressed: { opacity: 0.4 },
   body: { paddingBottom: 16 },
+  legendBlock:{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8, gap: 5, alignItems: 'center' },
+  legend:     { flexDirection: 'row', gap: 14 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  legendDot:  { width: 7, height: 7, borderRadius: 4, flexShrink: 0 },
+  legendLabel:{ fontSize: 10, color: 'rgba(255,255,255,0.55)' },
+  legendNote: { fontSize: 9, color: 'rgba(255,255,255,0.28)', fontStyle: 'italic' },
   divider: { height: 1, marginHorizontal: 16, marginVertical: 14 },
   chartBlock: { paddingHorizontal: 16, gap: 10 },
   chartTitle: { letterSpacing: 0.5 },

@@ -11,12 +11,14 @@ import AppText from './Text';
 
 interface TextFieldProps extends TextInputProps {
   label?: string;
+  hint?: string;
   error?: string | null;
   inputRef?: RefObject<TextInput | null>;
 }
 
 export default function TextField({
   label,
+  hint,
   error,
   style,
   onFocus,
@@ -62,6 +64,11 @@ export default function TextField({
         }}
         {...rest}
       />
+      {hint && !error && (
+        <AppText variant="caption" colour="textSecondary" style={styles.hint}>
+          {hint}
+        </AppText>
+      )}
       {error && (
         <AppText variant="caption" style={[styles.error, { color: colours.destructive }]}>
           {error}
@@ -82,5 +89,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontSize: 15,
   },
+  hint:  { marginTop: 4 },
   error: { marginTop: 4 },
 });

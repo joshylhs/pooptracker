@@ -17,7 +17,7 @@ export default function Avatar({ initials, colour, size = 36 }: AvatarProps) {
       ]}
     >
       <AppText style={{ fontSize, lineHeight: size, fontWeight: '600', color: '#fff' }}>
-        {initials.slice(0, 2).toUpperCase()}
+        {(initials ?? '').slice(0, 2).toUpperCase()}
       </AppText>
     </View>
   );

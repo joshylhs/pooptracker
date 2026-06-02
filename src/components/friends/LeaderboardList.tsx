@@ -45,23 +45,28 @@ export default function LeaderboardList({
   const listOpacity = useRef(new Animated.Value(1)).current;
   const tabTranslateX = useRef(new Animated.Value(0)).current;
 
+  // Fade out immediately on window change, fade in when new entries land.
+  const prevWindow = useRef(activeWindow);
   useEffect(() => {
-    if (!loading && entries.length > 0) {
-      listOpacity.setValue(0);
-      Animated.timing(listOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    if (prevWindow.current === activeWindow) return;
+    prevWindow.current = activeWindow;
+    Animated.timing(listOpacity, { toValue: 0.3, duration: 80, useNativeDriver: true }).start();
+  }, [activeWindow]);
+
+  useEffect(() => {
+    if (entries.length > 0) {
+      Animated.timing(listOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
     }
-  }, [loading]);
-  const tabWidth = useRef(new Animated.Value(0)).current;
+  }, [entries]);
+  const tabWidthRef = useRef(0);
   const containerWidth = useRef(0);
 
   const animateToIndex = (index: number, width: number) => {
-    const availableWidth = width - TAB_PADDING * 2;
+    const availableWidth = width - TAB_PADDING * 2 - 2; // subtract 1px border each side
     const singleTabWidth = (availableWidth - TAB_GAP * (WINDOWS.length - 1)) / WINDOWS.length;
+    tabWidthRef.current = singleTabWidth;
     const targetX = TAB_PADDING + index * (singleTabWidth + TAB_GAP);
-    Animated.parallel([
-      Animated.spring(tabTranslateX, { toValue: targetX, useNativeDriver: false, tension: 300, friction: 30 }),
-      Animated.timing(tabWidth, { toValue: singleTabWidth, duration: 0, useNativeDriver: false }),
-    ]).start();
+    Animated.spring(tabTranslateX, { toValue: targetX, useNativeDriver: true, tension: 300, friction: 30 }).start();
   };
 
   useEffect(() => {
@@ -101,7 +106,7 @@ export default function LeaderboardList({
         <Animated.View
           style={[
             styles.tabHighlight,
-            { backgroundColor: colours.primary400, transform: [{ translateX: tabTranslateX }], width: tabWidth },
+            { backgroundColor: colours.primary400, transform: [{ translateX: tabTranslateX }], width: tabWidthRef.current },
           ]}
         />
         {WINDOWS.map(w => {
@@ -153,9 +158,6 @@ export default function LeaderboardList({
         </Animated.View>
       )}
 
-      <AppText variant="caption" colour="textSecondary" style={styles.footer}>
-        Shows your friends' log counts only (no details!)
-      </AppText>
     </View>
   );
 }
@@ -199,5 +201,4 @@ const styles = StyleSheet.create({
   list: { gap: 6 },
   spinner: { marginVertical: 24 },
   empty: { textAlign: 'center', marginVertical: 24 },
-  footer: { textAlign: 'center', marginTop: 12 },
 });

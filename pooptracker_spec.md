@@ -34,9 +34,8 @@ src/
 ├── screens/
 │   ├── auth/
 │   │   ├── WelcomeScreen.tsx
-│   │   ├── SignupScreen.tsx
-│   │   ├── LoginScreen.tsx
-│   │   └── OnboardingScreen.tsx       # notification preferences setup
+│   │   ├── SignupScreen.tsx           # combined signup + onboarding (email, password, username, avatar, notifications)
+│   │   └── LoginScreen.tsx
 │   ├── home/
 │   │   ├── HomeScreen.tsx             # heatmap + quick log + day detail + insights
 │   │   └── HealthSignalsScreen.tsx    # Rome IV findings + past signals history
@@ -74,7 +73,7 @@ src/
 │       └── Toast.tsx                  # brief success/error toast overlay
 │
 ├── navigation/
-│   ├── RootNavigator.tsx              # switches between Auth, Onboarding, and App; renders OnboardingScreen directly (not inside AuthStack)
+│   ├── RootNavigator.tsx              # switches between AuthStack and AppTabs based on auth state
 │   ├── AuthStack.tsx                  # Welcome, Signup, Login
 │   ├── AppTabs.tsx                    # Home, Friends, Profile bottom tabs; HomeTabIcon shows coloured badge dot for urgent/gp findings
 │   ├── HomeStack.tsx                  # stack: HomeMain → HealthSignals
@@ -330,13 +329,10 @@ export const BRISTOL_TYPES = [
 
 ```
 RootNavigator
-├── AuthStack (shown when no authenticated user)
+├── AuthStack (shown when no authenticated user or onboarding not complete)
 │   ├── WelcomeScreen
-│   ├── SignupScreen
+│   ├── SignupScreen  ← combined signup + onboarding
 │   └── LoginScreen
-│
-├── OnboardingScreen (shown when authenticated but onboarding not completed)
-│   # Rendered directly by RootNavigator — not inside AuthStack
 │
 └── AppTabs (shown when authenticated + onboarding complete)
     ├── HomeStack
@@ -476,21 +472,7 @@ Pushed from HomeScreen via the health bar tab. Not a bottom tab.
 - Toggle smart suppress
 - Save notification settings (syncs to Firestore + reschedules Notifee triggers)
 - Sign out
-- Delete account (with confirmation + password re-auth)
-
-### OnboardingScreen (shown once after signup)
-
-**Displays:**
-- Brief welcome message
-- Notification preference toggle (default: on)
-- Time picker (default: 12:00)
-- Smart suppress preference: "skip reminder if already logged today" toggle (default: on — preference stored, logic built later)
-
-**Actions:**
-- Toggle notifications on/off
-- Set preferred reminder time
-- Set smart suppress preference
-- Continue → navigate to AppTabs (HomeScreen)
+- Delete account (type "DELETE" to confirm + optional feedback reason; no password re-auth required)
 
 ---
 

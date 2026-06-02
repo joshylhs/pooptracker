@@ -23,7 +23,10 @@ function mondayOf(d: Date): Date {
 }
 
 function dateString(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 export function niceStep(max: number): number {
@@ -124,12 +127,12 @@ export default function MiniFrequencyChart({ logs, label, yMax: yMaxProp }: Prop
             const total = b.below + b.ideal + b.over + b.quick;
             return (
               <View key={i} style={styles.col}>
-                {b.isCurrent && (
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: colours.primary600 + '18', borderRadius: 2 }]} />
-                )}
                 <View style={[styles.stack, { height: CHART_H }]}>
                   {total > 0 && (
-                    <View style={styles.barClip}>
+                    <View style={[
+                      styles.barClip,
+                      b.isCurrent && { borderWidth: 1, borderColor: colours.primary400 + '66' },
+                    ]}>
                       {b.quick > 0 && <View style={[styles.seg, { height: px(b.quick), backgroundColor: C_QUICK }]} />}
                       {b.over  > 0 && <View style={[styles.seg, { height: px(b.over),  backgroundColor: C_OVER  }]} />}
                       {b.ideal > 0 && <View style={[styles.seg, { height: px(b.ideal), backgroundColor: C_IDEAL }]} />}

@@ -50,8 +50,8 @@ function pickAvatarColour(uid: string): string {
   return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
 }
 
-function avatarInitialsFrom(displayName: string): string {
-  const parts = displayName.trim().split(/\s+/).slice(0, 2);
+function avatarInitialsFrom(username: string): string {
+  const parts = username.trim().split(/[\s_]+/).slice(0, 2);
   return parts.map(p => p[0]?.toUpperCase() ?? '').join('');
 }
 
@@ -67,18 +67,17 @@ function timeString(hour: number, minute: number): string {
  */
 export async function createUserProfile(args: {
   uid: string;
-  displayName: string;
   username: string;
   avatarConfig?: AvatarConfig;
   notifications: NotificationPrefs;
 }): Promise<UserProfile> {
-  const { uid, displayName, username, avatarConfig, notifications } = args;
+  const { uid, username, avatarConfig, notifications } = args;
   const usernameHashValue = await hashUsername(username);
 
   const profile: UserProfile = {
     uid,
     username,
-    avatarInitials: avatarInitialsFrom(displayName),
+    avatarInitials: avatarInitialsFrom(username),
     avatarColour: pickAvatarColour(uid),
     ...(avatarConfig ? { avatarConfig } : {}),
     createdAt: Date.now(),
@@ -100,7 +99,7 @@ export async function createUserProfile(args: {
     tx.set(doc(db, 'users', uid), {
       ...profile,
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
     tx.set(indexRef, {
       usernameHash: usernameHashValue,
       userId: uid,
@@ -116,6 +115,12 @@ export async function createUserProfile(args: {
  * Native Firestore SDK caches reads automatically, so subsequent calls within
  * the persistent cache window are free.
  */
+export async function checkUsernameExists(username: string): Promise<boolean> {
+  const hash = await hashUsername(username);
+  const snap = await getDoc(doc(db, 'usernameIndex', hash));
+  return snap.exists();
+}
+
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const snap = await getDoc(doc(db, 'users', uid));
   if (!snap.exists()) return null;

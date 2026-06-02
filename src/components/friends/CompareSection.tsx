@@ -87,6 +87,7 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
   const [cardIndex, setCardIndex] = useState(0);
   const [listWidth, setListWidth] = useState(0);
   const flatRef = useRef<FlatList>(null);
+  const loopOffsetRef = useRef(0);
 
   // Restore persisted friend selection
   useEffect(() => {
@@ -122,7 +123,7 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
   const selectFriend = (f: FriendProfile) => {
     setSelectedFriend(f);
     setCardIndex(0);
-    flatRef.current?.scrollToIndex({ index: 0, animated: false });
+    flatRef.current?.scrollToIndex({ index: loopOffsetRef.current, animated: false });
     AsyncStorage.setItem(SELECTED_FRIEND_KEY, f.uid);
     setPickerVisible(false);
   };
@@ -197,14 +198,24 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
   ] : [];
 
   const cardCount = cards.length;
-
-  if (friends.length === 0) return null;
+  // Wrap both ends: prepend clone of last card, append clone of first card.
+  // The list starts at index 1 so the real first card is visible.
+  const loopCards = cards.length > 1
+    ? [
+        { ...cards[cardCount - 1], key: cards[cardCount - 1].key + '_pre' },
+        ...cards,
+        { ...cards[0], key: cards[0].key + '_post' },
+      ]
+    : cards;
+  const LOOP_OFFSET = cards.length > 1 ? 1 : 0;
+  loopOffsetRef.current = LOOP_OFFSET;
 
   return (
     <View style={[styles.container, { backgroundColor: surface.surface, borderColor: surface.border }]}>
       {/* Header */}
       <View style={styles.header}>
         <AppText variant="sectionHeading">Compare</AppText>
+        {friends.length > 0 && (
         <Pressable
           onPress={() => setPickerVisible(true)}
           style={({ pressed }) => [styles.friendPill, { borderColor: surface.border, opacity: pressed ? 0.5 : 1 }]}
@@ -227,10 +238,15 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
             </>
           )}
         </Pressable>
+        )}
       </View>
 
       {/* Body */}
-      {!selectedFriend ? null : loading ? (
+      {friends.length === 0 ? (
+        <View style={styles.empty}>
+          <AppText variant="caption" colour="textSecondary">Add a friend to start comparing</AppText>
+        </View>
+      ) : !selectedFriend ? null : loading ? (
         <View style={styles.empty}>
           <ActivityIndicator size="small" color={colours.primary400} />
         </View>
@@ -238,16 +254,28 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
         <View>
           <FlatList
             ref={flatRef}
-            data={cards}
+            data={loopCards}
             keyExtractor={c => c.key}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             style={styles.flatList}
+            initialScrollIndex={LOOP_OFFSET}
+            getItemLayout={(_, index) => ({ length: listWidth, offset: listWidth * index, index })}
             onLayout={e => setListWidth(e.nativeEvent.layout.width)}
             onMomentumScrollEnd={e => {
               const idx = Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width);
-              setCardIndex(idx);
+              if (idx === 0) {
+                // Swiped left past first — snap to real last card
+                flatRef.current?.scrollToIndex({ index: cardCount, animated: false });
+                setCardIndex(cardCount - 1);
+              } else if (idx === cardCount + 1) {
+                // Swiped right past last — snap to real first card
+                flatRef.current?.scrollToIndex({ index: 1, animated: false });
+                setCardIndex(0);
+              } else {
+                setCardIndex(idx - LOOP_OFFSET);
+              }
             }}
             renderItem={({ item }) => (
               <View style={[styles.cardPage, listWidth > 0 && { width: listWidth }]}>

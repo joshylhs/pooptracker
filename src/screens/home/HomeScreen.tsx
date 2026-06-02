@@ -50,6 +50,21 @@ export default function HomeScreen() {
   const dayCardScale = useRef(new Animated.Value(0)).current;
   const [dayCardVisible, setDayCardVisible] = useState(false);
   const dayCardShowingRef = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollYRef = useRef(0);
+  const insightsYRef = useRef(0);
+  const preExpandY = useRef(0);
+
+  const handleInsightsToggle = (expanded: boolean) => {
+    if (expanded) {
+      preExpandY.current = scrollYRef.current;
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: Math.max(0, insightsYRef.current - 8), animated: true });
+      }, 30);
+    } else {
+      scrollRef.current?.scrollTo({ y: preExpandY.current, animated: true });
+    }
+  };
 
   useEffect(() => {
     if (selectedDate !== null) {
@@ -144,7 +159,12 @@ export default function HomeScreen() {
         onAcknowledge={f => userId && acknowledge(userId, f, f.id)}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={styles.scroll}
+        onScroll={e => { scrollYRef.current = e.nativeEvent.contentOffset.y; }}
+        scrollEventThrottle={100}
+      >
         <AppText variant="screenTitle">Homepage</AppText>
 
         {/* Health status bar tab */}
@@ -176,7 +196,7 @@ export default function HomeScreen() {
               { label: 'Backdating', body: "Logging for a past date won't extend your streak." },
             ]}
           />
-          <StatCard value={today} label="today" icon="toilet" iconColor="#7F77DD" />
+          <StatCard value={today} label="logs today" icon="toilet" iconColor="#7F77DD" />
           <StatCard value={monthly.toFixed(1)} label="monthly avg" icon="chart-bar" iconColor="#1D9E75" />
         </View>
 
@@ -199,7 +219,9 @@ export default function HomeScreen() {
           </Animated.View>
         )}
 
-        <InsightsSection logs={logs} />
+        <View onLayout={e => { insightsYRef.current = e.nativeEvent.layout.y; }}>
+          <InsightsSection logs={logs} onToggle={handleInsightsToggle} />
+        </View>
       </ScrollView>
 
       <View style={styles.fab}>

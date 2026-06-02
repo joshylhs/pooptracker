@@ -33,6 +33,7 @@ interface Props {
   ctaLabel?: string;
   onConfirm: (config: AvatarConfig) => void;
   loading?: boolean;
+  headerBorderRadius?: number;
 }
 
 const BODY_COLOR_KEYS:  BodyColor[]      = Object.keys(BODY_COLORS) as BodyColor[];
@@ -145,7 +146,7 @@ function ScrollRow({ children, colours, itemHeight }: ScrollRowProps) {
 
 // ── Main picker ───────────────────────────────────────────────────────────────
 
-export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = false }: Props) {
+export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = false, headerBorderRadius = 28 }: Props) {
   const { surface, colours } = useTheme();
   const [cfg, setCfg] = useState<AvatarConfig>(initial);
 
@@ -281,7 +282,7 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
 
       {/* ── Blurred sticky header — height driven by avatarCardWrap measurement ── */}
       {headerH > 0 && (
-        <View style={[styles.stickyHeader, { height: headerH }]} pointerEvents="none">
+        <View style={[styles.stickyHeader, { height: headerH, borderRadius: headerBorderRadius }]} pointerEvents="none">
           <BlurView
             style={StyleSheet.absoluteFill}
             blurType="dark"

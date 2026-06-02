@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
+import { google } from 'googleapis';
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -97,4 +98,88 @@ export const sendPoke = functions
     });
 
     return { success: true };
+  });
+
+const FEEDBACK_SHEET_ID = '1g5sshisjUGF9MXE8U8Mng1zBAIBSW3RL-2TlKfkABJM';
+
+async function appendFeedbackRow(row: string[]): Promise<void> {
+  const auth = new google.auth.GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+  const sheets = google.sheets({ version: 'v4', auth });
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: FEEDBACK_SHEET_ID,
+    range: 'Sheet1!A:E',
+    valueInputOption: 'RAW',
+    requestBody: { values: [row] },
+  });
+}
+
+export const submitFeedback = functions
+  .region('asia-southeast1')
+  .https.onCall(async (data, context) => {
+    const uid = context.auth?.uid;
+    if (!uid) throw new functions.https.HttpsError('unauthenticated', 'Must be signed in.');
+
+    const { type, topic, freeText, username, email, platform, deviceModel, appVersion } = data as {
+      type?: string;
+      topic?: string;
+      freeText?: string;
+      username?: string;
+      email?: string;
+      platform?: string;
+      deviceModel?: string;
+      appVersion?: string;
+    };
+
+    if (type !== 'deletion' && type !== 'general') {
+      throw new functions.https.HttpsError('invalid-argument', 'Invalid feedback type.');
+    }
+
+    const row = [
+      new Date().toISOString(),
+      uid,
+      username ?? '',
+      email ?? '',
+      platform ?? '',
+      deviceModel ?? '',
+      appVersion ?? '',
+      type,
+      topic ?? '',
+      freeText ?? '',
+    ];
+
+    await appendFeedbackRow(row);
+    return { success: true };
+  });
+
+export const onUserDeleted = functions
+  .region('asia-southeast1')
+  .auth.user()
+  .onDelete(async user => {
+    const uid = user.uid;
+
+    // Query usernameIndex directly by userId — avoids recomputing the hash
+    // and works even if the profile doc was already gone.
+    const indexSnap = await db.collection('usernameIndex').where('userId', '==', uid).get();
+    await Promise.all(indexSnap.docs.map(d => d.ref.delete()));
+
+    // Delete all subcollections
+    const subcollections = ['logs', 'dailySummaries', 'monthlyTotals', 'yearlyTotals', 'dismissedSignals'];
+    await Promise.all(
+      subcollections.map(async sub => {
+        const snap = await db.collection(`users/${uid}/${sub}`).get();
+        await Promise.all(snap.docs.map(d => d.ref.delete()));
+      }),
+    );
+
+    // Remove this user from every friend's list, then delete own friendship docs
+    const friendsSnap = await db.collection(`friendships/${uid}/friends`).get();
+    await Promise.all([
+      ...friendsSnap.docs.map(d => db.doc(`friendships/${d.id}/friends/${uid}`).delete()),
+      ...friendsSnap.docs.map(d => d.ref.delete()),
+    ]);
+
+    // Delete profile doc (no-op if it never existed)
+    await db.doc(`users/${uid}`).delete();
   });

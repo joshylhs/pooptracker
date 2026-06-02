@@ -1,10 +1,23 @@
 import { Fragment, useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import {
+  Alert,
+  LayoutAnimation,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  TextInput,
+  View,
+} from 'react-native';
+import DeviceInfo from 'react-native-device-info';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuthStore } from '../../store/authStore';
 import { getUserProfile, UserProfile, deleteUserData, updateUserProfile } from '../../services/users';
 import { useFriendsStore } from '../../store/friendsStore';
-import { deleteAccount, reauthenticateUser } from '../../services/auth';
+import { deleteAccount } from '../../services/auth';
+import { submitFeedback as submitFeedbackService, FeedbackPayload } from '../../services/feedback';
 import {
   loadNotificationPrefs,
   saveNotificationPrefs,
@@ -20,11 +33,32 @@ import Button from '../../components/shared/Button';
 import AvatarPickerModal from '../../components/shared/AvatarPickerModal';
 import Avatar from '../../components/shared/Avatar';
 import { CatAvatarCircle, AvatarConfig, DEFAULT_AVATAR_CONFIG } from '../../components/avatar';
+import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
+
+const DELETE_REASONS = [
+  "It's not useful enough",
+  'Privacy concerns',
+  'Too many bugs',
+  'Taking a break',
+  'Other',
+];
+
+const FEEDBACK_TOPICS = [
+  'Bug report',
+  'Feature request',
+  'General feedback',
+];
+
+const FEEDBACK_TOPIC_ICONS: Record<string, string> = {
+  'Bug report':       'bug',
+  'Feature request':  'lightbulb-on',
+  'General feedback': 'chat',
+};
 
 export default function ProfileScreen() {
   const user = useAuthStore(s => s.user);
   const logOut = useAuthStore(s => s.logOut);
-  const { surface } = useTheme();
+  const { surface, colours } = useTheme();
   const friends = useFriendsStore(s => s.friends);
   const trustedFriendIds = useFriendsStore(s => s.trustedFriendIds);
   const loadTrustedFriends = useFriendsStore(s => s.loadTrustedFriends);
@@ -42,6 +76,15 @@ export default function ProfileScreen() {
   const [savingNotifs, setSavingNotifs] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [trustModalVisible, setTrustModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteReason, setDeleteReason] = useState<string | undefined>(undefined);
+  const [deleteFreeText, setDeleteFreeText] = useState('');
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
+  const [feedbackTopic, setFeedbackTopic] = useState<string | undefined>(undefined);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [feedbackSent, setFeedbackSent] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -67,10 +110,22 @@ export default function ProfileScreen() {
   };
 
   const addSlot = () => {
+    LayoutAnimation.configureNext({
+      duration: 220,
+      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      update: { type: LayoutAnimation.Types.easeInEaseOut },
+      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    });
     setNotifPrefs(p => ({ ...p, slots: [...p.slots, { hour: 9, minute: 0 }] }));
   };
 
   const removeSlot = (index: number) => {
+    LayoutAnimation.configureNext({
+      duration: 220,
+      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      update: { type: LayoutAnimation.Types.easeInEaseOut },
+      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    });
     setNotifPrefs(p => ({ ...p, slots: p.slots.filter((_, i) => i !== index) }));
   };
 
@@ -119,36 +174,75 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete account',
-      'This permanently deletes your account and all your data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Continue', style: 'destructive', onPress: promptForPassword },
-      ],
-    );
+  const handleDeleteAccount = () => setDeleteModalVisible(true);
+
+  const handleCancelDelete = () => {
+    if (deleting) return;
+    setDeleteModalVisible(false);
+    setDeleteConfirmText('');
+    setDeleteReason(undefined);
+    setDeleteFreeText('');
   };
 
-  const promptForPassword = () => {
-    Alert.prompt(
-      'Confirm your password',
-      'Enter your password to permanently delete your account.',
-      async password => {
-        if (!password || !user) return;
-        setDeleting(true);
-        try {
-          await reauthenticateUser(password);
-          if (profile) await deleteUserData(user.uid, profile.username);
-          await deleteAccount();
-          // auth listener fires → navigates to login automatically
-        } catch (e: any) {
-          setDeleting(false);
-          Alert.alert('Error', e?.message ?? 'Failed to delete account. Try signing out and back in first.');
-        }
-      },
-      'secure-text',
-    );
+  const buildSystemInfo = (): Pick<FeedbackPayload, 'username' | 'email' | 'platform' | 'deviceModel' | 'appVersion'> => ({
+    username: profile?.username,
+    email: user?.email ?? undefined,
+    platform: Platform.OS,
+    deviceModel: DeviceInfo.getModel(),
+    appVersion: `${DeviceInfo.getVersion()} (${DeviceInfo.getBuildNumber()})`,
+  });
+
+  const handleConfirmDelete = async () => {
+    if (!user || deleteConfirmText !== 'DELETE') return;
+    setDeleting(true);
+    try {
+      await submitFeedbackService({
+        type: 'deletion',
+        topic: deleteReason,
+        freeText: deleteFreeText || undefined,
+        ...buildSystemInfo(),
+      });
+    } catch {
+      // non-fatal — proceed with deletion even if feedback fails
+    }
+    try {
+      if (profile) await deleteUserData(user.uid, profile.username);
+      await deleteAccount();
+      // auth listener fires → navigates to AuthStack automatically
+    } catch (e: any) {
+      setDeleting(false);
+      if (e?.code === 'auth/requires-recent-login') {
+        Alert.alert('Session expired', 'Sign out and sign back in, then try again.');
+      } else {
+        Alert.alert('Error', 'Could not delete account. Try signing out and back in first.');
+      }
+    }
+  };
+
+  const handleCancelFeedback = () => {
+    if (submittingFeedback) return;
+    setFeedbackModalVisible(false);
+    setFeedbackTopic(undefined);
+    setFeedbackText('');
+    setFeedbackSent(false);
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackText.trim() && !feedbackTopic) return;
+    setSubmittingFeedback(true);
+    try {
+      await submitFeedbackService({
+        type: 'general',
+        topic: feedbackTopic,
+        freeText: feedbackText.trim() || undefined,
+        ...buildSystemInfo(),
+      });
+      setFeedbackSent(true);
+    } catch {
+      Alert.alert('Error', 'Could not send feedback. Check your connection and try again.');
+    } finally {
+      setSubmittingFeedback(false);
+    }
   };
 
   const handleAvatarSave = async (config: AvatarConfig) => {
@@ -171,7 +265,7 @@ export default function ProfileScreen() {
       if (avatarConfig) {
         Alert.alert(
           'Remove cat avatar?',
-          'Your current avatar will be lost and you\'ll revert to your initials.',
+          "Your current avatar will be lost and you'll revert to your initials.",
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -231,6 +325,7 @@ export default function ProfileScreen() {
           </View>
           <View style={dividerStyle} />
           <View style={styles.row}>
+            <MCI name="cat" size={18} color={surface.textSecondary} style={styles.rowIcon} />
             <View style={styles.rowLabelBlock}>
               <AppText variant="body">Use cat avatar</AppText>
               <AppText variant="caption" colour="textSecondary">
@@ -260,7 +355,8 @@ export default function ProfileScreen() {
         </AppText>
         <View style={cardStyle}>
           <View style={styles.row}>
-            <AppText variant="body">Daily reminder</AppText>
+            <MCI name="bell" size={18} color={surface.textSecondary} style={styles.rowIcon} />
+            <AppText variant="body" style={styles.rowLabelBlock}>Daily reminder</AppText>
             <Switch
               value={notifPrefs.enabled}
               onValueChange={v => setNotifPrefs(p => ({ ...p, enabled: v }))}
@@ -310,6 +406,7 @@ export default function ProfileScreen() {
 
               <View style={[styles.dividerThick, { backgroundColor: surface.border }]} />
               <View style={styles.row}>
+                <MCI name="bell-sleep" size={18} color={surface.textSecondary} style={styles.rowIcon} />
                 <View style={styles.rowLabelBlock}>
                   <AppText variant="body">Smart suppress</AppText>
                   <AppText variant="caption" colour="textSecondary">
@@ -340,6 +437,7 @@ export default function ProfileScreen() {
         </AppText>
         <View style={cardStyle}>
           <View style={styles.row}>
+            <MCI name="hand-wave" size={18} color={surface.textSecondary} style={styles.rowIcon} />
             <View style={styles.rowLabelBlock}>
               <AppText variant="body">Allow pokes</AppText>
               <AppText variant="caption" colour="textSecondary">
@@ -361,6 +459,7 @@ export default function ProfileScreen() {
             <>
               <View style={[dividerStyle, { marginVertical: 0 }]} />
               <Pressable style={styles.row} onPress={() => setTrustModalVisible(true)} hitSlop={4}>
+                <MCI name="shield-account" size={18} color={surface.textSecondary} style={styles.rowIcon} />
                 <View style={styles.rowLabelBlock}>
                   <AppText variant="body">Trusted friends</AppText>
                   <AppText variant="caption" colour="textSecondary">
@@ -375,54 +474,17 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Trusted friends modal */}
-        <Modal visible={trustModalVisible} transparent animationType="fade" onRequestClose={() => setTrustModalVisible(false)}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setTrustModalVisible(false)}>
-            <View style={[styles.modalSheet, { backgroundColor: surface.surface, borderColor: surface.border }]}>
-              <AppText variant="sectionHeading" style={styles.modalTitle}>Trusted friends</AppText>
-              <AppText variant="caption" colour="textSecondary" style={styles.modalHint}>
-                Trusted friends can see your detailed stats
-              </AppText>
-              <ScrollView>
-                <View style={styles.row}>
-                  <AppText variant="body">All friends</AppText>
-                  <Switch
-                    value={friends.length > 0 && friends.every(f => trustedFriendIds.includes(f.uid))}
-                    onValueChange={v => setAllTrusted(friends.map(f => f.uid), v)}
-                    trackColor={{ true: '#7F77DD' }}
-                  />
-                </View>
-                <View style={dividerStyle} />
-                {friends.map((f, i) => (
-                  <Fragment key={f.uid}>
-                    {i > 0 && <View style={dividerStyle} />}
-                    <View style={styles.row}>
-                      <View style={styles.trustAvatarRow}>
-                        {f.avatarConfig
-                          ? <CatAvatarCircle config={f.avatarConfig} size={28} />
-                          : <Avatar initials={f.avatarInitials} colour={f.avatarColour} size={28} />
-                        }
-                        <AppText variant="body">{f.username}</AppText>
-                      </View>
-                      <Switch
-                        value={trustedFriendIds.includes(f.uid)}
-                        onValueChange={() => toggleTrust(f.uid)}
-                        trackColor={{ true: '#7F77DD' }}
-                      />
-                    </View>
-                  </Fragment>
-                ))}
-              </ScrollView>
-            </View>
-          </Pressable>
-        </Modal>
-
         {/* Account section */}
         <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
           ACCOUNT
         </AppText>
         <View style={styles.accountButtons}>
           <Button title="Sign out" icon="logout" onPress={handleSignOut} loading={signingOut} />
+          <Button
+            title="Send feedback"
+            icon="message-reply-text"
+            onPress={() => setFeedbackModalVisible(true)}
+          />
           <Button
             title="Delete account"
             variant="destructive"
@@ -432,6 +494,223 @@ export default function ProfileScreen() {
           />
         </View>
       </ScrollView>
+
+      {/* Trusted friends modal */}
+      <Modal visible={trustModalVisible} transparent animationType="fade" onRequestClose={() => setTrustModalVisible(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setTrustModalVisible(false)}>
+          <View style={[styles.modalSheet, { backgroundColor: surface.surface, borderColor: surface.border }]}>
+            <AppText variant="sectionHeading" style={styles.modalTitle}>Trusted friends</AppText>
+            <AppText variant="caption" colour="textSecondary" style={styles.modalHint}>
+              Trusted friends can see your detailed stats
+            </AppText>
+            <ScrollView>
+              <View style={styles.row}>
+                <AppText variant="body">All friends</AppText>
+                <Switch
+                  value={friends.length > 0 && friends.every(f => trustedFriendIds.includes(f.uid))}
+                  onValueChange={v => setAllTrusted(friends.map(f => f.uid), v)}
+                  trackColor={{ true: '#7F77DD' }}
+                />
+              </View>
+              <View style={dividerStyle} />
+              {friends.map((f, i) => (
+                <Fragment key={f.uid}>
+                  {i > 0 && <View style={dividerStyle} />}
+                  <View style={styles.row}>
+                    <View style={styles.trustAvatarRow}>
+                      {f.avatarConfig
+                        ? <CatAvatarCircle config={f.avatarConfig} size={28} />
+                        : <Avatar initials={f.avatarInitials} colour={f.avatarColour} size={28} />
+                      }
+                      <AppText variant="body">{f.username}</AppText>
+                    </View>
+                    <Switch
+                      value={trustedFriendIds.includes(f.uid)}
+                      onValueChange={() => toggleTrust(f.uid)}
+                      trackColor={{ true: '#7F77DD' }}
+                    />
+                  </View>
+                </Fragment>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Send feedback modal */}
+      <Modal
+        visible={feedbackModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelFeedback}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={handleCancelFeedback}>
+          <Pressable style={[styles.deleteModalSheet, { backgroundColor: surface.surface, borderColor: surface.border }]}>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              {feedbackSent ? (
+                <View style={styles.feedbackSentBlock}>
+                  <MCI name="check-circle" size={40} color={colours.primary400} />
+                  <AppText variant="sectionHeading" style={styles.feedbackSentTitle}>Thanks!</AppText>
+                  <AppText variant="body" colour="textSecondary" style={styles.feedbackSentBody}>
+                    Your feedback has been received.
+                  </AppText>
+                  <Button title="Close" onPress={handleCancelFeedback} />
+                </View>
+              ) : (
+                <>
+                  <AppText variant="sectionHeading" style={styles.modalTitle}>Send feedback</AppText>
+                  <AppText variant="caption" colour="textSecondary" style={styles.deleteWarning}>
+                    Bug, idea, or anything on your mind!
+                  </AppText>
+
+                  <AppText variant="caption" colour="textSecondary" style={styles.deleteFieldLabel}>
+                    Topic (optional)
+                  </AppText>
+                  {FEEDBACK_TOPICS.map(topic => (
+                    <Pressable
+                      key={topic}
+                      onPress={() => setFeedbackTopic(t => t === topic ? undefined : topic)}
+                      style={[
+                        styles.reasonRow,
+                        { borderColor: surface.border },
+                        feedbackTopic === topic && { borderColor: colours.primary400 },
+                      ]}
+                    >
+                      <View style={styles.reasonRowLeft}>
+                        <MCI
+                          name={FEEDBACK_TOPIC_ICONS[topic]}
+                          size={16}
+                          color={feedbackTopic === topic ? colours.primary400 : surface.textSecondary}
+                        />
+                        <AppText variant="body">{topic}</AppText>
+                      </View>
+                      {feedbackTopic === topic && (
+                        <MCI name="check" size={16} color={colours.primary400} />
+                      )}
+                    </Pressable>
+                  ))}
+
+                  <AppText variant="caption" colour="textSecondary" style={styles.deleteFieldLabel}>
+                    Message
+                  </AppText>
+                  <TextInput
+                    style={[
+                      styles.freeTextInput,
+                      { color: surface.textPrimary, borderColor: surface.border, backgroundColor: surface.background },
+                    ]}
+                    placeholder="What's on your mind?"
+                    placeholderTextColor={surface.textPlaceholder}
+                    value={feedbackText}
+                    onChangeText={setFeedbackText}
+                    multiline
+                    numberOfLines={4}
+                  />
+
+                  <View style={styles.deleteActions}>
+                    <Button
+                      title="Send"
+                      icon="send"
+                      onPress={handleSubmitFeedback}
+                      loading={submittingFeedback}
+                      disabled={!feedbackText.trim() && !feedbackTopic}
+                    />
+                    <Button title="Cancel" icon="close" onPress={handleCancelFeedback} />
+                  </View>
+                </>
+              )}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Delete account modal */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelDelete}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={handleCancelDelete}>
+          <Pressable style={[styles.deleteModalSheet, { backgroundColor: surface.surface, borderColor: surface.border }]}>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <AppText variant="sectionHeading" style={styles.modalTitle}>Delete your account</AppText>
+              <AppText variant="caption" colour="textSecondary" style={styles.deleteWarning}>
+                Permanently deletes all your data e.g. logs, stats etc.
+              </AppText>
+
+              <AppText variant="caption" colour="textSecondary" style={styles.deleteFieldLabel}>
+                Why are you leaving? (optional)
+              </AppText>
+              {DELETE_REASONS.map(reason => (
+                <Pressable
+                  key={reason}
+                  onPress={() => setDeleteReason(r => r === reason ? undefined : reason)}
+                  style={[
+                    styles.reasonRow,
+                    { borderColor: surface.border },
+                    deleteReason === reason && { borderColor: colours.destructive },
+                  ]}
+                >
+                  <AppText variant="body">{reason}</AppText>
+                  {deleteReason === reason && (
+                    <MCI name="check" size={16} color={colours.destructive} />
+                  )}
+                </Pressable>
+              ))}
+
+              <AppText variant="caption" colour="textSecondary" style={styles.deleteFieldLabel}>
+                Anything else? (optional)
+              </AppText>
+              <TextInput
+                style={[
+                  styles.freeTextInput,
+                  { color: surface.textPrimary, borderColor: surface.border, backgroundColor: surface.background },
+                ]}
+                placeholder="Tell us more..."
+                placeholderTextColor={surface.textPlaceholder}
+                value={deleteFreeText}
+                onChangeText={setDeleteFreeText}
+                multiline
+                numberOfLines={3}
+              />
+
+              <AppText variant="caption" colour="textSecondary" style={styles.deleteFieldLabel}>
+                Type{' '}
+                <AppText variant="caption" style={{ color: colours.destructive }}>DELETE</AppText>
+                {' '}to confirm
+              </AppText>
+              <TextInput
+                style={[
+                  styles.confirmInput,
+                  {
+                    color: surface.textPrimary,
+                    borderColor: deleteConfirmText === 'DELETE' ? colours.destructive : surface.border,
+                    backgroundColor: surface.background,
+                  },
+                ]}
+                placeholder="DELETE"
+                placeholderTextColor={surface.textPlaceholder}
+                value={deleteConfirmText}
+                onChangeText={setDeleteConfirmText}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+
+              <View style={styles.deleteActions}>
+                <Button
+                  title="Delete account"
+                  variant="destructive"
+                  icon="trash-can"
+                  onPress={handleConfirmDelete}
+                  loading={deleting}
+                  disabled={deleteConfirmText !== 'DELETE'}
+                />
+                <Button title="Cancel" icon="close" onPress={handleCancelDelete} />
+              </View>
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScreenContainer>
   );
 }
@@ -464,13 +743,12 @@ const styles = StyleSheet.create({
   },
   slotRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   slotRow: { paddingLeft: 20 },
+  rowIcon: { marginRight: 10 },
   rowLabelBlock: { flex: 1, gap: 3, marginRight: 12 },
   divider: { height: StyleSheet.hairlineWidth },
   dividerThick: { height: 1 },
   addLabel: { color: '#7F77DD' },
   accountButtons: { gap: 8 },
-  trustHeader: { paddingVertical: 10, gap: 2 },
-  trustHint: { fontStyle: 'italic' },
   trustAvatarRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   modalBackdrop: {
     flex: 1,
@@ -489,4 +767,72 @@ const styles = StyleSheet.create({
   },
   modalTitle: { marginBottom: 4 },
   modalHint: { marginBottom: 12, fontStyle: 'italic' },
+  deleteModalSheet: {
+    borderRadius: 14,
+    borderWidth: 1,
+    maxHeight: '85%',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
+  },
+  deleteWarning: {
+    marginBottom: 16,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
+  deleteFieldLabel: {
+    marginBottom: 6,
+    marginTop: 4,
+    letterSpacing: 0.3,
+  },
+  reasonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 4,
+  },
+  reasonRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  freeTextInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    marginBottom: 4,
+    minHeight: 72,
+    textAlignVertical: 'top',
+  },
+  confirmInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  deleteActions: {
+    gap: 8,
+    marginTop: 12,
+  },
+  feedbackSentBlock: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    gap: 12,
+  },
+  feedbackSentTitle: {
+    marginTop: 4,
+  },
+  feedbackSentBody: {
+    textAlign: 'center',
+    marginBottom: 8,
+  },
 });

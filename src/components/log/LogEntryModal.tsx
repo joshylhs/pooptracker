@@ -183,7 +183,7 @@ export default function LogEntryModal({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  scroll: { padding: 24, gap: 16 },
+  scroll: { padding: 24, gap: 12 },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   divider: { height: StyleSheet.hairlineWidth },
   whenRow: {
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 2,
   },
   notesInput: { minHeight: 60, textAlignVertical: 'top' },
   actions: { gap: 12, marginTop: 8 },

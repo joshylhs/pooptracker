@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendPoke = void 0;
+exports.onUserDeleted = exports.submitFeedback = exports.sendPoke = void 0;
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
+const googleapis_1 = require("googleapis");
 admin.initializeApp();
 const db = admin.firestore();
 const POKE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
@@ -83,5 +84,68 @@ exports.sendPoke = functions
         message: pokeMessage,
     });
     return { success: true };
+});
+const FEEDBACK_SHEET_ID = '1g5sshisjUGF9MXE8U8Mng1zBAIBSW3RL-2TlKfkABJM';
+async function appendFeedbackRow(row) {
+    const auth = new googleapis_1.google.auth.GoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+    const sheets = googleapis_1.google.sheets({ version: 'v4', auth });
+    await sheets.spreadsheets.values.append({
+        spreadsheetId: FEEDBACK_SHEET_ID,
+        range: 'Sheet1!A:E',
+        valueInputOption: 'RAW',
+        requestBody: { values: [row] },
+    });
+}
+exports.submitFeedback = functions
+    .region('asia-southeast1')
+    .https.onCall(async (data, context) => {
+    var _a;
+    const uid = (_a = context.auth) === null || _a === void 0 ? void 0 : _a.uid;
+    if (!uid)
+        throw new functions.https.HttpsError('unauthenticated', 'Must be signed in.');
+    const { type, topic, freeText, username, email, platform, deviceModel, appVersion } = data;
+    if (type !== 'deletion' && type !== 'general') {
+        throw new functions.https.HttpsError('invalid-argument', 'Invalid feedback type.');
+    }
+    const row = [
+        new Date().toISOString(),
+        uid,
+        username !== null && username !== void 0 ? username : '',
+        email !== null && email !== void 0 ? email : '',
+        platform !== null && platform !== void 0 ? platform : '',
+        deviceModel !== null && deviceModel !== void 0 ? deviceModel : '',
+        appVersion !== null && appVersion !== void 0 ? appVersion : '',
+        type,
+        topic !== null && topic !== void 0 ? topic : '',
+        freeText !== null && freeText !== void 0 ? freeText : '',
+    ];
+    await appendFeedbackRow(row);
+    return { success: true };
+});
+exports.onUserDeleted = functions
+    .region('asia-southeast1')
+    .auth.user()
+    .onDelete(async (user) => {
+    const uid = user.uid;
+    // Query usernameIndex directly by userId — avoids recomputing the hash
+    // and works even if the profile doc was already gone.
+    const indexSnap = await db.collection('usernameIndex').where('userId', '==', uid).get();
+    await Promise.all(indexSnap.docs.map(d => d.ref.delete()));
+    // Delete all subcollections
+    const subcollections = ['logs', 'dailySummaries', 'monthlyTotals', 'yearlyTotals', 'dismissedSignals'];
+    await Promise.all(subcollections.map(async (sub) => {
+        const snap = await db.collection(`users/${uid}/${sub}`).get();
+        await Promise.all(snap.docs.map(d => d.ref.delete()));
+    }));
+    // Remove this user from every friend's list, then delete own friendship docs
+    const friendsSnap = await db.collection(`friendships/${uid}/friends`).get();
+    await Promise.all([
+        ...friendsSnap.docs.map(d => db.doc(`friendships/${d.id}/friends/${uid}`).delete()),
+        ...friendsSnap.docs.map(d => d.ref.delete()),
+    ]);
+    // Delete profile doc (no-op if it never existed)
+    await db.doc(`users/${uid}`).delete();
 });
 //# sourceMappingURL=index.js.map

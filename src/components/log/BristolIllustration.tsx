@@ -4,11 +4,6 @@ import Svg, {
   Circle,
   Defs,
   Ellipse,
-  FeBlend,
-  FeColorMatrix,
-  FeComposite,
-  FeTurbulence,
-  Filter,
   Path,
   Polyline,
   RadialGradient,
@@ -30,23 +25,17 @@ function Type1() {
           <Stop offset="0%" stopColor="#c47a2a" />
           <Stop offset="100%" stopColor="#5c3207" />
         </RadialGradient>
-        <Filter id="tex1">
-          <FeTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves={4} result="noise" />
-          <FeColorMatrix type="saturate" values="0" in="noise" result="grey" />
-          <FeBlend in="SourceGraphic" in2="grey" mode="multiply" result="blend" />
-          <FeComposite in="blend" in2="SourceGraphic" operator="in" />
-        </Filter>
       </Defs>
       <Ellipse cx="7"  cy="26.5" rx="4.5" ry="1.1" fill="rgba(0,0,0,0.3)" />
       <Ellipse cx="19" cy="26.5" rx="5"   ry="1.2" fill="rgba(0,0,0,0.3)" />
       <Ellipse cx="31" cy="26.5" rx="4.2" ry="1.1" fill="rgba(0,0,0,0.3)" />
       <Ellipse cx="42" cy="23"   rx="3.8" ry="1"   fill="rgba(0,0,0,0.25)" />
       <Ellipse cx="51" cy="26"   rx="3.2" ry="0.9" fill="rgba(0,0,0,0.25)" />
-      <Circle cx="7"  cy="21"  r="5"   fill="url(#g1)" filter="url(#tex1)" />
-      <Circle cx="19" cy="20"  r="5.5" fill="url(#g1)" filter="url(#tex1)" />
-      <Circle cx="31" cy="21"  r="4.8" fill="url(#g1)" filter="url(#tex1)" />
-      <Circle cx="42" cy="17"  r="4"   fill="url(#g1)" filter="url(#tex1)" />
-      <Circle cx="51" cy="21"  r="3.5" fill="url(#g1)" filter="url(#tex1)" />
+      <Circle cx="7"  cy="21"  r="5"   fill="url(#g1)" />
+      <Circle cx="19" cy="20"  r="5.5" fill="url(#g1)" />
+      <Circle cx="31" cy="21"  r="4.8" fill="url(#g1)" />
+      <Circle cx="42" cy="17"  r="4"   fill="url(#g1)" />
+      <Circle cx="51" cy="21"  r="3.5" fill="url(#g1)" />
       <Circle cx="6"   cy="21.5" r="0.7" fill="rgba(0,0,0,0.35)" />
       <Circle cx="8.5" cy="19.5" r="0.5" fill="rgba(0,0,0,0.3)" />
       <Circle cx="7.5" cy="23"   r="0.5" fill="rgba(0,0,0,0.3)" />
@@ -79,22 +68,17 @@ function Type2() {
           <Stop offset="0%" stopColor="#9a5a14" />
           <Stop offset="100%" stopColor="#4a2805" />
         </RadialGradient>
-        <Filter id="tex2">
-          <FeTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves={4} result="noise" />
-          <FeBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend" />
-          <FeComposite in="blend" in2="SourceGraphic" operator="in" />
-        </Filter>
       </Defs>
       <Ellipse cx="28" cy="27.5" rx="24" ry="1.3" fill="rgba(0,0,0,0.28)" />
-      <Circle cx="11" cy="17" r="5.8" fill="url(#g2b)" filter="url(#tex2)" />
-      <Circle cx="22" cy="15" r="6.2" fill="url(#g2b)" filter="url(#tex2)" />
-      <Circle cx="33" cy="15" r="6.2" fill="url(#g2b)" filter="url(#tex2)" />
-      <Circle cx="44" cy="17" r="5.8" fill="url(#g2b)" filter="url(#tex2)" />
-      <Circle cx="6"  cy="21"   r="5.2" fill="url(#g2f)" filter="url(#tex2)" />
-      <Circle cx="16" cy="19.5" r="6.2" fill="url(#g2f)" filter="url(#tex2)" />
-      <Circle cx="28" cy="19"   r="6.8" fill="url(#g2f)" filter="url(#tex2)" />
-      <Circle cx="40" cy="19.5" r="6.2" fill="url(#g2f)" filter="url(#tex2)" />
-      <Circle cx="50" cy="21"   r="5.2" fill="url(#g2f)" filter="url(#tex2)" />
+      <Circle cx="11" cy="17" r="5.8" fill="url(#g2b)" />
+      <Circle cx="22" cy="15" r="6.2" fill="url(#g2b)" />
+      <Circle cx="33" cy="15" r="6.2" fill="url(#g2b)" />
+      <Circle cx="44" cy="17" r="5.8" fill="url(#g2b)" />
+      <Circle cx="6"  cy="21"   r="5.2" fill="url(#g2f)" />
+      <Circle cx="16" cy="19.5" r="6.2" fill="url(#g2f)" />
+      <Circle cx="28" cy="19"   r="6.8" fill="url(#g2f)" />
+      <Circle cx="40" cy="19.5" r="6.2" fill="url(#g2f)" />
+      <Circle cx="50" cy="21"   r="5.2" fill="url(#g2f)" />
       <Circle cx="5"    cy="22"   r="0.6" fill="rgba(0,0,0,0.32)" />
       <Circle cx="7"    cy="20"   r="0.5" fill="rgba(0,0,0,0.28)" />
       <Circle cx="15"   cy="20.5" r="0.6" fill="rgba(0,0,0,0.3)" />
@@ -119,23 +103,18 @@ function Type3() {
     <>
       <Defs>
         <RadialGradient id="g3" cx="50%" cy="30%" r="68%">
-          <Stop offset="0%" stopColor="#85cc30" />
-          <Stop offset="100%" stopColor="#3a5a0a" />
+          <Stop offset="0%" stopColor="#b07840" />
+          <Stop offset="100%" stopColor="#5c3510" />
         </RadialGradient>
-        <Filter id="tex3">
-          <FeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves={4} result="noise" />
-          <FeBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend" />
-          <FeComposite in="blend" in2="SourceGraphic" operator="in" />
-        </Filter>
       </Defs>
       <Ellipse cx="28" cy="27" rx="21" ry="1.3" fill="rgba(0,0,0,0.22)" />
       <Path
         d="M5,14 Q8,8 14,8 Q17,5 20,8 Q23,5 26,8 Q29,5 32,8 Q35,5 38,8 Q41,5 44,8 Q49,8 51,14 Q49,20 44,20 Q41,23 38,20 Q35,23 32,20 Q29,23 26,20 Q23,23 20,20 Q17,23 14,20 Q8,20 5,14 Z"
-        fill="url(#g3)" filter="url(#tex3)"
+        fill="url(#g3)"
       />
-      <Polyline points="17,8.5 15.5,13.5 17.5,15 16,19.5" fill="none" stroke="#2e4a07" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" opacity="0.75" />
-      <Polyline points="27,8 25.5,13 27.5,15 26,20"       fill="none" stroke="#2e4a07" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" opacity="0.75" />
-      <Polyline points="38,8 36.5,13 38.5,15 37,19.5"     fill="none" stroke="#2e4a07" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" opacity="0.75" />
+      <Polyline points="17,8.5 15.5,13.5 17.5,15 16,19.5" fill="none" stroke="#3d2008" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" opacity="0.75" />
+      <Polyline points="27,8 25.5,13 27.5,15 26,20"       fill="none" stroke="#3d2008" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" opacity="0.75" />
+      <Polyline points="38,8 36.5,13 38.5,15 37,19.5"     fill="none" stroke="#3d2008" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" opacity="0.75" />
       <Circle cx="11" cy="12" r="0.6" fill="rgba(0,0,0,0.3)" />
       <Circle cx="22" cy="10" r="0.6" fill="rgba(0,0,0,0.3)" />
       <Circle cx="33" cy="10" r="0.6" fill="rgba(0,0,0,0.3)" />
@@ -144,7 +123,7 @@ function Type3() {
       <Circle cx="23" cy="18" r="0.5" fill="rgba(0,0,0,0.25)" />
       <Circle cx="34" cy="18" r="0.5" fill="rgba(0,0,0,0.25)" />
       <Circle cx="44" cy="17" r="0.5" fill="rgba(0,0,0,0.25)" />
-      <Path d="M11,10 Q28,8 45,10" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2" strokeLinecap="round" />
+      <Path d="M16,11.5 Q28,9.5 40,11.5" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2" strokeLinecap="round" />
     </>
   );
 }
@@ -154,22 +133,12 @@ function Type4() {
     <>
       <Defs>
         <RadialGradient id="g4" cx="50%" cy="28%" r="65%">
-          <Stop offset="0%" stopColor="#56a81e" />
-          <Stop offset="100%" stopColor="#1e430a" />
+          <Stop offset="0%" stopColor="#c49050" />
+          <Stop offset="100%" stopColor="#6b3d18" />
         </RadialGradient>
-        <RadialGradient id="g4s" cx="50%" cy="20%" r="55%">
-          <Stop offset="0%" stopColor="rgba(255,255,255,0.2)" />
-          <Stop offset="100%" stopColor="rgba(255,255,255,0)" />
-        </RadialGradient>
-        <Filter id="tex4">
-          <FeTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves={4} result="noise" />
-          <FeBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend" />
-          <FeComposite in="blend" in2="SourceGraphic" operator="in" />
-        </Filter>
       </Defs>
       <Ellipse cx="28" cy="25" rx="16" ry="1" fill="rgba(0,0,0,0.2)" />
-      <Path d="M7,17 Q10,12 16,10 Q22,9 28,9 Q34,9 40,10 Q46,12 49,17 Q46,22 40,23 Q34,24 28,24 Q22,24 16,23 Q10,22 7,17 Z" fill="url(#g4)" filter="url(#tex4)" />
-      <Path d="M7,17 Q10,12 16,10 Q22,9 28,9 Q34,9 40,10 Q46,12 49,17 Q46,22 40,23 Q34,24 28,24 Q22,24 16,23 Q10,22 7,17 Z" fill="url(#g4s)" />
+      <Path d="M7,17 Q10,12 16,10 Q22,9 28,9 Q34,9 40,10 Q46,12 49,17 Q46,22 40,23 Q34,24 28,24 Q22,24 16,23 Q10,22 7,17 Z" fill="url(#g4)" />
       <Circle cx="16" cy="13"   r="0.6" fill="rgba(0,0,0,0.22)" />
       <Circle cx="23" cy="10.5" r="0.6" fill="rgba(0,0,0,0.2)" />
       <Circle cx="33" cy="10.5" r="0.6" fill="rgba(0,0,0,0.2)" />
@@ -190,22 +159,17 @@ function Type5() {
           <Stop offset="0%" stopColor="#d9901e" />
           <Stop offset="100%" stopColor="#7a4a09" />
         </RadialGradient>
-        <Filter id="tex5">
-          <FeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves={4} result="noise" />
-          <FeBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend" />
-          <FeComposite in="blend" in2="SourceGraphic" operator="in" />
-        </Filter>
       </Defs>
       <Ellipse cx="6"  cy="28"   rx="5"   ry="0.7" fill="rgba(0,0,0,0.22)" />
       <Ellipse cx="19" cy="27"   rx="6"   ry="0.7" fill="rgba(0,0,0,0.2)" />
       <Ellipse cx="33" cy="28"   rx="5"   ry="0.7" fill="rgba(0,0,0,0.2)" />
       <Ellipse cx="45" cy="24.5" rx="4"   ry="0.6" fill="rgba(0,0,0,0.18)" />
       <Ellipse cx="53" cy="27"   rx="2.5" ry="0.5" fill="rgba(0,0,0,0.15)" />
-      <Path d="M1,26 Q0,24.5 1,23 Q3,21.5 5,22 Q7,21 9,22.5 Q10,21.5 11,23.5 Q11,26 8,27.5 Q5,28 2,27 Z"             fill="url(#g5)" filter="url(#tex5)" />
-      <Path d="M13,24.5 Q12,22.5 14,21 Q17,19.5 20,20.5 Q22,19.5 24,21.5 Q25,23.5 23,25.5 Q20,27 17,26.5 Q13,26 13,24.5 Z" fill="url(#g5)" filter="url(#tex5)" />
-      <Path d="M27,26.5 Q26,24.5 27,23 Q29,21.5 32,22 Q35,21.5 36,23.5 Q37,25.5 35,27 Q32,28 29,27.5 Z"             fill="url(#g5)" filter="url(#tex5)" />
-      <Path d="M39,22 Q38,20 40,19 Q42,18 44,19 Q46,18.5 47,20.5 Q47,22.5 45,23.5 Q42,24 40,23 Z"                   fill="url(#g5)" filter="url(#tex5)" />
-      <Path d="M49,26 Q48,24.5 49.5,23.5 Q51.5,23 53,24 Q54,23.5 54,25 Q54,26.5 52,27 Q50,27.5 49,26 Z"             fill="url(#g5)" filter="url(#tex5)" />
+      <Path d="M1,26 Q0,24.5 1,23 Q3,21.5 5,22 Q7,21 9,22.5 Q10,21.5 11,23.5 Q11,26 8,27.5 Q5,28 2,27 Z"             fill="url(#g5)" />
+      <Path d="M13,24.5 Q12,22.5 14,21 Q17,19.5 20,20.5 Q22,19.5 24,21.5 Q25,23.5 23,25.5 Q20,27 17,26.5 Q13,26 13,24.5 Z" fill="url(#g5)" />
+      <Path d="M27,26.5 Q26,24.5 27,23 Q29,21.5 32,22 Q35,21.5 36,23.5 Q37,25.5 35,27 Q32,28 29,27.5 Z"             fill="url(#g5)" />
+      <Path d="M39,22 Q38,20 40,19 Q42,18 44,19 Q46,18.5 47,20.5 Q47,22.5 45,23.5 Q42,24 40,23 Z"                   fill="url(#g5)" />
+      <Path d="M49,26 Q48,24.5 49.5,23.5 Q51.5,23 53,24 Q54,23.5 54,25 Q54,26.5 52,27 Q50,27.5 49,26 Z"             fill="url(#g5)" />
       <Circle cx="4"  cy="24"   r="0.55" fill="rgba(0,0,0,0.32)" />
       <Circle cx="7"  cy="26"   r="0.5"  fill="rgba(0,0,0,0.28)" />
       <Circle cx="16" cy="22"   r="0.55" fill="rgba(0,0,0,0.3)" />
@@ -228,20 +192,15 @@ function Type6() {
     <>
       <Defs>
         <RadialGradient id="g6" cx="50%" cy="50%" r="62%">
-          <Stop offset="0%" stopColor="#e06038" />
-          <Stop offset="100%" stopColor="#7a2a0f" />
+          <Stop offset="0%" stopColor="#b8903a" />
+          <Stop offset="100%" stopColor="#6b4a18" />
         </RadialGradient>
-        <Filter id="tex6">
-          <FeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves={4} result="noise" />
-          <FeBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend" />
-          <FeComposite in="blend" in2="SourceGraphic" operator="in" />
-        </Filter>
       </Defs>
-      <Path d="M4,27 Q3,25 4,22.5 Q5,20.5 8,19.5 Q11,18.5 14,19.5 Q17,18.5 19,20.5 Q21,22 20,25 Q19,27.5 14,28 Q8,28 4,27 Z" fill="url(#g6)" filter="url(#tex6)" />
-      <Path d="M17,27.5 Q16,25.5 18,23.5 Q20,22 24,21.5 Q28,21 32,22 Q35,21.5 37,23.5 Q38,25.5 36,27.5 Q32,29 26,28.5 Q20,28.5 17,27.5 Z" fill="url(#g6)" filter="url(#tex6)" opacity="0.9" />
-      <Path d="M34,26 Q33,24 35,22.5 Q38,21 42,21.5 Q46,22 49,23.5 Q51,25 50,27 Q47,28 42,27.5 Q37,27.5 34,26 Z" fill="url(#g6)" filter="url(#tex6)" opacity="0.75" />
-      <Path d="M6,19.5 Q5,18 7,17 Q10,16 13,17.5 Q15,18.5 13,20.5 Q10,21.5 7,20.5 Z" fill="url(#g6)" filter="url(#tex6)" opacity="0.85" />
-      <Path d="M28,21.5 Q27,19.5 30,18.5 Q33,18 35,19.5 Q36,21 34,22 Q31,22.5 28,21.5 Z" fill="url(#g6)" filter="url(#tex6)" opacity="0.8" />
+      <Path d="M4,27 Q3,25 4,22.5 Q5,20.5 8,19.5 Q11,18.5 14,19.5 Q17,18.5 19,20.5 Q21,22 20,25 Q19,27.5 14,28 Q8,28 4,27 Z" fill="url(#g6)" />
+      <Path d="M17,27.5 Q16,25.5 18,23.5 Q20,22 24,21.5 Q28,21 32,22 Q35,21.5 37,23.5 Q38,25.5 36,27.5 Q32,29 26,28.5 Q20,28.5 17,27.5 Z" fill="url(#g6)" opacity="0.9" />
+      <Path d="M34,26 Q33,24 35,22.5 Q38,21 42,21.5 Q46,22 49,23.5 Q51,25 50,27 Q47,28 42,27.5 Q37,27.5 34,26 Z" fill="url(#g6)" opacity="0.75" />
+      <Path d="M6,19.5 Q5,18 7,17 Q10,16 13,17.5 Q15,18.5 13,20.5 Q10,21.5 7,20.5 Z" fill="url(#g6)" opacity="0.85" />
+      <Path d="M28,21.5 Q27,19.5 30,18.5 Q33,18 35,19.5 Q36,21 34,22 Q31,22.5 28,21.5 Z" fill="url(#g6)" opacity="0.8" />
       <Path d="M19,25 Q20,23.5 22,23.5 Q24,23.5 25,25 Q24,26.5 22,26.5 Q20,26.5 19,25 Z" fill="url(#g6)" opacity="0.55" />
       <Path d="M9,21  Q10,23.5 9,27"  fill="none" stroke="rgba(0,0,0,0.2)"  strokeWidth="0.8" strokeLinecap="round" />
       <Path d="M16,20 Q17,23 16,27.5" fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="0.8" strokeLinecap="round" />
@@ -255,9 +214,9 @@ function Type6() {
       <Circle cx="11" cy="26"   r="0.45" fill="rgba(0,0,0,0.2)" />
       <Circle cx="29" cy="27"   r="0.45" fill="rgba(0,0,0,0.18)" />
       <Circle cx="45" cy="26"   r="0.45" fill="rgba(0,0,0,0.16)" />
-      <Path d="M2,22 Q1,20.5 3,20 Q5,20 5.5,21.5 Q5,23 3,22.5 Z"         fill="#c04e25" opacity="0.6" filter="url(#tex6)" />
-      <Path d="M50,21.5 Q49,20 51.5,19.5 Q54,20 54,21.5 Q53,23 50,21.5 Z" fill="#c04e25" opacity="0.5" filter="url(#tex6)" />
-      <Circle cx="47" cy="27.5" r="1.3" fill="#c04e25" opacity="0.42" />
+      <Path d="M2,22 Q1,20.5 3,20 Q5,20 5.5,21.5 Q5,23 3,22.5 Z"         fill="#8a6020" opacity="0.6" />
+      <Path d="M50,21.5 Q49,20 51.5,19.5 Q54,20 54,21.5 Q53,23 50,21.5 Z" fill="#8a6020" opacity="0.5" />
+      <Circle cx="47" cy="27.5" r="1.3" fill="#8a6020" opacity="0.42" />
     </>
   );
 }
@@ -267,30 +226,25 @@ function Type7() {
     <>
       <Defs>
         <RadialGradient id="g7" cx="45%" cy="55%" r="60%">
-          <Stop offset="0%" stopColor="#b84820" />
-          <Stop offset="100%" stopColor="#3d1206" />
+          <Stop offset="0%" stopColor="#a8883a" />
+          <Stop offset="100%" stopColor="#5a3e10" />
         </RadialGradient>
-        <Filter id="tex7">
-          <FeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves={3} result="noise" />
-          <FeBlend in="SourceGraphic" in2="noise" mode="multiply" result="blend" />
-          <FeComposite in="blend" in2="SourceGraphic" operator="in" />
-        </Filter>
       </Defs>
       <Path
         d="M3,25 Q1,23 3,22 Q5,20 8,21 Q10,19 13,20 Q15,18 18,20 Q20,18 23,20 Q25,18 28,20 Q30,18 33,20 Q35,19 38,20 Q40,19 43,21 Q46,20 49,21 Q52,22 54,24 Q53,26 49,26 Q43,27 36,27 Q28,28 21,27 Q14,27 8,26 Q4,26 3,25 Z"
-        fill="url(#g7)" filter="url(#tex7)" opacity="0.95"
+        fill="url(#g7)" opacity="0.95"
       />
-      <Ellipse cx="27" cy="23.5" rx="17" ry="2"   fill="none" stroke="#993C1D" strokeWidth="0.9" opacity="0.45" />
-      <Ellipse cx="27" cy="21.8" rx="10" ry="1.3" fill="none" stroke="#993C1D" strokeWidth="0.7" opacity="0.28" />
-      <Ellipse cx="27" cy="20.5" rx="5"  ry="0.8" fill="none" stroke="#993C1D" strokeWidth="0.5" opacity="0.16" />
+      <Ellipse cx="27" cy="23.5" rx="17" ry="2"   fill="none" stroke="#7a5820" strokeWidth="0.9" opacity="0.45" />
+      <Ellipse cx="27" cy="21.8" rx="10" ry="1.3" fill="none" stroke="#7a5820" strokeWidth="0.7" opacity="0.28" />
+      <Ellipse cx="27" cy="20.5" rx="5"  ry="0.8" fill="none" stroke="#7a5820" strokeWidth="0.5" opacity="0.16" />
       <Ellipse cx="19" cy="23.5" rx="6" ry="1.2" fill="rgba(255,255,255,0.09)" rotation={-6} originX={19} originY={23.5} />
-      <Path d="M5,21  Q4,19.5 5.5,19 Q7,18.5 7.5,20 Q7,21.5 5,21 Z"      fill="#993C1D" opacity="0.6" filter="url(#tex7)" />
-      <Path d="M49,22 Q48,20.5 50,20 Q52,19.5 52,21 Q51.5,22.5 49,22 Z"  fill="#993C1D" opacity="0.5" filter="url(#tex7)" />
-      <Path d="M27,19 Q26,18 27.5,17.5 Q29,17 29,18.5 Q28.5,19.5 27,19 Z" fill="#993C1D" opacity="0.45" />
-      <Circle cx="15" cy="20" r="1"   fill="#993C1D" opacity="0.4" />
-      <Circle cx="40" cy="21" r="0.9" fill="#993C1D" opacity="0.38" />
-      <Circle cx="9"  cy="24" r="0.7" fill="#993C1D" opacity="0.35" />
-      <Circle cx="47" cy="25" r="0.6" fill="#993C1D" opacity="0.3" />
+      <Path d="M5,21  Q4,19.5 5.5,19 Q7,18.5 7.5,20 Q7,21.5 5,21 Z"      fill="#7a5820" opacity="0.6" />
+      <Path d="M49,22 Q48,20.5 50,20 Q52,19.5 52,21 Q51.5,22.5 49,22 Z"  fill="#7a5820" opacity="0.5" />
+      <Path d="M27,19 Q26,18 27.5,17.5 Q29,17 29,18.5 Q28.5,19.5 27,19 Z" fill="#7a5820" opacity="0.45" />
+      <Circle cx="15" cy="20" r="1"   fill="#7a5820" opacity="0.4" />
+      <Circle cx="40" cy="21" r="0.9" fill="#7a5820" opacity="0.38" />
+      <Circle cx="9"  cy="24" r="0.7" fill="#7a5820" opacity="0.35" />
+      <Circle cx="47" cy="25" r="0.6" fill="#7a5820" opacity="0.3" />
     </>
   );
 }

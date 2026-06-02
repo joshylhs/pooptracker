@@ -1,4 +1,4 @@
-import { Linking, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Modal, Pressable, StyleSheet, Switch, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from './Text';
 
@@ -8,17 +8,24 @@ export interface InfoRow {
   tag?: string;
 }
 
+export interface InfoToggle {
+  label: string;
+  value: boolean;
+  onValueChange: (v: boolean) => void;
+}
+
 interface InfoModalProps {
   visible: boolean;
   onClose: () => void;
   title: string;
   intro?: string;
   rows: InfoRow[];
+  toggles?: InfoToggle[];
   footerLabel?: string;
   footerUrl?: string;
 }
 
-export default function InfoModal({ visible, onClose, title, intro, rows, footerLabel, footerUrl }: InfoModalProps) {
+export default function InfoModal({ visible, onClose, title, intro, rows, toggles, footerLabel, footerUrl }: InfoModalProps) {
   const { surface, colours } = useTheme();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -44,6 +51,22 @@ export default function InfoModal({ visible, onClose, title, intro, rows, footer
               <AppText variant="caption" colour="textSecondary">{r.body}</AppText>
             </View>
           ))}
+          {toggles && toggles.length > 0 && (
+            <>
+              <View style={[styles.divider, { backgroundColor: surface.border }]} />
+              {toggles.map(t => (
+                <View key={t.label} style={styles.toggleRow}>
+                  <AppText variant="caption" colour="textSecondary" style={styles.toggleLabel}>{t.label}</AppText>
+                  <Switch
+                    value={t.value}
+                    onValueChange={t.onValueChange}
+                    trackColor={{ false: surface.border, true: colours.primary400 }}
+                    thumbColor="#fff"
+                  />
+                </View>
+              ))}
+            </>
+          )}
           {footerLabel && footerUrl && (
             <Pressable
               onPress={() => Linking.openURL(footerUrl)}
@@ -88,4 +111,6 @@ const styles = StyleSheet.create({
   closeBtn:    { borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 4 },
   infoButton:  { width: 16, height: 16, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   infoText:    { lineHeight: 16, fontSize: 11 },
+  toggleRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  toggleLabel: { flex: 1 },
 });

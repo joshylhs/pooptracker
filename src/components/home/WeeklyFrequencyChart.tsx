@@ -1,4 +1,4 @@
-import { StyleSheet, View, Animated, PanResponder, LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, Animated, LayoutChangeEvent } from 'react-native';
 import { useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from '../shared/Text';
@@ -16,12 +16,6 @@ const C_IDEAL = '#3B6D11';
 const C_OVER  = '#D85A30';
 const C_QUICK = 'rgba(255,255,255,0.15)';
 
-const LEGEND = [
-  { colour: C_BELOW, label: 'Too hard' },
-  { colour: C_IDEAL, label: 'Ideal' },
-  { colour: C_OVER,  label: 'Too loose' },
-];
-
 function mondayOf(d: Date): Date {
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
@@ -32,36 +26,34 @@ function mondayOf(d: Date): Date {
 }
 
 function dateString(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function shortLabel(monday: Date): string {
   return monday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
+function parseDateLocal(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 function rangeLabel(startDate: string, endDate: string): string {
-  const s = new Date(startDate);
-  const e = new Date(endDate);
-  const sf = s.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  const ef = e.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const sf = parseDateLocal(startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const ef = parseDateLocal(endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   return `${sf} – ${ef}`;
 }
 
-function niceCeiling(max: number): number {
-  const steps = [1, 2, 5, 10, 20, 25, 50, 100];
-  for (const s of steps) {
-    const candidate = Math.ceil(max / s) * s;
-    if (candidate / s >= 4 && candidate / s <= 8) return candidate;
-  }
-  return Math.ceil(max / 10) * 10;
-}
-
-function niceStep(ceiling: number): number {
-  const targets = [4, 5, 6];
-  for (const t of targets) {
-    if (ceiling % t === 0) return ceiling / t;
-  }
-  return Math.ceil(ceiling / 5);
+function chartParams(max: number): { step: number; ceiling: number; numSteps: number } {
+  if (max <= 0) return { step: 1, ceiling: 5, numSteps: 5 };
+  const steps = [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500];
+  const step = steps.find(s => Math.ceil(max / s) <= 5) ?? 500;
+  const ceiling = Math.ceil(max / step) * step;
+  const numSteps = ceiling / step;
+  return { step, ceiling, numSteps };
 }
 
 interface WeekBucket {
@@ -165,7 +157,6 @@ export default function WeeklyFrequencyChart({ logs }: Props) {
   const longPressActive = useRef(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const barsAreaX = useRef(0);
-  const barsAreaY = useRef(0);
   const bucketsRef = useRef<WeekBucket[]>([]);
   const yMaxRef = useRef(1);
 
@@ -200,12 +191,10 @@ export default function WeeklyFrequencyChart({ logs }: Props) {
   const insight = useMemo(() => deriveInsight(buckets), [buckets]);
 
   const maxCount = Math.max(...buckets.map(b => b.below + b.ideal + b.over + b.quick), 1);
-  const yMax = niceCeiling(maxCount);
+  const { step, ceiling: yMax, numSteps } = chartParams(maxCount);
   bucketsRef.current = buckets;
   yMaxRef.current = yMax;
-  const step = niceStep(yMax);
-  const tickCount = yMax / step;
-  const yTicks = Array.from({ length: tickCount }, (_, i) => (i + 1) * step);
+  const yTicks = Array.from({ length: numSteps }, (_, i) => (i + 1) * step);
 
   // converts a count value to a pixel height from the bottom of the chart area
   const toH = (n: number) => (n / yMax) * CHART_H;
@@ -226,51 +215,13 @@ export default function WeeklyFrequencyChart({ logs }: Props) {
     setTooltip({ bucket: b, x });
   };
 
-  const isOverBar = (screenX: number, screenY: number): boolean => {
-    const localX = screenX - barsAreaX.current;
-    const localY = screenY - barsAreaY.current;
-    const colW = chartWidth.current / WEEKS;
-    const idx = Math.max(0, Math.min(WEEKS - 1, Math.floor(localX / colW)));
-    const b = bucketsRef.current[idx];
-    if (!b) return false;
-    const total = b.below + b.ideal + b.over + b.quick;
-    const barH = (total / yMaxRef.current) * CHART_H;
-    const barTop = CHART_H - barH;
-    return localY >= barTop && localY <= CHART_H;
-  };
 
-  const barsPanResponder = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => false,
-    onMoveShouldSetPanResponder: () => longPressActive.current,
-    onStartShouldSetPanResponderCapture: () => false,
-    onMoveShouldSetPanResponderCapture: () => false,
-    onPanResponderMove: (_, gs) => {
-      if (!longPressActive.current) return;
-      updateTooltip(gs.moveX);
-    },
-    onPanResponderRelease: () => dismiss(),
-    onPanResponderTerminate: () => {
-      longPressActive.current = false;
-      setTooltip(null);
-    },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), []);
 
   const tt = tooltip?.bucket;
   const ttTotal = tt ? tt.below + tt.ideal + tt.over + tt.quick : 0;
 
   return (
     <View style={styles.container}>
-      {/* Legend */}
-      <View style={styles.legend}>
-        {LEGEND.map(item => (
-          <View key={item.label} style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: item.colour }]} />
-            <AppText style={styles.legendLabel}>{item.label}</AppText>
-          </View>
-        ))}
-      </View>
-
       {/* Chart: y-axis labels column + plot area */}
       <View style={styles.chartRow}>
 
@@ -295,12 +246,10 @@ export default function WeeklyFrequencyChart({ logs }: Props) {
           style={{ flex: 1 }}
           onLayout={(e: LayoutChangeEvent) => {
             chartWidth.current = e.nativeEvent.layout.width;
-            e.target.measure((_x, _y, _w, _h, pageX, pageY) => {
+            e.target.measure((_x, _y, _w, _h, pageX) => {
               barsAreaX.current = pageX;
-              barsAreaY.current = pageY;
             });
           }}
-          {...barsPanResponder.panHandlers}
         >
           {/* Chart area: fixed height, contains gridlines and bars as layers */}
           <View style={{ height: CHART_H }}>
@@ -321,13 +270,11 @@ export default function WeeklyFrequencyChart({ logs }: Props) {
               onStartShouldSetResponder={() => true}
               onResponderGrant={e => {
                 const sx = e.nativeEvent.pageX;
-                const sy = e.nativeEvent.pageY;
                 longPressTimer.current = setTimeout(() => {
-                  if (!isOverBar(sx, sy)) return;
                   longPressActive.current = true;
                   updateTooltip(sx);
                   Animated.timing(tooltipOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start();
-                }, 300);
+                }, 100);
               }}
               onResponderMove={e => {
                 if (!longPressActive.current) return;
@@ -414,10 +361,6 @@ export default function WeeklyFrequencyChart({ logs }: Props) {
 
 const styles = StyleSheet.create({
   container: { gap: 10 },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendDot: { width: 7, height: 7, borderRadius: 4 },
-  legendLabel: { fontSize: 10, color: 'rgba(255,255,255,0.55)' },
 
   chartRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 0 },
 

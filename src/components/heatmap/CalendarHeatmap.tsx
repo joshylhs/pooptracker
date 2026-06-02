@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import { DailySummary } from '../../utils/streakUtils';
@@ -49,6 +49,13 @@ function pad(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;
 }
 
+function monthRowCount(year: number, month: number): number {
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  return Math.ceil((startOffset + daysInMonth) / 7);
+}
+
 export default function CalendarHeatmap({
   summaries,
   selectedDate,
@@ -60,6 +67,10 @@ export default function CalendarHeatmap({
 
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
+
+  const slideX      = useRef(new Animated.Value(0)).current;
+  const gridOpacity = useRef(new Animated.Value(1)).current;
+  const rowAnims    = useRef(Array.from({ length: 6 }, () => new Animated.Value(1))).current;
 
   const countMap = useMemo(() => {
     const m: Record<string, number> = {};
@@ -120,26 +131,43 @@ export default function CalendarHeatmap({
     return chunks;
   }, [viewYear, viewMonth]);
 
-  const prevMonth = () => {
-    if (viewMonth === 0) {
-      setViewYear(y => y - 1);
-      setViewMonth(11);
-    } else {
-      setViewMonth(m => m - 1);
-    }
-  };
-
   const isCurrentMonth =
     viewYear === now.getFullYear() && viewMonth === now.getMonth();
 
-  const nextMonth = () => {
-    if (isCurrentMonth) return;
-    if (viewMonth === 11) {
-      setViewYear(y => y + 1);
-      setViewMonth(0);
-    } else {
-      setViewMonth(m => m + 1);
-    }
+  // direction: -1 = going back (slide right), +1 = going forward (slide left)
+  const navigateMonth = (direction: -1 | 1) => {
+    const exitX  = -direction * 40;
+    const enterX =  direction * 40;
+
+    // Pre-compute incoming month so we know how many rows to stagger
+    const newMonth = direction === -1 ? (viewMonth === 0 ? 11 : viewMonth - 1) : (viewMonth === 11 ? 0 : viewMonth + 1);
+    const newYear  = direction === -1 ? (viewMonth === 0 ? viewYear - 1 : viewYear) : (viewMonth === 11 ? viewYear + 1 : viewYear);
+    const newRows  = monthRowCount(newYear, newMonth);
+
+    Animated.parallel([
+      Animated.timing(slideX,      { toValue: exitX, duration: 160, useNativeDriver: true }),
+      Animated.timing(gridOpacity, { toValue: 0,     duration: 160, useNativeDriver: true }),
+    ]).start(() => {
+      if (direction === -1) {
+        if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
+        else setViewMonth(m => m - 1);
+      } else {
+        if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
+        else setViewMonth(m => m + 1);
+      }
+      slideX.setValue(enterX);
+      rowAnims.forEach(a => a.setValue(0));
+      Animated.parallel([
+        Animated.timing(slideX,      { toValue: 0, duration: 160, useNativeDriver: true }),
+        Animated.timing(gridOpacity, { toValue: 1, duration: 120, useNativeDriver: true }),
+        Animated.stagger(
+          45,
+          rowAnims.slice(0, newRows).map(a =>
+            Animated.spring(a, { toValue: 1, tension: 150, friction: 7, useNativeDriver: true }),
+          ),
+        ),
+      ]).start();
+    });
   };
 
   return (
@@ -151,7 +179,7 @@ export default function CalendarHeatmap({
     >
       {/* Header: ‹ Month YYYY › */}
       <View style={styles.header}>
-        <Pressable onPress={prevMonth} hitSlop={12} style={styles.arrowBtn}>
+        <Pressable onPress={() => navigateMonth(-1)} hitSlop={12} style={styles.arrowBtn}>
           {({ pressed }) => (
             <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
               <MCI name="chevron-left" size={22} color={surface.textPrimary} />
@@ -161,7 +189,7 @@ export default function CalendarHeatmap({
         <AppText variant="sectionHeading">
           {monthName} {viewYear}
         </AppText>
-        <Pressable onPress={nextMonth} hitSlop={12} style={styles.arrowBtn} disabled={isCurrentMonth}>
+        <Pressable onPress={() => navigateMonth(1)} hitSlop={12} style={styles.arrowBtn} disabled={isCurrentMonth}>
           {({ pressed }) => (
             <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
               <MCI name="chevron-right" size={22} color={isCurrentMonth ? surface.textPlaceholder : surface.textPrimary} />
@@ -170,6 +198,7 @@ export default function CalendarHeatmap({
         </Pressable>
       </View>
 
+      <Animated.View style={{ opacity: gridOpacity, transform: [{ translateX: slideX }] }}>
       {/* Day-of-week labels: M T W T F S S */}
       <View style={[styles.weekRow, styles.dowRow]}>
         {DAYS_OF_WEEK.map((d, i) => (
@@ -184,7 +213,14 @@ export default function CalendarHeatmap({
       {/* Day grid: chunks of 7, each cell is flex:1 + aspectRatio:1 */}
       <View style={styles.grid}>
         {rows.map((row, rowIdx) => (
-          <View key={rowIdx} style={styles.weekRow}>
+          <Animated.View
+            key={rowIdx}
+            style={[styles.weekRow, {
+              transform: [{
+                scale: rowAnims[rowIdx].interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }),
+              }],
+            }]}
+          >
             {row.map((cell, colIdx) => {
               const isFuture = cell.dateStr > today;
               const count = countMap[cell.dateStr] ?? 0;
@@ -232,9 +268,10 @@ export default function CalendarHeatmap({
                 </Pressable>
               );
             })}
-          </View>
+          </Animated.View>
         ))}
       </View>
+      </Animated.View>
 
       <Legend />
     </View>

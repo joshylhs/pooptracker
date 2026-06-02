@@ -73,7 +73,6 @@ export default function FriendsScreen() {
   const logs = useLogStore(s => s.logs);
   const leaderboardEntries = leaderboard?.entries ?? [];
   const myEntry = leaderboardEntries.find(e => e.isSelf);
-  const myProfileRef = useRef<typeof myProfile>(null);
   const myProfile = myEntry ? {
     name: 'You',
     avatarInitials: myEntry.avatarInitials,
@@ -81,7 +80,9 @@ export default function FriendsScreen() {
     avatarConfig: myEntry.avatarConfig,
     value: 0,
   } : null;
-  if (myProfile) myProfileRef.current = myProfile;
+  // Frozen on first population — leaderboard window changes must not re-render CompareSection.
+  const myProfileRef = useRef<typeof myProfile>(null);
+  if (myProfile && !myProfileRef.current) myProfileRef.current = myProfile;
   const stableMyProfile = myProfileRef.current;
 
   const panelCount = pendingIncoming.length + pendingOutgoing.length + friends.length;
@@ -395,7 +396,7 @@ export default function FriendsScreen() {
 
         <LeaderboardList
           entries={leaderboard?.entries ?? []}
-          loading={loading || leaderboardLoading}
+          loading={loading || (leaderboardLoading && (leaderboard?.entries ?? []).length === 0)}
           activeWindow={activeWindow}
           onWindowChange={handleWindowChange}
           onFriendPress={uid => navigation.navigate('FriendDetail', { friendId: uid })}
