@@ -43,6 +43,8 @@ export default function HomeScreen() {
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [logTrigger, setLogTrigger] = useState(0);
+  const [lastLoggedDate, setLastLoggedDate] = useState<string | null>(null);
   const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -104,6 +106,11 @@ export default function HomeScreen() {
 
   const todayString = formatDate(new Date());
 
+  const triggerLogAnimations = (date: string) => {
+    setLogTrigger(t => t + 1);
+    setLastLoggedDate(date);
+  };
+
   const handleQuickLog = () => {
     const ts = selectedDate && selectedDate !== todayString
       ? new Date(selectedDate + 'T12:00:00').getTime()
@@ -111,6 +118,7 @@ export default function HomeScreen() {
     quickLog(ts);
     showToast('Logged!');
     if (userId) onLogSaved(userId, false);
+    triggerLogAnimations(selectedDate ?? todayString);
   };
 
   const handleModalClose = (saved: boolean, wasEditing: boolean, hadBlood?: boolean) => {
@@ -119,6 +127,7 @@ export default function HomeScreen() {
     if (saved) {
       showToast(wasEditing ? 'Changes saved' : 'Logged!');
       if (userId) onLogSaved(userId, hadBlood ?? false);
+      if (!wasEditing) triggerLogAnimations(selectedDate ?? todayString);
     }
   };
 
@@ -204,6 +213,7 @@ export default function HomeScreen() {
           summaries={summaries}
           selectedDate={selectedDate}
           onDayPress={d => setSelectedDate(d === selectedDate ? null : d)}
+          lastLoggedDate={lastLoggedDate}
         />
 
         {dayCardVisible && (
@@ -229,6 +239,7 @@ export default function HomeScreen() {
           onQuickLog={handleQuickLog}
           onAddDetails={() => setIsModalOpen(true)}
           selectedDate={selectedDate}
+          logTrigger={logTrigger}
         />
       </View>
 

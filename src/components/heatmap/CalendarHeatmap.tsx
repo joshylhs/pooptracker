@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
@@ -19,30 +19,30 @@ import AppText from '../shared/Text';
 const DAYS_OF_WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const GAP = 4;
 const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
 interface CalendarHeatmapProps {
   summaries: readonly DailySummary[];
   selectedDate: string | null;
   onDayPress: (date: string) => void;
+  lastLoggedDate?: string | null;
 }
 
 interface CellData {
   day: number;
   dateStr: string;
   isOverflow: boolean;
+}
+
+interface HeatmapCellProps {
+  cell: CellData;
+  today: string;
+  selectedDate: string | null;
+  countMap: Record<string, number>;
+  lastLoggedDate?: string | null;
+  onPress: (date: string) => void;
 }
 
 function pad(n: number): string {
@@ -56,12 +56,73 @@ function monthRowCount(year: number, month: number): number {
   return Math.ceil((startOffset + daysInMonth) / 7);
 }
 
+function HeatmapCell({ cell, today, selectedDate, countMap, lastLoggedDate, onPress }: HeatmapCellProps) {
+  const { surface, colours } = useTheme();
+  const isFuture = cell.dateStr > today;
+  const count = countMap[cell.dateStr] ?? 0;
+  const level = getIntensityLevel(count);
+  const isToday = cell.dateStr === today;
+  const isSelected = cell.dateStr === selectedDate;
+  const fill = !isFuture && level > 0 ? INTENSITY_COLOURS[level] : 'transparent';
+  const borderColour = isSelected
+    ? colours.destructive
+    : isToday
+      ? colours.primary400
+      : 'transparent';
+  const textColour = !isFuture && level > 0 ? '#FFFFFF' : surface.textPrimary;
+  const opacity = isFuture ? 0.2 : cell.isOverflow ? 0.4 : 1;
+
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (cell.dateStr !== lastLoggedDate) return;
+    Animated.sequence([
+      Animated.spring(scale, { toValue: 1.35, damping: 6,  stiffness: 200, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1.0,  damping: 10, stiffness: 180, useNativeDriver: true }),
+    ]).start();
+  }, [lastLoggedDate]);
+
+  return (
+    <Animated.View style={[styles.cellWrapper, { transform: [{ scale }] }]}>
+      <Pressable
+        onPress={() => onPress(cell.dateStr)}
+        disabled={isFuture}
+        style={[
+          styles.cell,
+          {
+            backgroundColor: fill,
+            borderColor: isFuture ? 'transparent' : borderColour,
+            borderWidth: 2,
+            opacity,
+          },
+        ]}
+      >
+        {isSelected && !isToday && (
+          <View style={[StyleSheet.absoluteFill, styles.selectedOverlay]} />
+        )}
+        <AppText
+          style={[
+            styles.dayText,
+            {
+              color: textColour,
+              fontWeight: !isFuture && level > 0 ? '500' : '400',
+            },
+          ]}
+        >
+          {cell.day}
+        </AppText>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 export default function CalendarHeatmap({
   summaries,
   selectedDate,
   onDayPress,
+  lastLoggedDate,
 }: CalendarHeatmapProps) {
-  const { surface, colours } = useTheme();
+  const { surface } = useTheme();
   const today = todayString();
   const now = useMemo(() => new Date(), []);
 
@@ -199,78 +260,40 @@ export default function CalendarHeatmap({
       </View>
 
       <Animated.View style={{ opacity: gridOpacity, transform: [{ translateX: slideX }] }}>
-      {/* Day-of-week labels: M T W T F S S */}
-      <View style={[styles.weekRow, styles.dowRow]}>
-        {DAYS_OF_WEEK.map((d, i) => (
-          <View key={i} style={styles.headerCell}>
-            <AppText variant="caption" colour="textSecondary">
-              {d}
-            </AppText>
-          </View>
-        ))}
-      </View>
+        {/* Day-of-week labels */}
+        <View style={[styles.weekRow, styles.dowRow]}>
+          {DAYS_OF_WEEK.map((d, i) => (
+            <View key={i} style={styles.headerCell}>
+              <AppText variant="caption" colour="textSecondary">{d}</AppText>
+            </View>
+          ))}
+        </View>
 
-      {/* Day grid: chunks of 7, each cell is flex:1 + aspectRatio:1 */}
-      <View style={styles.grid}>
-        {rows.map((row, rowIdx) => (
-          <Animated.View
-            key={rowIdx}
-            style={[styles.weekRow, {
-              transform: [{
-                scale: rowAnims[rowIdx].interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }),
-              }],
-            }]}
-          >
-            {row.map((cell, colIdx) => {
-              const isFuture = cell.dateStr > today;
-              const count = countMap[cell.dateStr] ?? 0;
-              const level = getIntensityLevel(count);
-              const isToday = cell.dateStr === today;
-              const isSelected = cell.dateStr === selectedDate;
-              const fill = !isFuture && level > 0 ? INTENSITY_COLOURS[level] : 'transparent';
-              const borderColour = isSelected
-                ? colours.destructive
-                : isToday
-                  ? colours.primary400
-                  : 'transparent';
-              const textColour =
-                !isFuture && level > 0 ? '#FFFFFF' : surface.textPrimary;
-              const opacity = isFuture ? 0.2 : cell.isOverflow ? 0.4 : 1;
-              return (
-                <Pressable
+        {/* Day grid */}
+        <View style={styles.grid}>
+          {rows.map((row, rowIdx) => (
+            <Animated.View
+              key={rowIdx}
+              style={[styles.weekRow, {
+                transform: [{
+                  scale: rowAnims[rowIdx].interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }),
+                }],
+              }]}
+            >
+              {row.map((cell, colIdx) => (
+                <HeatmapCell
                   key={`${cell.dateStr}-${colIdx}`}
-                  onPress={() => onDayPress(cell.dateStr)}
-                  disabled={isFuture}
-                  style={[
-                    styles.cell,
-                    {
-                      backgroundColor: fill,
-                      borderColor: isFuture ? 'transparent' : borderColour,
-                      borderWidth: 2,
-                      opacity,
-                    },
-                  ]}
-                >
-                  {isSelected && !isToday && (
-                    <View style={[StyleSheet.absoluteFill, styles.selectedOverlay]} />
-                  )}
-                  <AppText
-                    style={[
-                      styles.dayText,
-                      {
-                        color: textColour,
-                        fontWeight: !isFuture && level > 0 ? '500' : '400',
-                      },
-                    ]}
-                  >
-                    {cell.day}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </Animated.View>
-        ))}
-      </View>
+                  cell={cell}
+                  today={today}
+                  selectedDate={selectedDate}
+                  countMap={countMap}
+                  lastLoggedDate={lastLoggedDate}
+                  onPress={onDayPress}
+                />
+              ))}
+            </Animated.View>
+          ))}
+        </View>
       </Animated.View>
 
       <Legend />
@@ -284,9 +307,7 @@ function Legend() {
 
   return (
     <View style={[styles.legend, { borderTopColor: surface.border }]}>
-      <AppText variant="caption" colour="textSecondary">
-        less
-      </AppText>
+      <AppText variant="caption" colour="textSecondary">less</AppText>
       <View style={styles.legendSwatches}>
         {levels.map(level => (
           <View
@@ -294,17 +315,14 @@ function Legend() {
             style={[
               styles.swatch,
               {
-                backgroundColor:
-                  level === 0 ? surface.background : INTENSITY_COLOURS[level],
+                backgroundColor: level === 0 ? surface.background : INTENSITY_COLOURS[level],
                 borderColor: surface.border,
               },
             ]}
           />
         ))}
       </View>
-      <AppText variant="caption" colour="textSecondary">
-        more
-      </AppText>
+      <AppText variant="caption" colour="textSecondary">more</AppText>
     </View>
   );
 }
@@ -346,9 +364,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: GAP,
   },
-  cell: {
+  cellWrapper: {
     flex: 1,
     aspectRatio: 1,
+  },
+  cell: {
+    flex: 1,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
