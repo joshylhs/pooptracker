@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Modal,
   Pressable,
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import { doc, getDoc } from '@react-native-firebase/firestore';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
+import SpinningRing from '../shared/SpinningRing';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from '../shared/Text';
 import Avatar from '../shared/Avatar';
@@ -80,6 +82,7 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
   const userId = useAuthStore(s => s.user?.uid ?? '');
   const myAcknowledged = useSignalsStore(s => s.acknowledged);
 
+  const pillScale = useRef(new Animated.Value(1)).current;
   const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null);
   const [friendData, setFriendData] = useState<FriendData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -216,28 +219,35 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
       <View style={styles.header}>
         <AppText variant="sectionHeading">Compare</AppText>
         {friends.length > 0 && (
-        <Pressable
-          onPress={() => setPickerVisible(true)}
-          style={({ pressed }) => [styles.friendPill, { borderColor: surface.border, opacity: pressed ? 0.5 : 1 }]}
-          hitSlop={8}
-        >
-          {selectedFriend ? (
-            <>
-              {selectedFriend.avatarConfig
-                ? <CatAvatarCircle config={selectedFriend.avatarConfig} size={20} />
-                : <Avatar initials={selectedFriend.avatarInitials} colour={selectedFriend.avatarColour} size={20} />
-              }
-              <AppText style={[styles.friendPillName, { color: surface.textPrimary }]} numberOfLines={1}>
-                {selectedFriend.username}
-              </AppText>
-            </>
-          ) : (
-            <>
-              <MCI name="plus-circle" size={18} color={colours.primary400} />
-              <AppText style={[styles.friendPillName, { color: colours.primary400 }]}>Choose friend</AppText>
-            </>
-          )}
-        </Pressable>
+          <Animated.View style={{ transform: [{ scale: pillScale }] }}>
+            <Pressable
+              onPress={() => setPickerVisible(true)}
+              onPressIn={() => Animated.spring(pillScale, { toValue: 0.90, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+              onPressOut={() => Animated.spring(pillScale, { toValue: 1, speed: 40, bounciness: 5, useNativeDriver: true }).start()}
+              style={[styles.friendPill, { borderColor: surface.border, backgroundColor: surface.border }]}
+              hitSlop={8}
+            >
+              {selectedFriend ? (
+                <>
+                  <SpinningRing size={26} avatarSize={18}>
+                    {selectedFriend.avatarConfig
+                      ? <CatAvatarCircle config={selectedFriend.avatarConfig} size={18} />
+                      : <Avatar initials={selectedFriend.avatarInitials} colour={selectedFriend.avatarColour} size={18} />
+                    }
+                  </SpinningRing>
+                  <AppText style={[styles.friendPillName, { color: surface.textPrimary }]} numberOfLines={1}>
+                    {selectedFriend.username}
+                  </AppText>
+                  <MCI name="swap-horizontal" size={14} color={surface.textSecondary} />
+                </>
+              ) : (
+                <>
+                  <MCI name="plus-circle" size={18} color={colours.primary400} />
+                  <AppText style={[styles.friendPillName, { color: colours.primary400 }]}>Choose friend</AppText>
+                </>
+              )}
+            </Pressable>
+          </Animated.View>
         )}
       </View>
 
@@ -283,14 +293,14 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
                   <View>
                     <View style={styles.chartCard}>
                       <View style={styles.chartSide}>
-                        <MiniFrequencyChart logs={myLogs} label="You" yMax={sharedYMax} />
+                        <MiniFrequencyChart logs={myLogs} label="you" yMax={sharedYMax} />
                       </View>
                       <View style={[styles.chartDivider, { backgroundColor: surface.border }]} />
                       <View style={styles.chartSide}>
-                        <MiniFrequencyChart logs={friendLogs} label={selectedFriend?.username ?? ''} yMax={sharedYMax} />
+                        <MiniFrequencyChart logs={friendLogs} label="them" yMax={sharedYMax} />
                       </View>
                     </View>
-                    <AppText style={[styles.cardLabel, { color: surface.textSecondary, marginTop: 8 }]}>
+                    <AppText style={[styles.cardLabel, { color: surface.textSecondary }]}>
                       frequency · last 6 weeks
                     </AppText>
                   </View>
@@ -299,7 +309,7 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
                     <View style={styles.signalRow}>
                       <View style={styles.signalSide}>
                         <MCI name={SIGNAL_META[mySignalStatus].icon} size={28} color={SIGNAL_META[mySignalStatus].colour} />
-                        <AppText style={[styles.signalName, { color: surface.textSecondary }]}>You</AppText>
+                        <AppText style={[styles.signalName, { color: surface.textSecondary }]}>you</AppText>
                         <AppText style={[styles.signalStatus, { color: SIGNAL_META[mySignalStatus].colour }]} numberOfLines={2}>
                           {SIGNAL_META[mySignalStatus].label}
                         </AppText>
@@ -309,9 +319,7 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
                         {signalStatus ? (
                           <>
                             <MCI name={SIGNAL_META[signalStatus].icon} size={28} color={SIGNAL_META[signalStatus].colour} />
-                            <AppText style={[styles.signalName, { color: surface.textSecondary }]}>
-                              {selectedFriend?.username}
-                            </AppText>
+                            <AppText style={[styles.signalName, { color: surface.textSecondary }]}>them</AppText>
                             <AppText style={[styles.signalStatus, { color: SIGNAL_META[signalStatus].colour }]} numberOfLines={2}>
                               {SIGNAL_META[signalStatus].label}
                             </AppText>
@@ -325,9 +333,9 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
                   </View>
                 ) : (
                   <CompareCard
-                    label={item.label}
                     left={{ ...myProfile, value: item.myValue! }}
                     right={{ ...friendSide, value: item.friendValue! }}
+                    label={item.label}
                   />
                 )}
               </View>
@@ -356,7 +364,7 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
         <Pressable style={styles.pickerBackdrop} onPress={() => setPickerVisible(false)}>
           <View style={[styles.pickerSheet, { backgroundColor: surface.surface, borderColor: surface.border }]}>
             <AppText variant="sectionHeading" style={styles.pickerTitle}>Compare with</AppText>
-            <ScrollView>
+            <ScrollView scrollIndicatorInsets={{ right: 6 }} indicatorStyle="white">
               {selectedFriend && (
                 <Pressable
                   style={({ pressed }) => [styles.pickerRow, { borderColor: surface.border, opacity: pressed ? 0.5 : 1 }]}
@@ -410,7 +418,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 8,
   },
   friendPill: {
     flexDirection: 'row',
@@ -419,13 +427,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 8,
     maxWidth: 160,
   },
   friendPillName: { fontSize: 13, fontWeight: '500', flexShrink: 1 },
+  statLabel: { letterSpacing: 0.4 },
   empty: { paddingHorizontal: 16, paddingBottom: 16, alignItems: 'center' },
   flatList: { flex: 1 },
-  cardPage: { paddingHorizontal: 16, paddingBottom: 8, justifyContent: 'center' },
+  cardPage: { paddingHorizontal: 16, paddingBottom: 4, justifyContent: 'center' },
   chartCard: { flexDirection: 'row', alignItems: 'flex-end' },
   chartSide: { flex: 1 },
   chartDivider: { width: 1, alignSelf: 'stretch', marginHorizontal: 8 },
@@ -436,7 +445,7 @@ const styles = StyleSheet.create({
   signalName: { fontSize: 12 },
   signalStatus: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
   cardLabel: { fontSize: 11, textAlign: 'center', letterSpacing: 0.4, marginTop: 4 },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingBottom: 12 },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingBottom: 10, paddingTop: 2 },
   dot: { width: 5, height: 5, borderRadius: 3 },
   pickerBackdrop: {
     flex: 1,
