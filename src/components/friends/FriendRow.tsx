@@ -7,18 +7,25 @@ import Avatar from '../shared/Avatar';
 import { CatAvatarCircle } from '../avatar';
 import { LeaderboardEntry } from '../../services/friends';
 import { sendPoke } from '../../services/pokes';
+import MedalIcon from './MedalIcon';
+import { Mood } from '../../utils/moodUtils';
+
+export const FRIEND_ROW_MARGIN = 6;
 
 interface FriendRowProps {
   rank: number;
   entry: LeaderboardEntry;
+  mood?: Mood;
   onPress?: () => void;
 }
 
-export default function FriendRow({ rank, entry, onPress }: FriendRowProps) {
+export default function FriendRow({ rank, entry, mood, onPress }: FriendRowProps) {
   const { surface, colours } = useTheme();
   const [poking, setPoking] = useState(false);
   const [poked, setPoked] = useState(false);
   const pokeScale = useRef(new Animated.Value(1)).current;
+  const rowScale  = useRef(new Animated.Value(1)).current;
+  const pressable = !entry.isSelf && !!onPress;
 
   const pokeScaleUp = () => Animated.timing(pokeScale, { toValue: 1.15, duration: 100, useNativeDriver: true }).start();
   const pokeScaleDown = (cb?: () => void) => Animated.timing(pokeScale, { toValue: 1, duration: 150, useNativeDriver: true }).start(cb);
@@ -46,20 +53,28 @@ export default function FriendRow({ rank, entry, onPress }: FriendRowProps) {
   };
 
   return (
+    <Animated.View style={{ transform: [{ scale: rowScale }] }}>
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
+      onPressIn={() => { if (pressable) Animated.spring(rowScale, { toValue: 0.97, speed: 40, bounciness: 0, useNativeDriver: true }).start(); }}
+      onPressOut={() => { if (pressable) Animated.spring(rowScale, { toValue: 1,    speed: 40, bounciness: 4, useNativeDriver: true }).start(); }}
+      style={[
         styles.row,
         { backgroundColor: surface.surface, borderColor: surface.border },
         entry.isSelf && { backgroundColor: 'rgba(127, 119, 221, 0.4)', borderColor: colours.primary400 },
-        pressed && !entry.isSelf && { opacity: 0.7 },
       ]}
     >
-      <AppText variant="bodyEmphasis" style={[styles.rank, { color: surface.textSecondary }]}>
-        {rank}
-      </AppText>
+      {rank <= 3 ? (
+        <View style={styles.rank}>
+          <MedalIcon rank={rank} />
+        </View>
+      ) : (
+        <AppText variant="bodyEmphasis" style={[styles.rank, { color: surface.textSecondary }]}>
+          {rank}
+        </AppText>
+      )}
       {entry.avatarConfig ? (
-        <CatAvatarCircle config={entry.avatarConfig} size={48} />
+        <CatAvatarCircle config={entry.avatarConfig} size={48} mood={mood} />
       ) : (
         <Avatar initials={entry.avatarInitials} colour={entry.avatarColour} size={48} />
       )}
@@ -96,6 +111,7 @@ export default function FriendRow({ rank, entry, onPress }: FriendRowProps) {
         {entry.count}
       </AppText>
     </Pressable>
+    </Animated.View>
   );
 }
 
@@ -104,12 +120,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 9.5,
     gap: 12,
     borderRadius: 10,
     borderWidth: 1,
+    marginHorizontal: FRIEND_ROW_MARGIN,
   },
-  rank: { width: 20, textAlign: 'center' },
+  rank: { width: 27, textAlign: 'center', alignItems: 'center' },
   nameCol: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   count: { width: 36, textAlign: 'center' },

@@ -118,6 +118,8 @@ export default function LogEntryModal({
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
+          scrollIndicatorInsets={{ right: 6 }}
+          indicatorStyle="white"
         >
           <View style={styles.headerRow}>
             <AppText variant="caption" colour="textSecondary" style={styles.editLabel}>

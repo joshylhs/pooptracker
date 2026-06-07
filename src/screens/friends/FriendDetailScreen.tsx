@@ -5,6 +5,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   View,
 } from 'react-native';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -30,6 +31,7 @@ import CalendarHeatmap from '../../components/heatmap/CalendarHeatmap';
 import BristolDistributionChart from '../../components/home/BristolDistributionChart';
 import WeeklyFrequencyChart from '../../components/home/WeeklyFrequencyChart';
 import Button from '../../components/shared/Button';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = NativeStackScreenProps<FriendsStackParamList, 'FriendDetail'>;
 
@@ -61,8 +63,11 @@ const SIGNAL_META: Record<FriendSignalStatus, { colour: string; label: string; i
 
 export default function FriendDetailScreen({ route, navigation }: Props) {
   const { colours, surface } = useTheme();
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const { friendId } = route.params;
   const remove = useFriendsStore(s => s.remove);
+  const trustedFriendIds = useFriendsStore(s => s.trustedFriendIds);
+  const toggleTrust = useFriendsStore(s => s.toggleTrust);
   const currentUserId = useAuthStore(s => s.user?.uid);
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -132,7 +137,7 @@ export default function FriendDetailScreen({ route, navigation }: Props) {
       {/* Tap the dim area to dismiss */}
       <Pressable style={StyleSheet.absoluteFill} onPress={() => navigation.goBack()} />
 
-      <View style={styles.card}>
+      <View style={[styles.card, { paddingBottom: bottomInset + 16, backgroundColor: surface.background }]}>
         {/* Drag handle — larger hit area so the gesture fires reliably */}
         <View style={styles.handleArea} {...pan.panHandlers}>
           <View style={styles.handle} />
@@ -141,7 +146,12 @@ export default function FriendDetailScreen({ route, navigation }: Props) {
         {loading ? (
           <ActivityIndicator style={styles.spinner} />
         ) : (
-          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            style={{ marginHorizontal: -16 }}
+            scrollIndicatorInsets={{ right: 6 }}
+            indicatorStyle="white"
+          >
             <View style={styles.identity}>
               {profile?.avatarConfig ? (
                 <CatAvatarCircle config={profile.avatarConfig} size={64} />
@@ -214,6 +224,19 @@ export default function FriendDetailScreen({ route, navigation }: Props) {
               </View>
             )}
 
+            <View style={[styles.trustRow, { backgroundColor: surface.surface, borderColor: surface.border }]}>
+              <MCI name="shield-account" size={18} color={surface.textSecondary} style={styles.trustIcon} />
+              <View style={styles.trustLabel}>
+                <AppText variant="body">Trusted friend</AppText>
+                <AppText variant="caption" colour="textSecondary">Can see your detailed stats</AppText>
+              </View>
+              <Switch
+                value={trustedFriendIds.includes(friendId)}
+                onValueChange={() => toggleTrust(friendId)}
+                trackColor={{ true: '#7F77DD' }}
+              />
+            </View>
+
             <Button
               title="Remove friend"
               variant="destructive"
@@ -239,7 +262,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingTop: 12,
     paddingHorizontal: 16,
-    paddingBottom: 40,
     maxHeight: '82%',
   },
   handleArea: {
@@ -254,7 +276,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#7A6F60',
   },
   spinner: { paddingVertical: 48 },
-  scroll: { gap: 16, paddingBottom: 8 },
+  scroll: { gap: 16, paddingBottom: 8, paddingHorizontal: 16 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   nameBlock: { gap: 8 },
   pokePill: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
@@ -266,4 +288,14 @@ const styles = StyleSheet.create({
   chartBlock: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
   divider: { height: 1, marginHorizontal: 16, marginVertical: 0 },
   chartTitle: { letterSpacing: 0.5 },
+  trustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  trustIcon: { marginRight: 10 },
+  trustLabel: { flex: 1, gap: 2 },
 });

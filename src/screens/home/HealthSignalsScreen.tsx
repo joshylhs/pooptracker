@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -151,6 +152,7 @@ function PastCard({ record }: { record: AcknowledgedSignal }) {
 }
 
 export default function HealthSignalsScreen() {
+  const { top: topInset } = useSafeAreaInsets();
   const { surface } = useTheme();
   const navigation = useNavigation();
   const userId = useAuthStore(s => s.user?.uid ?? null);
@@ -175,12 +177,12 @@ export default function HealthSignalsScreen() {
 
   return (
     <ScreenContainer>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backRow} hitSlop={8}>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backRow, { paddingTop: topInset }]} hitSlop={8}>
         <MCI name="arrow-left" size={20} color={surface.textSecondary} />
         <AppText variant="body" colour="textSecondary">Home</AppText>
       </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingHorizontal: 24 }]} style={{ marginHorizontal: -24 }} scrollIndicatorInsets={{ right: 6 }} indicatorStyle="white">
         <View style={styles.titleRow}>
           <AppText variant="screenTitle">Health Signals</AppText>
           <InfoButton onPress={() => setInfoVisible(true)} />
@@ -285,7 +287,7 @@ export default function HealthSignalsScreen() {
 
 const styles = StyleSheet.create({
   backRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingBottom: 12 },
-  scroll: { gap: 8, paddingBottom: 40 },
+  scroll: { gap: 8, paddingBottom: 24 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   legend: { gap: 4, paddingVertical: 4 },
   legendItem: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },

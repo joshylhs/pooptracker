@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medal Preview — PoopTracker Leaderboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #2a2826;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 32px 24px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      color: #f0ece8;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 36px;
+    }
+
+    .variants {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
+      background: #1e1c1a;
+      border: 1px solid #3a3632;
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .card-label {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #c8b89a;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .medal-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 24px;
+    }
+
+    .medal-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .medal-name {
+      font-size: 11px;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    svg {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Medal Preview</h1>
+<p class="subtitle">PoopTracker leaderboard medals — pixel-art grid approach. All sizes shown at 1× (multiply P for device pixels).</p>
+
+<div class="variants" id="variants"></div>
+
+<script>
+// ─── Colour palettes ───────────────────────────────────────────────────────
+const PALETTES = {
+  gold:   { coinLight:'#FFD84D', coinMid:'#F5C518', coinDark:'#C8960A', highlight:'#FFE87A', digit:'#9A7000' },
+  silver: { coinLight:'#DCDCDC', coinMid:'#B0B0B0', coinDark:'#888888', highlight:'#EFEFEF', digit:'#666666' },
+  bronze: { coinLight:'#E0984A', coinMid:'#CD7F32', coinDark:'#7A4A10', highlight:'#F0B46A', digit:'#7A4A10' },
+};
+
+const SASH    = '#CC2222';
+const SASH_DK = '#991111';
+
+// ─── Pixel font: 3-wide × 5-tall (relative [col, row]) ───────────────────
+const DIGITS = {
+  1: [[1,0],[0,1],[1,1],[1,2],[1,3],[0,4],[1,4],[2,4]],
+  2: [[0,0],[1,0],[2,0],[2,1],[0,2],[1,2],[2,2],[0,3],[0,4],[1,4],[2,4]],
+  3: [[0,0],[1,0],[2,0],[2,1],[1,2],[2,2],[2,3],[0,4],[1,4],[2,4]],
+};
+
+// ─── Pixel star (5×5, centred) ────────────────────────────────────────────
+// coords relative to a 5×5 box
+const STAR_5x5 = [
+  [2,0],
+  [0,1],[1,1],[2,1],[3,1],[4,1],
+  [1,2],[2,2],[3,2],
+  [0,3],[2,3],[4,3],
+  [0,4],[4,4],
+];
+
+// ─── Core medal builder ───────────────────────────────────────────────────
+// config: { P, cols, rows, sashCols:[startCol,endCol], coinRows, highlight, flat }
+// coinRows: array of { row, cols:[start,end] } for mid cells
+//           plus special marking of which rows use light vs mid
+
+/**
+ * Build SVG rect elements for a medal.
+ * @param {number} rank  1/2/3
+ * @param {'gold'|'silver'|'bronze'} metal
+ * @param {object} cfg
+ */
+function buildMedalRects(rank, metal, cfg) {
+  const { P, cols, sashStart, sashEnd, showHighlight, showShadow, starMode } = cfg;
+  const pal = PALETTES[metal];
+  const rects = [];
+
+  function rect(c, r, color) {
+    rects.push({ x: c * P, y: r * P, w: P, h: P, fill: color });
+  }
+
+  // ── Sash (rows 0-1) ────────────────────────────────────────────
+  for (let r = 0; r <= 1; r++) {
+    for (let c = sashStart; c <= sashEnd; c++) {
+      rect(c, r, r === 0 ? SASH : SASH_DK);
+    }
+  }
+
+  // ── Coin body ─────────────────────────────────────────────────
+  // row 2: mid span
+  const coinColStart = cfg.coinColStart;
+  const coinColEnd   = cfg.coinColEnd;
+  const midStart     = cfg.midStart ?? coinColStart;
+  const midEnd       = cfg.midEnd   ?? coinColEnd;
+
+  // row 2
+  for (let c = midStart; c <= midEnd; c++) rect(c, 2, pal.coinMid);
+
+  // rows 3-7: outer edge mid, inner light
+  for (let r = 3; r <= 7; r++) {
+    rect(coinColStart, r, pal.coinMid);
+    rect(coinColEnd,   r, pal.coinMid);
+    for (let c = coinColStart + 1; c <= coinColEnd - 1; c++) {
+      rect(c, r, pal.coinLight);
+    }
+  }
+
+  // row 8
+  for (let c = midStart; c <= midEnd; c++) rect(c, 8, pal.coinMid);
+
+  // ── Highlight ────────────────────────────────────────────────
+  if (showHighlight) {
+    const ho = cfg.highlightOffset ?? 0; // col offset for wider coin
+    [[2 + ho, 3], [3 + ho, 3], [2 + ho, 4]].forEach(([c, r]) => rect(c, r, pal.highlight));
+  }
+
+  // ── Shadow ───────────────────────────────────────────────────
+  if (showShadow) {
+    const so = cfg.shadowOffset ?? 0;
+    [[6 + so, 7], [7 + so, 7], [7 + so, 6]].forEach(([c, r]) => rect(c, r, pal.coinDark));
+  }
+
+  // ── Digit or Star ────────────────────────────────────────────
+  const digitOriginCol = cfg.digitOriginCol ?? 3;
+  const digitOriginRow = cfg.digitOriginRow ?? 3;
+
+  if (starMode) {
+    // 5×5 star centred — shift origin so it fits in coin
+    const so = cfg.starColOffset ?? 0;
+    STAR_5x5.forEach(([dc, dr]) => rect(digitOriginCol + dc + so, digitOriginRow + dr, pal.digit));
+  } else {
+    const pixels = DIGITS[rank];
+    pixels.forEach(([dc, dr]) => rect(digitOriginCol + dc, digitOriginRow + dr, pal.digit));
+  }
+
+  return rects;
+}
+
+function renderSVG(rects, totalCols, totalRows, P) {
+  const W = totalCols * P;
+  const H = totalRows * P;
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  rects.forEach(({ x, y, w, h, fill }) => {
+    svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"/>`;
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+// ─── Alt F: 5×7 pixel font ────────────────────────────────────────────────
+const DIGITS_5x7 = {
+  1: [[2,0],[1,1],[2,1],[2,2],[2,3],[2,4],[2,5],[0,6],[1,6],[2,6],[3,6],[4,6]],
+  2: [[0,0],[1,0],[2,0],[3,0],[4,0],[4,1],[4,2],[0,3],[1,3],[2,3],[3,3],[4,3],[0,4],[0,5],[0,6],[1,6],[2,6],[3,6],[4,6]],
+  3: [[0,0],[1,0],[2,0],[3,0],[4,0],[4,1],[4,2],[1,3],[2,3],[3,3],[4,3],[4,4],[4,5],[0,6],[1,6],[2,6],[3,6],[4,6]],
+};
+
+/**
+ * Build SVG rects for Alt F: 13-col × 14-row grid, P=2, 5×7 digit font.
+ */
+function buildAltFRects(rank, metal) {
+  const P   = 2;
+  const pal = PALETTES[metal];
+  const rects = [];
+
+  function rect(c, r, color) {
+    rects.push({ x: c * P, y: r * P, w: P, h: P, fill: color });
+  }
+
+  // ── Sash (rows 0-1, cols 4-8) ─────────────────────────────────
+  for (let c = 4; c <= 8; c++) rect(c, 0, SASH);
+  // row 1: corners darker
+  rect(4, 1, SASH_DK);
+  rect(8, 1, SASH_DK);
+  for (let c = 5; c <= 7; c++) rect(c, 1, SASH);
+
+  // ── Coin body ─────────────────────────────────────────────────
+  // row 2: cols 3-9 coinMid
+  for (let c = 3; c <= 9; c++) rect(c, 2, pal.coinMid);
+  // row 3: cols 2-10 coinMid
+  for (let c = 2; c <= 10; c++) rect(c, 3, pal.coinMid);
+  // rows 4-10: col 1 & 11 = coinMid; cols 2-10 = coinLight
+  for (let r = 4; r <= 10; r++) {
+    rect(1,  r, pal.coinMid);
+    rect(11, r, pal.coinMid);
+    for (let c = 2; c <= 10; c++) rect(c, r, pal.coinLight);
+  }
+  // row 11: cols 2-10 coinMid
+  for (let c = 2; c <= 10; c++) rect(c, 11, pal.coinMid);
+  // row 12: cols 3-9 coinMid
+  for (let c = 3; c <= 9; c++) rect(c, 12, pal.coinMid);
+  // row 13: cols 4-8 coinMid (bottom nub)
+  for (let c = 4; c <= 8; c++) rect(c, 13, pal.coinMid);
+
+  // ── Highlight ────────────────────────────────────────────────
+  [[2,4],[3,4],[4,4],[2,5],[3,5],[2,6]].forEach(([c, r]) => rect(c, r, pal.highlight));
+
+  // ── Shadow ───────────────────────────────────────────────────
+  [[9,10],[10,10],[10,9],[9,9]].forEach(([c, r]) => rect(c, r, pal.coinDark));
+
+  // ── Digit (5×7, origin col 4, row 4) — 2×2 block per bitmap point ──
+  // Coin light area bounds: cols 2-10, rows 4-10
+  const DIGIT_COL_MIN = 2, DIGIT_COL_MAX = 10;
+  const DIGIT_ROW_MIN = 4, DIGIT_ROW_MAX = 10;
+  const pixels = DIGITS_5x7[rank];
+  const painted = new Set();
+  pixels.forEach(([dc, dr]) => {
+    const baseC = 4 + dc;
+    const baseR = 4 + dr;
+    [[0,0],[1,0],[0,1],[1,1]].forEach(([oc, or]) => {
+      const c = baseC + oc;
+      const r = baseR + or;
+      if (c < DIGIT_COL_MIN || c > DIGIT_COL_MAX) return;
+      if (r < DIGIT_ROW_MIN || r > DIGIT_ROW_MAX) return;
+      const key = `${c},${r}`;
+      if (painted.has(key)) return;
+      painted.add(key);
+      rect(c, r, pal.digit);
+    });
+  });
+
+  return rects;
+}
+
+// ─── Variant definitions ──────────────────────────────────────────────────
+
+const VARIANTS = [
+  {
+    id: 'current',
+    label: 'Current',
+    desc: 'P=3 · 9×10 grid · rounded coin · highlight + shadow · pixel digit',
+    buildCfg: (rank) => ({
+      P: 3,
+      cols: 9, rows: 10,
+      sashStart: 3, sashEnd: 5,
+      coinColStart: 1, coinColEnd: 7,
+      midStart: 2, midEnd: 6,
+      showHighlight: true,
+      showShadow: true,
+      starMode: false,
+      digitOriginCol: 3, digitOriginRow: 3,
+    }),
+  },
+  {
+    id: 'altF',
+    label: 'Alt F',
+    desc: 'P=2 · 13×14 grid · same rendered size as Current (~26×28pt) · 5×7 digit font',
+    altF: true,
+  },
+  {
+    id: 'altA',
+    label: 'Alt A',
+    desc: 'P=2 · same 9×10 grid · smaller overall (18×20pt)',
+    buildCfg: (rank) => ({
+      P: 2,
+      cols: 9, rows: 10,
+      sashStart: 3, sashEnd: 5,
+      coinColStart: 1, coinColEnd: 7,
+      midStart: 2, midEnd: 6,
+      showHighlight: true,
+      showShadow: true,
+      starMode: false,
+      digitOriginCol: 3, digitOriginRow: 3,
+    }),
+  },
+  {
+    id: 'altB',
+    label: 'Alt B',
+    desc: 'P=3 · wider coin — 11-col grid, coin spans cols 1-9 · more circular',
+    buildCfg: (rank) => ({
+      P: 3,
+      cols: 11, rows: 10,
+      sashStart: 4, sashEnd: 6,    // centred on 11 cols (cols 4-6)
+      coinColStart: 1, coinColEnd: 9,
+      midStart: 2, midEnd: 8,
+      showHighlight: true,
+      showShadow: true,
+      highlightOffset: 1,          // shift highlights right by 1
+      shadowOffset: 1,             // shift shadow right by 1
+      starMode: false,
+      digitOriginCol: 4, digitOriginRow: 3,  // centre digit on wider coin
+    }),
+  },
+  {
+    id: 'altC',
+    label: 'Alt C',
+    desc: 'P=3 · star instead of digit — pixel star centred in coin',
+    buildCfg: (rank) => ({
+      P: 3,
+      cols: 9, rows: 10,
+      sashStart: 3, sashEnd: 5,
+      coinColStart: 1, coinColEnd: 7,
+      midStart: 2, midEnd: 6,
+      showHighlight: true,
+      showShadow: true,
+      starMode: true,
+      digitOriginCol: 2, digitOriginRow: 3,
+      starColOffset: 0,
+    }),
+  },
+  {
+    id: 'altD',
+    label: 'Alt D',
+    desc: 'P=3 · flat coin — no highlight or shadow · clean minimal look',
+    buildCfg: (rank) => ({
+      P: 3,
+      cols: 9, rows: 10,
+      sashStart: 3, sashEnd: 5,
+      coinColStart: 1, coinColEnd: 7,
+      midStart: 2, midEnd: 6,
+      showHighlight: false,
+      showShadow: false,
+      starMode: false,
+      digitOriginCol: 3, digitOriginRow: 3,
+    }),
+  },
+  {
+    id: 'altE',
+    label: 'Alt E',
+    desc: 'P=4 · large chunky medals — 36×40pt — same 9×10 grid',
+    buildCfg: (rank) => ({
+      P: 4,
+      cols: 9, rows: 10,
+      sashStart: 3, sashEnd: 5,
+      coinColStart: 1, coinColEnd: 7,
+      midStart: 2, midEnd: 6,
+      showHighlight: true,
+      showShadow: true,
+      starMode: false,
+      digitOriginCol: 3, digitOriginRow: 3,
+    }),
+  },
+];
+
+// ─── Render ───────────────────────────────────────────────────────────────
+
+const container = document.getElementById('variants');
+
+VARIANTS.forEach(variant => {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const header = document.createElement('div');
+  header.className = 'card-header';
+  header.innerHTML = `<span class="card-label">${variant.label}</span><span class="card-desc">${variant.desc}</span>`;
+  card.appendChild(header);
+
+  const row = document.createElement('div');
+  row.className = 'medal-row';
+
+  ['gold', 'silver', 'bronze'].forEach((metal, i) => {
+    const rank = i + 1;
+    let rects, svgStr;
+    if (variant.altF) {
+      rects  = buildAltFRects(rank, metal);
+      svgStr = renderSVG(rects, 13, 14, 2);
+    } else {
+      const cfg = variant.buildCfg(rank);
+      rects  = buildMedalRects(rank, metal, cfg);
+      svgStr = renderSVG(rects, cfg.cols, cfg.rows, cfg.P);
+    }
+
+    const item = document.createElement('div');
+    item.className = 'medal-item';
+    item.innerHTML = svgStr + `<span class="medal-name">${metal} #${rank}</span>`;
+    row.appendChild(item);
+  });
+
+  card.appendChild(row);
+  container.appendChild(card);
+});
+</script>
+</body>
+</html>

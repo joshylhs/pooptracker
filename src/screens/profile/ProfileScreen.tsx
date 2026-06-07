@@ -1,6 +1,7 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   LayoutAnimation,
   Modal,
   Platform,
@@ -26,6 +27,7 @@ import {
   MAX_NOTIFICATION_SLOTS,
 } from '../../services/notificationPrefs';
 import { scheduleDaily } from '../../services/notifications';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import ScreenContainer from '../../components/shared/ScreenContainer';
 import AppText from '../../components/shared/Text';
@@ -34,6 +36,22 @@ import AvatarPickerModal from '../../components/shared/AvatarPickerModal';
 import Avatar from '../../components/shared/Avatar';
 import { CatAvatarCircle, AvatarConfig, DEFAULT_AVATAR_CONFIG } from '../../components/avatar';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
+
+function RemoveSlotButton({ onPress }: { onPress: () => void }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      onPressIn={() => Animated.spring(scale, { toValue: 0.82, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+      onPressOut={() => Animated.spring(scale, { toValue: 1, speed: 40, bounciness: 5, useNativeDriver: true }).start()}
+    >
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <AppText variant="body" colour="textSecondary"> ✕</AppText>
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 const DELETE_REASONS = [
   "It's not useful enough",
@@ -56,6 +74,7 @@ const FEEDBACK_TOPIC_ICONS: Record<string, string> = {
 };
 
 export default function ProfileScreen() {
+  const { top: topInset } = useSafeAreaInsets();
   const user = useAuthStore(s => s.user);
   const logOut = useAuthStore(s => s.logOut);
   const { surface, colours } = useTheme();
@@ -99,6 +118,43 @@ export default function ProfileScreen() {
   }, [user?.uid]);
 
   const isDirty = JSON.stringify(notifPrefs) !== JSON.stringify(savedPrefs);
+  const saveBtnOp      = useRef(new Animated.Value(0)).current;
+  const saveBtnScale   = useRef(new Animated.Value(0.88)).current;
+  const addSlotScale    = useRef(new Animated.Value(1)).current;
+  const trustedBtnScale = useRef(new Animated.Value(1)).current;
+  const avatarScale     = useRef(new Animated.Value(1)).current;
+  const [showSaveBtn, setShowSaveBtn] = useState(false);
+
+  useEffect(() => {
+    if (isDirty) {
+      LayoutAnimation.configureNext({
+        duration: 220,
+        create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+        update: { type: LayoutAnimation.Types.easeInEaseOut },
+      });
+      saveBtnOp.setValue(0);
+      saveBtnScale.setValue(0.88);
+      setShowSaveBtn(true);
+      Animated.parallel([
+        Animated.timing(saveBtnOp,    { toValue: 1, duration: 220, useNativeDriver: true }),
+        Animated.spring(saveBtnScale, { toValue: 1, friction: 8, tension: 80, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(saveBtnOp,    { toValue: 0,    duration: 160, useNativeDriver: true }),
+        Animated.timing(saveBtnScale, { toValue: 0.88, duration: 160, useNativeDriver: true }),
+      ]).start(({ finished }) => {
+        if (finished) {
+          LayoutAnimation.configureNext({
+            duration: 180,
+            delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+            update: { type: LayoutAnimation.Types.easeInEaseOut },
+          });
+          setShowSaveBtn(false);
+        }
+      });
+    }
+  }, [isDirty]);
 
   const handleSlotTimeChange = (index: number) => (_: unknown, selected: Date) => {
     setNotifPrefs(p => ({
@@ -293,18 +349,25 @@ export default function ProfileScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: topInset + 16, paddingHorizontal: 24 }]} style={{ marginHorizontal: -24 }} scrollIndicatorInsets={{ right: 6 }} indicatorStyle="white">
         <AppText variant="screenTitle" style={styles.title}>Profile</AppText>
 
         {/* Identity card */}
         <View style={cardStyle}>
           <View style={styles.identity}>
             {avatarConfig ? (
-              <Pressable onPress={() => setAvatarPickerVisible(true)} hitSlop={4}>
-                <CatAvatarCircle config={avatarConfig} size={AVATAR_SIZE} />
-                <View style={styles.editBadge}>
-                  <AppText style={styles.editBadgeText}>✎</AppText>
-                </View>
+              <Pressable
+                onPress={() => setAvatarPickerVisible(true)}
+                hitSlop={4}
+                onPressIn={() => Animated.spring(avatarScale, { toValue: 0.97, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+                onPressOut={() => Animated.spring(avatarScale, { toValue: 1,    speed: 40, bounciness: 5, useNativeDriver: true }).start()}
+              >
+                <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
+                  <CatAvatarCircle config={avatarConfig} size={AVATAR_SIZE} />
+                  <View style={styles.editBadge}>
+                    <AppText style={styles.editBadgeText}>✎</AppText>
+                  </View>
+                </Animated.View>
               </Pressable>
             ) : (
               <Avatar
@@ -385,9 +448,7 @@ export default function ProfileScreen() {
                           themeVariant="dark"
                         />
                         {notifPrefs.slots.length > 1 && (
-                          <Pressable onPress={() => removeSlot(i)} hitSlop={8}>
-                            <AppText variant="body" colour="textSecondary"> ✕</AppText>
-                          </Pressable>
+                          <RemoveSlotButton onPress={() => removeSlot(i)} />
                         )}
                       </View>
                     </View>
@@ -398,8 +459,15 @@ export default function ProfileScreen() {
               {notifPrefs.slots.length < MAX_NOTIFICATION_SLOTS && (
                 <>
                   <View style={dividerStyle} />
-                  <Pressable onPress={addSlot} style={[styles.row, styles.slotRow]}>
-                    <AppText variant="body" style={styles.addLabel}>+ Add reminder</AppText>
+                  <Pressable
+                    onPress={addSlot}
+                    onPressIn={() => Animated.spring(addSlotScale, { toValue: 0.96, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+                    onPressOut={() => Animated.spring(addSlotScale, { toValue: 1, speed: 40, bounciness: 4, useNativeDriver: true }).start()}
+                    style={[styles.row, styles.slotRow]}
+                  >
+                    <Animated.View style={{ transform: [{ scale: addSlotScale }] }}>
+                      <AppText variant="body" style={styles.addLabel}>+ Add reminder</AppText>
+                    </Animated.View>
                   </Pressable>
                 </>
               )}
@@ -423,12 +491,14 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {isDirty && (
-          <Button
-            title="Save notification settings"
-            onPress={handleSaveNotifs}
-            loading={savingNotifs}
-          />
+        {showSaveBtn && (
+          <Animated.View style={{ opacity: saveBtnOp, transform: [{ scale: saveBtnScale }] }}>
+            <Button
+              title="Save notification settings"
+              onPress={handleSaveNotifs}
+              loading={savingNotifs}
+            />
+          </Animated.View>
         )}
 
         {/* Friends section */}
@@ -458,7 +528,13 @@ export default function ProfileScreen() {
           {friends.length > 0 && (
             <>
               <View style={[dividerStyle, { marginVertical: 0 }]} />
-              <Pressable style={styles.row} onPress={() => setTrustModalVisible(true)} hitSlop={4}>
+              <Pressable
+                style={styles.row}
+                onPress={() => setTrustModalVisible(true)}
+                hitSlop={4}
+                onPressIn={() => Animated.spring(trustedBtnScale, { toValue: 0.9, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+                onPressOut={() => Animated.spring(trustedBtnScale, { toValue: 1,    speed: 40, bounciness: 5, useNativeDriver: true }).start()}
+              >
                 <MCI name="shield-account" size={18} color={surface.textSecondary} style={styles.rowIcon} />
                 <View style={styles.rowLabelBlock}>
                   <AppText variant="body">Trusted friends</AppText>
@@ -466,9 +542,11 @@ export default function ProfileScreen() {
                     Trusted friends can see your detailed stats
                   </AppText>
                 </View>
-                <AppText variant="caption" colour="textSecondary">
-                  {trustedFriendIds.length > 0 ? `${trustedFriendIds.length} trusted` : 'None'} ›
-                </AppText>
+                <Animated.View style={{ transform: [{ scale: trustedBtnScale }] }}>
+                  <AppText variant="caption" colour="textSecondary">
+                    {trustedFriendIds.length > 0 ? `${trustedFriendIds.length} trusted` : 'None'} ›
+                  </AppText>
+                </Animated.View>
               </Pressable>
             </>
           )}
@@ -503,7 +581,7 @@ export default function ProfileScreen() {
             <AppText variant="caption" colour="textSecondary" style={styles.modalHint}>
               Trusted friends can see your detailed stats
             </AppText>
-            <ScrollView>
+            <ScrollView scrollIndicatorInsets={{ right: 6 }} indicatorStyle="white">
               <View style={styles.row}>
                 <AppText variant="body">All friends</AppText>
                 <Switch
@@ -716,7 +794,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { gap: 8, paddingBottom: 40 },
+  scroll: { gap: 8, paddingBottom: 24 },
   title: { marginBottom: 8 },
   card: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 4 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },

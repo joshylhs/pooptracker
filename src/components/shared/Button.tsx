@@ -1,10 +1,12 @@
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   StyleSheet,
   View,
   ViewStyle,
 } from 'react-native';
+import { useRef } from 'react';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from './Text';
@@ -32,32 +34,38 @@ export default function Button({
 }: ButtonProps) {
   const { colours } = useTheme();
   const isDisabled = disabled || loading;
+  const scale = useRef(new Animated.Value(1)).current;
 
   const variantStyles = getVariantStyles(variant, colours);
 
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={isDisabled}
-      style={({ pressed }) => [
-        styles.base,
-        variantStyles.container,
-        pressed && variantStyles.pressed,
-        isDisabled && styles.disabled,
-        style,
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={variantStyles.spinnerColour} />
-      ) : (
-        <View style={styles.inner}>
-          {icon && <MCI name={icon} size={18} color={variantStyles.textColour} />}
-          <AppText variant="bodyEmphasis" style={{ color: variantStyles.textColour }}>
-            {title}
-          </AppText>
-        </View>
-      )}
-    </Pressable>
+    <Animated.View style={[style, { transform: [{ scale }] }]}>
+      <Pressable
+        onPress={onPress}
+        disabled={isDisabled}
+        onPressIn={() => {
+          if (!isDisabled) Animated.spring(scale, { toValue: 0.97, speed: 40, bounciness: 0, useNativeDriver: true }).start();
+        }}
+        onPressOut={() => Animated.spring(scale, { toValue: 1, speed: 40, bounciness: 4, useNativeDriver: true }).start()}
+        style={({ pressed }) => [
+          styles.base,
+          variantStyles.container,
+          pressed && variantStyles.pressed,
+          isDisabled && styles.disabled,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={variantStyles.spinnerColour} />
+        ) : (
+          <View style={styles.inner}>
+            {icon && <MCI name={icon} size={18} color={variantStyles.textColour} />}
+            <AppText variant="bodyEmphasis" style={{ color: variantStyles.textColour }}>
+              {title}
+            </AppText>
+          </View>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 

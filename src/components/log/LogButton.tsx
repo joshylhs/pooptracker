@@ -23,8 +23,8 @@ function formatDatePill(dateStr: string): string {
 export default function LogButton({ onQuickLog, onAddDetails, selectedDate, logTrigger = 0 }: LogButtonProps) {
   const { colours } = useTheme();
 
-  const mainScale    = useRef(new Animated.Value(1)).current;
-  const quickOpacity = useRef(new Animated.Value(1)).current;
+  const mainScale  = useRef(new Animated.Value(1)).current;
+  const quickScale = useRef(new Animated.Value(1)).current;
 
   const labelY    = useRef(new Animated.Value(0)).current;
   const labelOp   = useRef(new Animated.Value(1)).current;
@@ -152,12 +152,12 @@ export default function LogButton({ onQuickLog, onAddDetails, selectedDate, logT
 
       <Pressable
         onPress={onQuickLog}
-        onPressIn={() => { Animated.timing(quickOpacity, { toValue: 0.6, duration: 80, useNativeDriver: true }).start(); }}
-        onPressOut={() => { Animated.timing(quickOpacity, { toValue: 1,   duration: 80, useNativeDriver: true }).start(); }}
+        onPressIn={() => { Animated.spring(quickScale, { toValue: 0.97, useNativeDriver: true, speed: 40, bounciness: 0 }).start(); }}
+        onPressOut={() => { Animated.spring(quickScale, { toValue: 1,    useNativeDriver: true, speed: 40, bounciness: 4 }).start(); }}
         style={styles.quickBtn}
       >
         <BlurView blurType="dark" blurAmount={4} style={StyleSheet.absoluteFill} reducedTransparencyFallbackColor="#1a1918" pointerEvents="none" />
-        <Animated.View style={[styles.quickContent, { opacity: quickOpacity }]}>
+        <Animated.View style={[styles.quickContent, { transform: [{ scale: quickScale }] }]}>
           <AppText variant="caption" style={styles.quickText}>Quick log</AppText>
           <AppText variant="caption" style={styles.quickDot}> · </AppText>
           <AppText variant="caption" style={styles.quickSub}>

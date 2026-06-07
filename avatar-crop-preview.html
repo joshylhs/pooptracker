@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cat Avatar Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #1a1a2e; color: #e0e0e0; font-family: system-ui, sans-serif; padding: 24px; }
+  h1 { font-size: 18px; margin-bottom: 4px; color: #a89be8; }
+  h2 { font-size: 16px; margin-bottom: 4px; color: #a89be8; margin-top: 32px; }
+  p.sub { font-size: 12px; color: #888; margin-bottom: 24px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 32px; background: #12122a; padding: 20px; border-radius: 12px; border: 1px solid #2a2a4a; }
+  .ctrl-group { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
+  .ctrl-group label { font-size: 12px; color: #a89be8; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .ctrl-group select, .ctrl-group input[type=range] { width: 100%; }
+  .ctrl-group select { background: #1e1e3a; color: #e0e0e0; border: 1px solid #3a3a5a; border-radius: 6px; padding: 4px 8px; font-size: 13px; }
+  .val { font-size: 11px; color: #888; margin-top: 2px; }
+  input[type=range] { accent-color: #7f77dd; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .preset-btn { background: #12122a; border: 1px solid #3a3a5a; color: #a89be8; border-radius: 8px; padding: 6px 14px; font-size: 12px; cursor: pointer; }
+  .preset-btn:hover { background: #1e1e3a; border-color: #7f77dd; }
+  .preset-btn.active { background: #2a2060; border-color: #7f77dd; color: #fff; }
+
+  .sizes-row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; margin-bottom: 32px; }
+  .size-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .size-label { font-size: 11px; color: #666; }
+
+  .circle-wrap { border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+
+  .section-title { font-size: 13px; color: #7f77dd; font-weight: 600; margin-bottom: 12px; margin-top: 8px; letter-spacing: 0.4px; }
+  .divider { border: none; border-top: 1px solid #2a2a4a; margin: 32px 0; }
+
+  .grid { display: flex; flex-wrap: wrap; gap: 20px; }
+  .avatar-card { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .avatar-card .name { font-size: 10px; color: #666; text-align: center; max-width: 80px; }
+
+  .viewbox-display { font-family: monospace; font-size: 13px; color: #7fe8a8; background: #0d1a10; border: 1px solid #2a4a30; border-radius: 6px; padding: 6px 12px; margin-bottom: 16px; display: inline-block; }
+
+  /* Mood section */
+  .mood-grid { display: flex; flex-wrap: wrap; gap: 32px; margin-bottom: 24px; }
+  .mood-card { display: flex; flex-direction: column; align-items: center; gap: 10px; background: #12122a; border: 1px solid #2a2a4a; border-radius: 12px; padding: 16px; min-width: 130px; }
+  .mood-card.active-mood { border-color: #7f77dd; background: #1a1a3a; }
+  .mood-name { font-size: 13px; font-weight: 700; color: #a89be8; letter-spacing: 0.3px; }
+  .mood-trigger { font-size: 10px; color: #666; text-align: center; max-width: 120px; line-height: 1.4; }
+  .mood-sizes { display: flex; gap: 8px; align-items: flex-end; }
+  .mood-editor { background: #0d0d1f; border: 1px solid #2a2a4a; border-radius: 8px; padding: 12px; margin-top: 8px; width: 100%; }
+  .mood-editor label { font-size: 10px; color: #7f77dd; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .mood-editor select { background: #1e1e3a; color: #e0e0e0; border: 1px solid #3a3a5a; border-radius: 4px; padding: 2px 6px; font-size: 11px; width: 100%; margin-bottom: 8px; }
+  .sparkle-overlay { width: 100%; height: 100%; overflow: visible; pointer-events: none; display: block; }
+</style>
+</head>
+<body>
+
+<h1>Cat Avatar Preview</h1>
+<p class="sub">Section 1: crop tuning. Section 2: mood expressions.</p>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 1: CROP -->
+<h2>Crop Preview</h2>
+<p class="sub">Adjust focal point and visible region — see result at every size simultaneously.</p>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <label>Focal X <span class="val" id="vfx"></span></label>
+    <input type="range" id="fx" min="0" max="32" step="0.5" value="16">
+  </div>
+  <div class="ctrl-group">
+    <label>Focal Y <span class="val" id="vfy"></span></label>
+    <input type="range" id="fy" min="0" max="32" step="0.5" value="12">
+  </div>
+  <div class="ctrl-group">
+    <label>Visible units (zoom) <span class="val" id="vcu"></span></label>
+    <input type="range" id="cu" min="10" max="32" step="0.5" value="32">
+  </div>
+  <div class="ctrl-group">
+    <label>Body colour</label>
+    <select id="bodyColor">
+      <option value="#F5DEB3">cream</option>
+      <option value="#E8824A">orange</option>
+      <option value="#9BA3A3">grey</option>
+      <option value="#3C3C3C">black</option>
+      <option value="#8B6355">brown</option>
+      <option value="#F0F0F0">white</option>
+      <option value="#C4A8C8">lavender</option>
+      <option value="#8FA8BF">bluegrey</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Wall colour</label>
+    <select id="wallColor">
+      <option value="transparent">none</option>
+      <option value="#2B2250">dusk</option>
+      <option value="#4A7C59">sage</option>
+      <option value="#A0404A">rose</option>
+      <option value="#3A4A5C">slate</option>
+      <option value="#8C6E45">sand</option>
+      <option value="#6A4A7C">lilac</option>
+      <option value="#2A6B6B">teal</option>
+      <option value="#2C2C2C">charcoal</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Eye style</label>
+    <select id="eyeStyle">
+      <option value="round">round</option>
+      <option value="sparkle">sparkle</option>
+      <option value="button">button</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Cheeks</label>
+    <select id="cheekStyle">
+      <option value="blush">blush</option>
+      <option value="freckles">freckles</option>
+      <option value="none">none</option>
+    </select>
+  </div>
+</div>
+
+<div class="presets" id="presets"></div>
+<div class="viewbox-display" id="vbDisplay">viewBox="..."</div>
+
+<div class="section-title">All sizes — current config</div>
+<div class="sizes-row" id="sizesRow"></div>
+
+<hr class="divider">
+<div class="section-title">All headdresses at size 48 — stress test crop</div>
+<div class="grid" id="headdressGrid"></div>
+
+<hr class="divider">
+<div class="section-title">Reference: full 0 0 32 32 viewBox</div>
+<div class="sizes-row" id="refRow"></div>
+
+<!-- ══════════════════════════════════════════════════ SECTION 3: ANIMATIONS -->
+<hr class="divider">
+<h2>Mood Animations</h2>
+<p class="sub">Cat moves inside the circle — circle stays fixed. Adjust dials per mood. "Up" = rise, "Down" = fall.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:24px;margin-bottom:32px;" id="animSection"></div>
+
+<style>
+  .anim-card { background:#12122a; border:1px solid #2a2a4a; border-radius:12px; padding:16px; min-width:220px; }
+  .anim-card h3 { font-size:13px; color:#a89be8; margin-bottom:12px; font-weight:700; }
+  .anim-preview { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
+  .anim-dial { display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+  .anim-dial label { font-size:10px; color:#7f77dd; text-transform:uppercase; letter-spacing:0.4px; }
+  .anim-dial input[type=range] { width:160px; accent-color:#7f77dd; }
+  .anim-dial .val { font-size:11px; color:#888; }
+  .anim-circle-wrap { border-radius:50%; overflow:hidden; position:relative; flex-shrink:0; background:#2a2a4a; }
+  .anim-inner { display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
+  .anim-inner svg { display:block; }
+</style>
+
+<script>
+// ── animation section ────────────────────────────────────────────────────────
+const ANIM_MOODS = [
+  { key:'inactive', name:'😴 Inactive', amp:2,  upMs:1800, downMs:1800, peakPauseMs:600,
+    eyeStyle:'closed', mouthStyle:'flat', cheekStyle:'none', headdressStyle:'none', overlay:'zzz',
+    eyePrimary:'#2C1810', bodyColor:'#F5DEB3', wallColor:'transparent', baseEyeStyle:'round' },
+  { key:'proud',    name:'✨ Proud',    amp:4,  upMs:500,  downMs:500,  peakPauseMs:0,
+    eyeStyle:'proud', mouthStyle:'smile', cheekStyle:'blush', headdressStyle:'none', overlay:'none',
+    eyePrimary:'#2C1810', bodyColor:'#F5DEB3', wallColor:'transparent', baseEyeStyle:'round' },
+  { key:'default',  name:'😊 Default',  amp:0,  upMs:1000, downMs:1000, peakPauseMs:0,
+    eyeStyle:'round', mouthStyle:'smile', cheekStyle:'blush', headdressStyle:'none', overlay:'none',
+    eyePrimary:'#2C1810', bodyColor:'#F5DEB3', wallColor:'transparent', baseEyeStyle:'round' },
+];
+const ANIM_SIZE = 80;
+
+// Tracks running animation intervals keyed by mood key
+const animTimers = {};
+
+function easeInOutSin(t) {
+  return (1 - Math.cos(Math.PI * t)) / 2;
+}
+
+function startAnim(key) {
+  const m = ANIM_MOODS.find(x => x.key === key);
+  const inner = document.getElementById(`anim-inner-${key}`);
+  if (!inner) return;
+  if (animTimers[key]) { cancelAnimationFrame(animTimers[key]); delete animTimers[key]; }
+  if (m.amp === 0) { inner.style.transform = 'translateY(0px)'; return; }
+
+  // phases: 0 = fall (0→amp), 1 = peak pause, 2 = rise (amp→0)
+  let phase = 0;
+  let phaseStart = null;
+
+  function phaseDuration(p) {
+    if (p === 0) return m.downMs;
+    if (p === 1) return m.peakPauseMs || 0;
+    return m.upMs;
+  }
+
+  function tick(ts) {
+    if (!phaseStart) phaseStart = ts;
+    const dur = phaseDuration(phase);
+    const elapsed = ts - phaseStart;
+    const t = dur > 0 ? Math.min(elapsed / dur, 1) : 1;
+
+    let y;
+    if (phase === 0) y = easeInOutSin(t) * m.amp;   // 0 → amp (fall)
+    else if (phase === 1) y = m.amp;                  // hold at peak
+    else y = m.amp - easeInOutSin(t) * m.amp;         // amp → 0 (rise)
+
+    inner.style.transform = `translateY(${y}px)`;
+
+    if (t >= 1) {
+      phase = (phase + 1) % 3;
+      phaseStart = ts;
+    }
+    animTimers[key] = requestAnimationFrame(tick);
+  }
+  animTimers[key] = requestAnimationFrame(tick);
+}
+
+function buildAnimSection() {
+  const el = document.getElementById('animSection');
+  el.innerHTML = ANIM_MOODS.map(m => {
+    const wallBg = m.wallColor === 'transparent' ? '#2a2a4a' : m.wallColor;
+    const svgContent = catSvg(m, VB);
+    return `<div class="anim-card">
+      <h3>${m.name}</h3>
+      <div class="anim-preview">
+        <div class="anim-circle-wrap" style="width:${ANIM_SIZE}px;height:${ANIM_SIZE}px;background:${wallBg};">
+          <div class="anim-inner" id="anim-inner-${m.key}" style="width:${ANIM_SIZE}px;height:${ANIM_SIZE}px;">
+            ${svgContent}
+          </div>
+        </div>
+      </div>
+      <div class="anim-dial">
+        <label>Amplitude <span class="val" id="av-${m.key}">${m.amp}px</span></label>
+        <input type="range" min="0" max="12" step="0.5" value="${m.amp}"
+          oninput="updateAnim('${m.key}','amp',this.value)">
+      </div>
+      <div class="anim-dial">
+        <label>Rise speed <span class="val" id="uv-${m.key}">${m.upMs}ms</span></label>
+        <input type="range" min="100" max="4000" step="50" value="${m.upMs}"
+          oninput="updateAnim('${m.key}','upMs',this.value)">
+      </div>
+      <div class="anim-dial">
+        <label>Fall speed <span class="val" id="dv-${m.key}">${m.downMs}ms</span></label>
+        <input type="range" min="100" max="4000" step="50" value="${m.downMs}"
+          oninput="updateAnim('${m.key}','downMs',this.value)">
+      </div>
+      ${m.peakPauseMs !== undefined && m.key === 'inactive' ? `
+      <div class="anim-dial">
+        <label>Peak pause <span class="val" id="pv-${m.key}">${m.peakPauseMs}ms</span></label>
+        <input type="range" min="0" max="3000" step="50" value="${m.peakPauseMs}"
+          oninput="updateAnim('${m.key}','peakPauseMs',this.value)">
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  ANIM_MOODS.forEach(m => startAnim(m.key));
+}
+
+function updateAnim(key, prop, val) {
+  const m = ANIM_MOODS.find(x => x.key === key);
+  m[prop] = parseFloat(val);
+  // update label
+  if (prop === 'amp')          document.getElementById(`av-${key}`).textContent = `${m.amp}px`;
+  if (prop === 'upMs')         document.getElementById(`uv-${key}`).textContent = `${m.upMs}ms`;
+  if (prop === 'downMs')       document.getElementById(`dv-${key}`).textContent = `${m.downMs}ms`;
+  if (prop === 'peakPauseMs')  document.getElementById(`pv-${key}`).textContent = `${m.peakPauseMs}ms`;
+  startAnim(key);
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 2: MOODS -->
+<hr class="divider">
+<h2>Mood Expressions</h2>
+<p class="sub">Click a mood card to select it and edit its expression below. Uses the locked viewBox from above.</p>
+
+<div class="mood-grid" id="moodGrid"></div>
+
+<div id="moodEditorPanel" style="background:#12122a;border:1px solid #2a2a4a;border-radius:12px;padding:20px;margin-top:8px;max-width:600px;">
+  <div style="font-size:13px;color:#a89be8;font-weight:700;margin-bottom:12px;" id="editorTitle">Select a mood to edit</div>
+  <div style="display:flex;flex-wrap:wrap;gap:16px;">
+    <div class="ctrl-group">
+      <label>Eye style</label>
+      <select id="mEyeStyle" onchange="updateMood()">
+        <option value="round">round</option>
+        <option value="button">button</option>
+        <option value="halflidded">half-lidded</option>
+        <option value="droopy">droopy</option>
+        <option value="furrowed">furrowed</option>
+        <option value="closed">closed (sleeping)</option>
+        <option value="strain">strained</option>
+        <option value="proud">proud sparkle</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Base eye shape (for halflidded/proud)</label>
+      <select id="mBaseEye" onchange="updateMood()">
+        <option value="round">round</option>
+        <option value="button">button</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Mouth</label>
+      <select id="mMouth" onchange="updateMood()">
+        <option value="smile">smile (default)</option>
+        <option value="smirk">smirk</option>
+        <option value="frown">frown</option>
+        <option value="strain">strain (open)</option>
+        <option value="flat">flat</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Cheeks</label>
+      <select id="mCheeks" onchange="updateMood()">
+        <option value="blush">blush</option>
+        <option value="freckles">freckles</option>
+        <option value="none">none</option>
+        <option value="sweat">sweat drops</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Headdress</label>
+      <select id="mHeaddress" onchange="updateMood()">
+        <option value="none">none</option>
+        <option value="flower">flower</option>
+        <option value="bow">bow</option>
+        <option value="crown">crown</option>
+        <option value="partyhat">partyhat</option>
+        <option value="tophat">tophat</option>
+        <option value="beanie">beanie</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Overlay</label>
+      <select id="mOverlay" onchange="updateMood()">
+        <option value="none">none</option>
+        <option value="zzz">zzz</option>
+        <option value="sparkles">sparkles</option>
+        <option value="glow">glow ring</option>
+        <option value="sweat">sweat drops</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Eye primary</label>
+      <select id="mEyePrimary" onchange="updateMood()">
+        <option value="#2C1810">dark (default)</option>
+        <option value="#2D6A2D">green</option>
+        <option value="#1A4A8A">blue</option>
+        <option value="#B85A00">orange</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── pixel art helpers ──────────────────────────────────────────────────────────
+
+const INNER_EAR = '#FFB3C6';
+const NOSE      = '#C87080';
+const MOUTH_C   = '#2C1810';
+const BLUSH_C   = '#F0A0B0';
+const FRECKLE   = '#C08878';
+const VB        = '0 -4 32 32'; // locked viewbox from session
+
+function rect(x, y, w, h, fill) {
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"/>`;
+}
+function circle(cx, cy, r, fill) {
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}"/>`;
+}
+
+function body(c) {
+  const s = '#F0F0F0';
+  return [
+    rect(6,0,1,1,c), rect(5,1,3,1,c), rect(5,2,5,1,c), rect(5,3,6,1,c),
+    rect(6,1,1,1,INNER_EAR), rect(6,2,3,1,INNER_EAR), rect(6,3,4,1,INNER_EAR),
+    rect(25,0,1,1,c), rect(24,1,3,1,c), rect(22,2,5,1,c), rect(21,3,6,1,c),
+    rect(25,1,1,1,INNER_EAR), rect(23,2,3,1,INNER_EAR), rect(22,3,4,1,INNER_EAR),
+    rect(5,4,22,15,c), rect(6,19,20,1,c), rect(7,20,18,1,c), rect(9,21,14,1,c), rect(11,22,10,1,c),
+    rect(13,23,6,1,c), rect(12,24,8,1,c),
+    rect(11,25,10,1,c), rect(9,26,14,1,c), rect(8,27,16,1,c), rect(9,28,14,4,c),
+    rect(12,14,8,1,s), rect(11,15,10,4,s), rect(12,19,8,1,s), rect(13,20,6,1,s),
+    rect(14,15,3,2,NOSE),
+  ].join('');
+}
+
+// ── eye variants ──────────────────────────────────────────────────────────────
+// baseEyeStyle: the user's chosen eye shape (round/button) — used by halflidded + proud
+function eyes(style, p = '#2C1810', s = '#FFFFFF', bodyCol = '#F5DEB3', baseEyeStyle = 'round') {
+  switch(style) {
+    case 'button':
+      return [rect(10,10,3,3,s),rect(11,10,1,3,p),rect(19,10,3,3,s),rect(20,10,1,3,p)].join('');
+    case 'halflidded': {
+      // 1px horizontal lid line in body colour, then the eye below
+      if (baseEyeStyle === 'button') {
+        // button: lid at y=10, eye (2px tall) at y=11-12
+        return [
+          rect(10,10,3,1,bodyCol), rect(20,10,3,1,bodyCol), // lid line
+          rect(10,11,3,2,s), rect(11,11,1,2,p),             // left eye
+          rect(19,11,3,2,s), rect(20,11,1,2,p),             // right eye
+        ].join('');
+      }
+      // round: lid at y=11, eye (1px tall) at y=12
+      return [
+        rect(10,11,2,1,bodyCol), rect(20,11,2,1,bodyCol), // lid line
+        rect(10,12,2,1,p), rect(20,12,2,1,p),             // eye
+        rect(10,12,1,1,s), rect(20,12,1,1,s),             // highlight
+      ].join('');
+    }
+    case 'droopy':
+      return [
+        rect(10,12,2,2,p), rect(20,12,2,2,p),
+        rect(9,11,4,1,'rgba(200,160,130,0.7)'),
+        rect(19,11,4,1,'rgba(200,160,130,0.7)'),
+      ].join('');
+    case 'furrowed':
+      return [
+        rect(10,12,2,1,p), rect(20,12,2,1,p),
+        rect(9,10,3,1,'#6B4226'),
+        rect(21,10,3,1,'#6B4226'),
+        rect(10,11,1,1,'#6B4226'),
+        rect(21,11,1,1,'#6B4226'),
+      ].join('');
+    case 'closed':
+      return [rect(10,12,3,1,p), rect(20,12,3,1,p)].join('');
+    case 'strain':
+      return [
+        rect(10,10,3,3,s), rect(20,10,3,3,s),
+        rect(11,11,1,1,p), rect(21,11,1,1,p),
+        rect(9,10,1,1,'#6B4226'), rect(13,10,1,1,'#6B4226'),
+        rect(19,10,1,1,'#6B4226'), rect(23,10,1,1,'#6B4226'),
+      ].join('');
+    case 'proud': {
+      if (baseEyeStyle === 'button') {
+        return [
+          rect(10,10,3,3,s),rect(11,10,1,3,p),rect(19,10,3,3,s),rect(20,10,1,3,p),
+          // outer corner sparkles (top only)
+          rect(9,9,1,1,s),   rect(13,9,1,1,s),
+          rect(18,9,1,1,s),  rect(22,9,1,1,s),
+          // crevice pixels (top corners of eye only)
+          rect(10,10,1,1,s), rect(12,10,1,1,s),
+          rect(19,10,1,1,s), rect(21,10,1,1,s),
+        ].join('');
+      }
+      // Round (2×2) — standard sparkle
+      return [
+        rect(10,11,2,2,p),rect(20,11,2,2,p),
+        rect(10,11,1,1,s),rect(11,12,1,1,s),
+        rect(20,11,1,1,s),rect(21,12,1,1,s),
+        rect(12,10,1,1,s),rect(22,10,1,1,s),
+      ].join('');
+    }
+    default: // round
+      return [rect(10,11,2,2,p),rect(20,11,2,2,p),rect(10,11,1,1,s),rect(20,11,1,1,s)].join('');
+  }
+}
+
+// ── mouth variants ────────────────────────────────────────────────────────────
+function mouth(style) {
+  switch(style) {
+    case 'smirk':
+      // asymmetric — only right side curl, flat left
+      return [
+        rect(15,17,1,2,MOUTH_C),
+        rect(17,18,1,1,MOUTH_C),
+        rect(16,19,1,1,MOUTH_C),
+        // flat left side (no left curl)
+        rect(13,18,2,1,MOUTH_C),
+      ].join('');
+    case 'frown':
+      return [
+        rect(15,17,1,2,MOUTH_C),
+        rect(13,17,1,1,MOUTH_C), rect(17,17,1,1,MOUTH_C),   // corners up
+        rect(14,18,1,1,MOUTH_C), rect(16,18,1,1,MOUTH_C),   // curves inward
+      ].join('');
+    case 'strain':
+      // open mouth connected to snout, no outline
+      return [
+        rect(15,17,1,1,MOUTH_C),             // stem from nose
+        rect(13,18,6,1,MOUTH_C),             // top lip
+        rect(13,20,6,1,MOUTH_C),             // bottom lip
+        rect(13,19,6,1,'#1a0808'),           // dark open gap
+        rect(14,19,4,1,'#8B3030'),           // tongue hint
+        rect(13,18,1,3,MOUTH_C),            // left side
+        rect(18,18,1,3,MOUTH_C),            // right side
+      ].join('');
+    case 'flat':
+      return rect(13,18,6,1,MOUTH_C);
+    default: // smile
+      return [
+        rect(15,17,1,2,MOUTH_C),
+        rect(13,18,1,1,MOUTH_C), rect(17,18,1,1,MOUTH_C),
+        rect(14,19,1,1,MOUTH_C), rect(16,19,1,1,MOUTH_C),
+      ].join('');
+  }
+}
+
+// ── cheek variants ────────────────────────────────────────────────────────────
+function cheeks(style) {
+  if (style === 'none') return '';
+  if (style === 'freckles') return [
+    circle(7,16.5,0.7,FRECKLE), circle(9.5,16.5,0.7,FRECKLE), circle(8.2,14.8,0.7,FRECKLE),
+    circle(22.5,16.5,0.7,FRECKLE), circle(25,16.5,0.7,FRECKLE), circle(23.8,14.8,0.7,FRECKLE),
+  ].join('');
+  if (style === 'sweat') return [
+    // sweat drop left cheek
+    rect(7,13,1,2,'#88CCFF'), rect(8,14,1,1,'#88CCFF'), rect(7,15,1,1,'#AADDFF'),
+    // sweat drop right cheek
+    rect(25,13,1,2,'#88CCFF'), rect(24,14,1,1,'#88CCFF'), rect(25,15,1,1,'#AADDFF'),
+  ].join('');
+  return rect(7,15,3,2,BLUSH_C) + rect(22,15,3,2,BLUSH_C);
+}
+
+// ── headdress variants ────────────────────────────────────────────────────────
+function headdress(style) {
+  if (style === 'flower') return [rect(15,2,2,2,'#FFE066'),rect(15,1,2,1,'#FF8FAB'),rect(15,4,2,1,'#FF8FAB'),rect(13,2,2,2,'#FF8FAB'),rect(17,2,2,2,'#FF8FAB')].join('');
+  if (style === 'bow') return [
+    rect(7,0,2,1,'#FF8FAB'),rect(9,1,2,1,'#FF8FAB'),rect(11,2,2,1,'#FF8FAB'),rect(13,3,2,1,'#FF8FAB'),
+    rect(23,0,2,1,'#FF8FAB'),rect(21,1,2,1,'#FF8FAB'),rect(19,2,2,1,'#FF8FAB'),rect(17,3,2,1,'#FF8FAB'),
+    rect(14,3,4,2,'#E0607E'),rect(11,4,2,1,'#FF8FAB'),rect(19,4,2,1,'#FF8FAB'),rect(9,5,2,1,'#FF8FAB'),rect(21,5,2,1,'#FF8FAB'),
+  ].join('');
+  if (style === 'crown') return [
+    rect(10,3,12,1,'#FFD700'),rect(10,2,3,1,'#FFD700'),rect(14,1,4,2,'#FFD700'),rect(15,0,2,1,'#FFD700'),rect(19,2,3,1,'#FFD700'),
+    rect(11,3,1,1,'#FF4444'),rect(15,2,2,1,'#FF4444'),rect(20,3,1,1,'#FF4444'),
+  ].join('');
+  if (style === 'partyhat') return [
+    rect(15,0,2,1,'#FFFFFF'),rect(15,1,2,1,'#FF6B6B'),rect(14,2,4,1,'#FF6B6B'),rect(13,3,6,1,'#FF6B6B'),
+    rect(12,4,8,1,'#E55555'),rect(16,2,1,1,'#FFFFFF'),rect(14,3,1,1,'#FFFFFF'),
+  ].join('');
+  if (style === 'tophat') return [
+    rect(11,0,10,1,'#1A1A1A'),rect(10,1,12,1,'#1A1A1A'),rect(10,2,12,1,'#1A1A1A'),rect(10,3,12,1,'#1A1A1A'),
+    rect(10,4,12,1,'#C0392B'),rect(7,5,18,1,'#1A1A1A'),
+  ].join('');
+  if (style === 'beanie') return [
+    rect(14,0,4,1,'#FFFFFF'),rect(12,1,8,1,'#FF8FAB'),rect(10,2,12,1,'#FF8FAB'),
+    rect(9,3,14,1,'#5B8CFF'),rect(8,4,16,1,'#FF8FAB'),rect(8,5,16,2,'#4070DD'),
+  ].join('');
+  return '';
+}
+
+// ── overlay (drawn as HTML on top of SVG circle) ──────────────────────────────
+function overlayHtml(style, size) {
+  if (style === 'zzz') {
+    // Zzz as absolute overlay SVG — sits above circle, not clipped by viewBox
+    // Uses a simple 0 0 32 32 coord space mapped to the circle size
+    return `<svg class="sparkle-overlay" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg">
+      <!-- large Z -->
+      <rect x="27" y="1"  width="4" height="1" fill="#AAAAEE"/>
+      <rect x="29" y="2"  width="1" height="1" fill="#AAAAEE"/>
+      <rect x="28" y="3"  width="1" height="1" fill="#AAAAEE"/>
+      <rect x="27" y="4"  width="4" height="1" fill="#AAAAEE"/>
+      <!-- medium Z -->
+      <rect x="22" y="4"  width="4" height="1" fill="#7777BB"/>
+      <rect x="24" y="5"  width="1" height="1" fill="#7777BB"/>
+      <rect x="23" y="6"  width="1" height="1" fill="#7777BB"/>
+      <rect x="22" y="7"  width="4" height="1" fill="#7777BB"/>
+      <!-- small Z -->
+      <rect x="17" y="7"  width="4" height="1" fill="#9999CC"/>
+      <rect x="19" y="8"  width="1" height="1" fill="#9999CC"/>
+      <rect x="18" y="9"  width="1" height="1" fill="#9999CC"/>
+      <rect x="17" y="10" width="4" height="1" fill="#9999CC"/>
+    </svg>`;
+  }
+  if (style === 'sparkles') {
+    function star(x, y, r, fill, op) {
+      return `<rect x="${x-r}" y="${y}" width="${r*2}" height="1" fill="${fill}" opacity="${op}"/>
+              <rect x="${x}" y="${y-r}" width="1" height="${r*2}" fill="${fill}" opacity="${op}"/>
+              <rect x="${x}" y="${y}" width="1" height="1" fill="${fill}" opacity="${op}"/>`;
+    }
+    return `<svg class="sparkle-overlay" viewBox="0 -4 32 32" xmlns="http://www.w3.org/2000/svg">
+      ${star(3,  1,  2, '#FFE066', 0.9)}
+      ${star(28, 2,  2, '#FFD700', 0.85)}
+      ${star(2,  20, 2, '#FFE066', 0.7)}
+      ${star(29, 18, 2, '#FFD700', 0.8)}
+      ${star(5,  10, 1, '#FFFFFF', 0.6)}
+      ${star(27, 12, 1, '#FFFFFF', 0.6)}
+    </svg>`;
+  }
+  if (style === 'glow') {
+    const s = size;
+    return `<svg class="sparkle-overlay" viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${s/2}" cy="${s/2}" r="${s/2-1}" fill="none" stroke="#C4A8FF" stroke-width="${s*0.06}" opacity="0.35"/>
+      <circle cx="${s/2}" cy="${s/2}" r="${s/2-1}" fill="none" stroke="#C4A8FF" stroke-width="${s*0.02}" opacity="0.6"/>
+    </svg>`;
+  }
+  return '';
+}
+
+function catSvg(opts, vb) {
+  const { bodyColor = '#F5DEB3', wallColor = 'transparent', eyeStyle = 'round',
+          mouthStyle = 'smile', cheekStyle = 'blush', headdressStyle = 'none',
+          eyePrimary = '#2C1810', baseEyeStyle = 'round' } = opts;
+  const wall = wallColor !== 'transparent' ? rect(0,0,32,32,wallColor) : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="100%" height="100%">
+    ${wall}
+    ${body(bodyColor)}
+    ${eyes(eyeStyle, eyePrimary, '#FFFFFF', bodyColor, baseEyeStyle)}
+    ${mouth(mouthStyle)}
+    ${cheeks(cheekStyle)}
+    ${headdress(headdressStyle)}
+  </svg>`;
+}
+
+function makeCircle(size, svgContent, wallColor, overlay = '') {
+  const bg = wallColor === 'transparent' ? '#2a2a4a' : wallColor;
+  return `<div style="position:relative;width:${size}px;height:${size}px;">
+    <div class="circle-wrap" style="width:${size}px;height:${size}px;background:${bg};">
+      ${svgContent}
+    </div>
+    ${overlay ? `<div style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;">${overlay}</div>` : ''}
+  </div>`;
+}
+
+// ── crop section state ─────────────────────────────────────────────────────────
+const SIZES = [16, 18, 20, 24, 32, 36, 48, 64, 96, 128];
+const HEADDRESSES = ['none','flower','bow','crown','partyhat','tophat','beanie'];
+const PRESETS = [
+  { label: 'Face-tight',  fx: 16, fy: 12, cu: 20 },
+  { label: 'Face+ears',   fx: 16, fy: 11, cu: 22 },
+  { label: 'Head-full',   fx: 16, fy: 12, cu: 26 },
+  { label: 'Portrait',    fx: 16, fy: 14, cu: 28 },
+  { label: 'Locked (app)',fx: 16, fy: 12, cu: 32 },
+];
+let activePreset = 4;
+
+function getViewBox() {
+  const fx = parseFloat(document.getElementById('fx').value);
+  const fy = parseFloat(document.getElementById('fy').value);
+  const cu = parseFloat(document.getElementById('cu').value);
+  return `${(fx-cu/2).toFixed(1)} ${(fy-cu/2).toFixed(1)} ${cu} ${cu}`;
+}
+
+function getCropOpts() {
+  return {
+    bodyColor:     document.getElementById('bodyColor').value,
+    wallColor:     document.getElementById('wallColor').value,
+    eyeStyle:      document.getElementById('eyeStyle').value,
+    mouthStyle:    'smile',
+    cheekStyle:    document.getElementById('cheekStyle').value,
+    headdressStyle:'none',
+  };
+}
+
+function renderCrop() {
+  const fx = parseFloat(document.getElementById('fx').value);
+  const fy = parseFloat(document.getElementById('fy').value);
+  const cu = parseFloat(document.getElementById('cu').value);
+  document.getElementById('vfx').textContent = fx;
+  document.getElementById('vfy').textContent = fy;
+  document.getElementById('vcu').textContent = cu;
+  const vb = getViewBox();
+  document.getElementById('vbDisplay').textContent = `viewBox="${vb}"`;
+  const opts = getCropOpts();
+
+  document.getElementById('sizesRow').innerHTML = SIZES.map(sz =>
+    `<div class="size-col">${makeCircle(sz, catSvg(opts,vb), opts.wallColor)}<span class="size-label">${sz}pt</span></div>`
+  ).join('');
+
+  document.getElementById('headdressGrid').innerHTML = HEADDRESSES.map(h =>
+    `<div class="avatar-card">${makeCircle(48, catSvg({...opts,headdressStyle:h},vb), opts.wallColor)}<span class="name">${h}</span></div>`
+  ).join('');
+
+  document.getElementById('refRow').innerHTML = SIZES.map(sz =>
+    `<div class="size-col">${makeCircle(sz, catSvg(opts,'0 0 32 32'), opts.wallColor)}<span class="size-label">${sz}pt</span></div>`
+  ).join('');
+}
+
+function buildPresets() {
+  document.getElementById('presets').innerHTML = PRESETS.map((p,i) =>
+    `<button class="preset-btn${i===activePreset?' active':''}" onclick="applyPreset(${i})">${p.label}</button>`
+  ).join('');
+}
+
+function applyPreset(i) {
+  activePreset = i;
+  const p = PRESETS[i];
+  document.getElementById('fx').value = p.fx;
+  document.getElementById('fy').value = p.fy;
+  document.getElementById('cu').value = p.cu;
+  buildPresets();
+  renderCrop();
+}
+
+['fx','fy','cu'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { activePreset=-1; buildPresets(); renderCrop(); });
+});
+['bodyColor','wallColor','eyeStyle','cheekStyle'].forEach(id => {
+  document.getElementById(id).addEventListener('change', renderCrop);
+});
+
+// ── mood section ───────────────────────────────────────────────────────────────
+const MOODS = [
+  {
+    key: 'inactive',
+    name: '😴 Inactive',
+    trigger: 'Zero logs since Monday',
+    priority: 1,
+    eyeStyle: 'closed', mouthStyle: 'flat', cheekStyle: 'none',
+    headdressStyle: 'none', overlay: 'zzz', eyePrimary: '#2C1810',
+    bodyColor: '#F5DEB3', wallColor: 'transparent', baseEyeStyle: 'round',
+  },
+  {
+    key: 'proud',
+    name: '✨ Proud',
+    trigger: 'Personal best streak currently active',
+    priority: 2,
+    eyeStyle: 'proud', mouthStyle: 'smile', cheekStyle: 'blush',
+    headdressStyle: 'none', overlay: 'sparkles', eyePrimary: '#2C1810',
+    bodyColor: '#F5DEB3', wallColor: 'transparent', baseEyeStyle: 'round',
+  },
+  {
+    key: 'default',
+    name: '😊 Default',
+    trigger: 'Active streak, logged today',
+    priority: 3,
+    eyeStyle: 'round', mouthStyle: 'smile', cheekStyle: 'blush',
+    headdressStyle: 'none', overlay: 'none', eyePrimary: '#2C1810',
+    bodyColor: '#F5DEB3', wallColor: 'transparent', baseEyeStyle: 'round',
+  },
+];
+
+let selectedMood = null;
+const MOOD_SIZES = [36, 64, 96];
+
+function moodCardHtml(mood) {
+  const vb = VB;
+  const sizes = MOOD_SIZES.map(sz => {
+    const svg = catSvg(mood, vb);
+    const ov = overlayHtml(mood.overlay, sz);
+    return makeCircle(sz, svg, mood.wallColor, ov);
+  }).join('');
+  const sel = selectedMood === mood.key ? ' active-mood' : '';
+  return `<div class="mood-card${sel}" onclick="selectMood('${mood.key}')">
+    <div class="mood-name">${mood.name}</div>
+    <div class="mood-sizes">${sizes}</div>
+    <div class="mood-trigger">${mood.trigger}</div>
+  </div>`;
+}
+
+function renderMoods() {
+  document.getElementById('moodGrid').innerHTML = MOODS.map(moodCardHtml).join('');
+}
+
+function selectMood(key) {
+  selectedMood = key;
+  const mood = MOODS.find(m => m.key === key);
+  document.getElementById('editorTitle').textContent = `Editing: ${mood.name}`;
+  document.getElementById('mEyeStyle').value   = mood.eyeStyle;
+  document.getElementById('mBaseEye').value    = mood.baseEyeStyle || 'round';
+  document.getElementById('mMouth').value      = mood.mouthStyle;
+  document.getElementById('mCheeks').value     = mood.cheekStyle;
+  document.getElementById('mHeaddress').value  = mood.headdressStyle;
+  document.getElementById('mOverlay').value    = mood.overlay;
+  document.getElementById('mEyePrimary').value = mood.eyePrimary;
+  renderMoods();
+}
+
+function updateMood() {
+  if (!selectedMood) return;
+  const mood = MOODS.find(m => m.key === selectedMood);
+  mood.eyeStyle      = document.getElementById('mEyeStyle').value;
+  mood.baseEyeStyle  = document.getElementById('mBaseEye').value;
+  mood.mouthStyle    = document.getElementById('mMouth').value;
+  mood.cheekStyle    = document.getElementById('mCheeks').value;
+  mood.headdressStyle= document.getElementById('mHeaddress').value;
+  mood.overlay       = document.getElementById('mOverlay').value;
+  mood.eyePrimary    = document.getElementById('mEyePrimary').value;
+  renderMoods();
+}
+
+// ── init ───────────────────────────────────────────────────────────────────────
+buildPresets();
+applyPreset(4); // start on locked app viewbox
+renderMoods();
+buildAnimSection();
+</script>
+</body>
+</html>

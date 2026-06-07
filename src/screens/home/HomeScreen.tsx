@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, LayoutAnimation, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -30,6 +31,7 @@ type HomeNav = NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>;
 
 export default function HomeScreen() {
   const { surface } = useTheme();
+  const { top: topInset } = useSafeAreaInsets();
   const navigation = useNavigation<HomeNav>();
   const userId = useAuthStore(s => s.user?.uid ?? null);
   const logs = useLogStore(s => s.logs);
@@ -150,7 +152,7 @@ export default function HomeScreen() {
     return Array.from(counts, ([date, count]) => ({ date, count }));
   }, [logs]);
 
-  const { currentStreak } = calculateStreaks(streakSummaries);
+  const { currentStreak, longestStreak } = calculateStreaks(streakSummaries);
   const today = todayCount(summaries);
   const monthly = monthlyAverage(summaries);
 
@@ -170,9 +172,12 @@ export default function HomeScreen() {
 
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, { paddingTop: topInset + 16, paddingHorizontal: 24 }]}
         onScroll={e => { scrollYRef.current = e.nativeEvent.contentOffset.y; }}
         scrollEventThrottle={100}
+        style={{ marginHorizontal: -24 }}
+        scrollIndicatorInsets={{ right: 6 }}
+        indicatorStyle="white"
       >
         <AppText variant="screenTitle">Homepage</AppText>
 
@@ -203,6 +208,7 @@ export default function HomeScreen() {
             infoRows={[
               { label: 'How it counts', body: 'Based on when you created each log for that day instead of the date of the log itself.' },
               { label: 'Backdating', body: "Logging for a past date won't extend your streak." },
+              { label: 'Longest ever', body: `Your all-time longest streak is ${longestStreak} day${longestStreak === 1 ? '' : 's'}.` },
             ]}
           />
           <StatCard value={today} label="logs today" icon="toilet" iconColor="#7F77DD" />
@@ -214,6 +220,7 @@ export default function HomeScreen() {
           selectedDate={selectedDate}
           onDayPress={d => setSelectedDate(d === selectedDate ? null : d)}
           lastLoggedDate={lastLoggedDate}
+          logTrigger={logTrigger}
         />
 
         {dayCardVisible && (

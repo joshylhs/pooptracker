@@ -1,16 +1,19 @@
 import React from 'react';
 import { G, Rect } from 'react-native-svg';
 
+export type MouthStyle = 'default' | 'flat';
+
 interface Props {
   color?: string;
   snoutColor?: string;
+  mouthStyle?: MouthStyle;
 }
 
 const INNER_EAR = '#FFB3C6';
 const NOSE  = '#C87080';
 const MOUTH = '#2C1810';
 
-export default function CatBody({ color = '#F5DEB3', snoutColor = '#F0F0F0' }: Props) {
+export default function CatBody({ color = '#F5DEB3', snoutColor = '#F0F0F0', mouthStyle = 'default' }: Props) {
   const c = color;
   const s = snoutColor;
   return (
@@ -61,12 +64,20 @@ export default function CatBody({ color = '#F5DEB3', snoutColor = '#F0F0F0' }: P
       {/* Nose */}
       <Rect x={14} y={15} width={3} height={2} fill={NOSE} />
 
-      {/* Mouth — stem from nose centre col 15, Y smile curl */}
-      <Rect x={15} y={17} width={1} height={2} fill={MOUTH} />
-      <Rect x={13} y={18} width={1} height={1} fill={MOUTH} />
-      <Rect x={17} y={18} width={1} height={1} fill={MOUTH} />
-      <Rect x={14} y={19} width={1} height={1} fill={MOUTH} />
-      <Rect x={16} y={19} width={1} height={1} fill={MOUTH} />
+      {/* Mouth */}
+      {mouthStyle === 'flat' ? (
+        // Flat line — neutral/inactive expression
+        <Rect x={13} y={18} width={5} height={1} fill={MOUTH} />
+      ) : (
+        // Default smile — stem from nose, Y curl
+        <>
+          <Rect x={15} y={17} width={1} height={2} fill={MOUTH} />
+          <Rect x={13} y={18} width={1} height={1} fill={MOUTH} />
+          <Rect x={17} y={18} width={1} height={1} fill={MOUTH} />
+          <Rect x={14} y={19} width={1} height={1} fill={MOUTH} />
+          <Rect x={16} y={19} width={1} height={1} fill={MOUTH} />
+        </>
+      )}
 
     </G>
   );

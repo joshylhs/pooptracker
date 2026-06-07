@@ -28,6 +28,7 @@ interface CalendarHeatmapProps {
   selectedDate: string | null;
   onDayPress: (date: string) => void;
   lastLoggedDate?: string | null;
+  logTrigger?: number;
 }
 
 interface CellData {
@@ -42,6 +43,7 @@ interface HeatmapCellProps {
   selectedDate: string | null;
   countMap: Record<string, number>;
   lastLoggedDate?: string | null;
+  logTrigger?: number;
   onPress: (date: string) => void;
 }
 
@@ -56,7 +58,7 @@ function monthRowCount(year: number, month: number): number {
   return Math.ceil((startOffset + daysInMonth) / 7);
 }
 
-function HeatmapCell({ cell, today, selectedDate, countMap, lastLoggedDate, onPress }: HeatmapCellProps) {
+function HeatmapCell({ cell, today, selectedDate, countMap, lastLoggedDate, logTrigger, onPress }: HeatmapCellProps) {
   const { surface, colours } = useTheme();
   const isFuture = cell.dateStr > today;
   const count = countMap[cell.dateStr] ?? 0;
@@ -75,12 +77,12 @@ function HeatmapCell({ cell, today, selectedDate, countMap, lastLoggedDate, onPr
   const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (cell.dateStr !== lastLoggedDate) return;
+    if (!logTrigger || cell.dateStr !== lastLoggedDate) return;
     Animated.sequence([
-      Animated.spring(scale, { toValue: 1.35, damping: 6,  stiffness: 200, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1.0,  damping: 10, stiffness: 180, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1.18, damping: 14, stiffness: 350, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1.0,  damping: 16, stiffness: 350, useNativeDriver: true }),
     ]).start();
-  }, [lastLoggedDate]);
+  }, [logTrigger]);
 
   return (
     <Animated.View style={[styles.cellWrapper, { transform: [{ scale }] }]}>
@@ -121,17 +123,24 @@ export default function CalendarHeatmap({
   selectedDate,
   onDayPress,
   lastLoggedDate,
+  logTrigger,
 }: CalendarHeatmapProps) {
   const { surface } = useTheme();
-  const today = todayString();
-  const now = useMemo(() => new Date(), []);
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const today = todayString(now);
 
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
 
-  const slideX      = useRef(new Animated.Value(0)).current;
-  const gridOpacity = useRef(new Animated.Value(1)).current;
-  const rowAnims    = useRef(Array.from({ length: 6 }, () => new Animated.Value(1))).current;
+  const slideX        = useRef(new Animated.Value(0)).current;
+  const gridOpacity   = useRef(new Animated.Value(1)).current;
+  const rowAnims      = useRef(Array.from({ length: 6 }, () => new Animated.Value(1))).current;
+  const leftChevScale  = useRef(new Animated.Value(1)).current;
+  const rightChevScale = useRef(new Animated.Value(1)).current;
 
   const countMap = useMemo(() => {
     const m: Record<string, number> = {};
@@ -240,22 +249,31 @@ export default function CalendarHeatmap({
     >
       {/* Header: ‹ Month YYYY › */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigateMonth(-1)} hitSlop={12} style={styles.arrowBtn}>
-          {({ pressed }) => (
-            <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
-              <MCI name="chevron-left" size={22} color={surface.textPrimary} />
-            </View>
-          )}
+        <Pressable
+          onPress={() => navigateMonth(-1)}
+          hitSlop={12}
+          style={styles.arrowBtn}
+          onPressIn={() => Animated.spring(leftChevScale,  { toValue: 0.88, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+          onPressOut={() => Animated.spring(leftChevScale,  { toValue: 1,    speed: 40, bounciness: 5, useNativeDriver: true }).start()}
+        >
+          <Animated.View style={[styles.chevronCircle, { transform: [{ scale: leftChevScale }] }]}>
+            <MCI name="chevron-left" size={22} color={surface.textPrimary} />
+          </Animated.View>
         </Pressable>
         <AppText variant="sectionHeading">
           {monthName} {viewYear}
         </AppText>
-        <Pressable onPress={() => navigateMonth(1)} hitSlop={12} style={styles.arrowBtn} disabled={isCurrentMonth}>
-          {({ pressed }) => (
-            <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
-              <MCI name="chevron-right" size={22} color={isCurrentMonth ? surface.textPlaceholder : surface.textPrimary} />
-            </View>
-          )}
+        <Pressable
+          onPress={() => navigateMonth(1)}
+          hitSlop={12}
+          style={styles.arrowBtn}
+          disabled={isCurrentMonth}
+          onPressIn={() => { if (!isCurrentMonth) Animated.spring(rightChevScale, { toValue: 0.88, speed: 40, bounciness: 0, useNativeDriver: true }).start(); }}
+          onPressOut={() => Animated.spring(rightChevScale, { toValue: 1, speed: 40, bounciness: 5, useNativeDriver: true }).start()}
+        >
+          <Animated.View style={[styles.chevronCircle, { transform: [{ scale: rightChevScale }] }]}>
+            <MCI name="chevron-right" size={22} color={isCurrentMonth ? surface.textPlaceholder : surface.textPrimary} />
+          </Animated.View>
         </Pressable>
       </View>
 
@@ -288,6 +306,7 @@ export default function CalendarHeatmap({
                   selectedDate={selectedDate}
                   countMap={countMap}
                   lastLoggedDate={lastLoggedDate}
+                  logTrigger={logTrigger}
                   onPress={onDayPress}
                 />
               ))}

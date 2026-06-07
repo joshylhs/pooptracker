@@ -38,7 +38,7 @@ interface Props {
 
 const BODY_COLOR_KEYS:  BodyColor[]      = Object.keys(BODY_COLORS) as BodyColor[];
 const WALL_COLOR_KEYS:  WallColor[]      = Object.keys(WALL_COLORS) as WallColor[];
-const EYE_STYLES:       EyeStyle[]       = ['round', 'sparkle', 'button'];
+const EYE_STYLES:       EyeStyle[]       = ['round', 'button'];
 const EYE_PRIMARIES:    EyeColor[]       = Object.keys(EYE_COLORS) as EyeColor[];
 const EYE_SECONDARIES:  EyeSecondary[]   = Object.keys(EYE_SECONDARY_COLORS) as EyeSecondary[];
 const HEADDRESSES:      HeaddressStyle[] = ['none', 'flower', 'bow', 'crown', 'partyhat', 'beanie', 'tophat'];
@@ -178,12 +178,14 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
       {/* ── Scrollable trait sections — fills root, scrolls under the header ── */}
       <ScrollView
         ref={verticalScrollRef}
-        showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.sectionsScroll, { paddingTop: headerH || 200 }]}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
         onScroll={onVerticalScroll}
         scrollEventThrottle={16}
+        style={{ marginHorizontal: -20 }}
+        scrollIndicatorInsets={{ right: 6 }}
+        indicatorStyle="white"
       >
         <View style={[styles.sections, cardStyle]}>
 
@@ -562,7 +564,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  sectionsScroll: { gap: 12, paddingBottom: 8 },
+  sectionsScroll: { gap: 12, paddingBottom: 8, paddingHorizontal: 20 },
 
   sections: {
     borderRadius: 16,

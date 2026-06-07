@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Animated, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from '../shared/Text';
-import FriendRow from './FriendRow';
+import FriendRow, { FRIEND_ROW_MARGIN } from './FriendRow';
 import { LeaderboardEntry, LeaderboardWindow } from '../../services/friends';
+import { getMood } from '../../utils/moodUtils';
 
 function formatUpdated(ts: number): string {
   const diff = Math.floor((Date.now() - ts) / 1000);
@@ -128,13 +129,17 @@ export default function LeaderboardList({
         })}
       </View>
 
+      {/* Divider between tabs and list */}
+      {!loading && entries.length > 0 && (
+        <View style={[styles.tabDivider, { backgroundColor: surface.border }]} />
+      )}
+
       {/* Column headers */}
       {!loading && entries.length > 0 && (
         <View style={styles.colHeader}>
           <AppText variant="caption" style={[styles.colRank, { color: surface.textSecondary }]}>#</AppText>
-          {/* avatar spacer: 34px + 12px gap */}
-          <View style={styles.colAvatarSpacer} />
-          <AppText variant="caption" style={[styles.colName, { color: surface.textSecondary }]}>User</AppText>
+          <AppText variant="caption" style={[styles.colAvatar, { color: surface.textSecondary }]}>User</AppText>
+          <View style={{ flex: 1 }} />
           <AppText variant="caption" style={[styles.colCount, { color: surface.textSecondary }]}>Logs</AppText>
         </View>
       )}
@@ -147,14 +152,21 @@ export default function LeaderboardList({
         </AppText>
       ) : (
         <Animated.View style={[styles.list, { opacity: listOpacity }]}>
-          {entries.map((entry, i) => (
-            <FriendRow
-              key={entry.uid}
-              rank={i + 1}
-              entry={entry}
-              onPress={entry.isSelf ? undefined : () => onFriendPress(entry.uid)}
-            />
-          ))}
+          {entries.map((entry, i) => {
+            const rank = i === 0 ? 1 : entries[i].count === entries[i - 1].count
+              ? entries.findIndex(e => e.count === entry.count) + 1
+              : i + 1;
+            const mood = getMood(entry, rank);
+            return (
+              <FriendRow
+                key={entry.uid}
+                rank={rank}
+                entry={entry}
+                mood={mood}
+                onPress={entry.isSelf ? undefined : () => onFriendPress(entry.uid)}
+              />
+            );
+          })}
         </Animated.View>
       )}
 
@@ -174,6 +186,7 @@ const styles = StyleSheet.create({
     gap: TAB_GAP,
     marginBottom: 8,
   },
+  tabDivider: { height: StyleSheet.hairlineWidth, marginBottom: 10 },
   tabHighlight: {
     position: 'absolute',
     top: TAB_PADDING,
@@ -193,10 +206,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     gap: 12,
     marginBottom: 6,
+    marginHorizontal: FRIEND_ROW_MARGIN,
   },
-  colRank: { width: 20, textAlign: 'center' },
-  colAvatarSpacer: { width: 48 },
-  colName: { flex: 1 },
+  colRank: { width: 27, textAlign: 'center' },
+  colAvatar: { width: 48, textAlign: 'center' },
   colCount: { width: 36, textAlign: 'center' },
   list: { gap: 6 },
   spinner: { marginVertical: 24 },

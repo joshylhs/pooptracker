@@ -1,4 +1,4 @@
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { useCallback, useEffect, useRef } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
@@ -23,6 +23,27 @@ function FadeTab({ children }: { children: React.ReactNode }) {
     }, [opacity]),
   );
   return <Animated.View style={{ flex: 1, opacity }}>{children}</Animated.View>;
+}
+
+function ScaleTabButton(props: any) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const { children, style, onPress, onLongPress, accessibilityRole, accessibilityState, testID } = props;
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      onPressIn={() => Animated.spring(scale, { toValue: 0.80, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+      onPressOut={() => Animated.spring(scale, { toValue: 1,   speed: 40, bounciness: 5, useNativeDriver: true }).start()}
+      style={style}
+      accessibilityRole={accessibilityRole}
+      accessibilityState={accessibilityState}
+      testID={testID}
+    >
+      <Animated.View style={{ transform: [{ scale }] }}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
 }
 
 function HomeTabIcon({ color, size }: { color: string; size: number }) {
@@ -52,6 +73,7 @@ export default function AppTabs() {
       initialRouteName="Home"
       screenOptions={{
         headerShown: false,
+        tabBarButton: (props) => <ScaleTabButton {...props} />,
         tabBarStyle: {
           borderTopColor: '#4A4239',
           borderTopWidth: 1,

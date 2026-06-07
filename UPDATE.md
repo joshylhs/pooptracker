@@ -39,7 +39,7 @@ Auth state drives routing: unauthenticated → AuthStack, else AppTabs. **Onboar
 
 ### Data Layer
 - `src/database/logRepository.ts` — all Firestore log read/write; batched writes keep denormalised counters (`dailySummaries`, `monthlyTotals`, `yearlyTotals`) in sync
-- `src/services/friends.ts` — friend CRUD, leaderboard fetch (reads the counter docs, not raw logs)
+- `src/services/friends.ts` — friend CRUD, leaderboard fetch. `LeaderboardEntry` now includes `countToday`, `currentStreak`, `longestStreak`. `fetchLeaderboardWindow` fetches streak data per user in parallel (30 days of `dailySummaries`) alongside the existing counter reads.
 - `src/services/pokes.ts` — FCM token registration + Cloud Function call for sending pokes
 - `src/services/users.ts` — user profile reads/writes; includes `avatarConfig` field (pixel avatar)
 - `src/services/signals.ts` — read/write `dismissedSignals` subcollection (path unchanged); `AcknowledgedSignal` with `state: 'latest' | 'current' | 'resolved'`; blood auto-resolves after 3 consecutive non-blood logs via `incrementBloodCleanCount`
@@ -215,6 +215,8 @@ All animations use `useNativeDriver: true` (transform/opacity) unless otherwise 
 | `CalendarHeatmap` — month switch | Slide left/right (40px) + fade (160ms); rows spring-pop in staggered (45ms/row) | `Animated.parallel` + `Animated.stagger` |
 | `ProfileScreen` — reminder add/remove | Height + opacity (220ms) | `LayoutAnimation.configureNext` |
 | `LoginScreen` — forgot password link | Opacity dim on press (0.45) | Pressable `style={({ pressed }) => ...}` |
+| `CatAvatarCircle` — inactive mood | Slow sleeping breath: cat bobs inside fixed circle (amp 3pt, fall 1300ms, pause 1400ms, rise 1600ms) | `Animated.loop` + `Animated.sequence` + `Animated.delay`; `useNativeDriver: true` |
+| `CatAvatarCircle` — proud mood | Perky bounce: cat bobs inside fixed circle (amp 4pt, fall 600ms, rise 800ms) | same pattern, no pause phase |
 
 ---
 
@@ -223,6 +225,43 @@ All animations use `useNativeDriver: true` (transform/opacity) unless otherwise 
 `friendlyAuthError(e)` in `src/services/auth.ts` maps Firebase error codes to plain-English messages. Used in both LoginScreen and SignupScreen catches. Covers: `invalid-credential`, `wrong-password`, `user-not-found`, `email-already-in-use`, `weak-password`, `invalid-email`, `user-disabled`, `too-many-requests`, `network-request-failed`. Falls through to "Something went wrong — try again." for unknown codes. `operation-not-allowed` intentionally not mapped (developer misconfiguration, not a user-facing error).
 
 SignupScreen has a `generalError` slot (shown above submit button) for non-field errors (network, rate limit). Field-specific errors still attach to their field (`emailError`, `passwordError`, `usernameError`).
+
+---
+
+## Cat Avatar Mood System
+
+Leaderboard avatars display one of three moods, computed fresh on each leaderboard fetch. Mood is not stored — it's derived from live data.
+
+### Priority order
+1. **Inactive** — `countToday === 0` (no logs since midnight). Closed eyes, flat mouth, no cheeks, zzz overlay. Slow sleeping-breath bob animation.
+2. **Proud** — `currentStreak === longestStreak && currentStreak > 0` (currently on personal best streak). Gold sparkle eyes, smile, blush. Perky bounce animation.
+3. **Default** — everything else. Normal round eyes, smile, blush. No animation.
+
+### Key files
+- `src/utils/moodUtils.ts` — `getMood(entry, rank): Mood` — sole source of truth for mood logic
+- `src/components/avatar/CatAvatarCircle.tsx` — accepts `mood` prop; maps mood → eye/mouth overrides; renders zzz overlay outside the `overflow:hidden` circle; drives animation via `Animated.loop`
+- `src/components/avatar/CatEyes.tsx` — added `closed`, `halflidded`, `proud` mood-only eye variants (not user-selectable); `sparkle` eye falls through to `round` for legacy users
+- `src/components/avatar/CatBody.tsx` — added `flat` mouth variant
+- `src/components/avatar/CatAvatar.tsx` — added `moodEyes` and `mouthStyle` props; mood overrides take priority over user config
+- `src/components/friends/LeaderboardList.tsx` — computes mood per entry, passes to `FriendRow`
+
+### Animation design
+Both animated moods use `translateY` on the SVG **inside** the fixed circle — the circle clips naturally. The zzz overlay sits outside the circle as an absolutely-positioned sibling so it is never clipped.
+
+| Mood | Amplitude | Fall | Pause | Rise |
+|---|---|---|---|---|
+| Inactive | 3pt | 1300ms | 1400ms | 1600ms |
+| Proud | 4pt | 600ms | — | 800ms |
+
+### Avatar picker changes
+- `sparkle` removed from user-selectable eye options (`EYE_STYLES = ['round', 'button']`)
+- Existing users with `sparkle` saved silently render as `round` — no migration needed
+
+---
+
+## Heatmap Midnight Fix
+
+`CalendarHeatmap` previously computed `today` once on mount, so the highlighted date wouldn't update if the app stayed open past midnight. Fixed by replacing the frozen `useMemo(() => new Date(), [])` with a `useState` + `setInterval` that ticks every 60 seconds. `todayString(now)` is called with the live `now` value, so the today highlight and `isCurrentMonth` guard both self-correct within one minute of midnight.
 
 ---
 
@@ -259,6 +298,7 @@ SignupScreen has a `generalError` slot (shown above submit button) for non-field
 - Poke button inline with username; scale animation on press
 - Renders `CatAvatarCircle` (pixel avatar) if `avatarConfig` is set; falls back to `Avatar` (initials circle)
 - Both avatar types render at size 48 so all rows have consistent height
+- Accepts `mood` prop (`'inactive' | 'proud' | 'default'`) computed by `LeaderboardList` and forwarded to `CatAvatarCircle`
 
 **CompareSection** (`src/components/friends/CompareSection.tsx`):
 - Lives above the leaderboard on FriendsScreen

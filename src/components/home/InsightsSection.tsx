@@ -22,7 +22,8 @@ export default function InsightsSection({ logs, onToggle }: Props) {
   const { surface } = useTheme();
   const weeklyInsight = deriveWeeklyInsight(logs);
   const [expanded, setExpanded] = useState(true);
-  const rotateAnim = useRef(new Animated.Value(1)).current;
+  const rotateAnim  = useRef(new Animated.Value(1)).current;
+  const chevScale   = useRef(new Animated.Value(1)).current;
 
   const toggle = () => {
     const newExpanded = !expanded;
@@ -48,14 +49,17 @@ export default function InsightsSection({ logs, onToggle }: Props) {
         <Pressable onPress={toggle} style={styles.headerPressable}>
           <AppText variant="sectionHeading">Insights</AppText>
         </Pressable>
-        <Pressable onPress={toggle} hitSlop={8}>
-          {({ pressed }) => (
-            <View style={[styles.chevronCircle, pressed && styles.chevronCirclePressed]}>
-              <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
-                <MCI name="chevron-down" size={20} color={surface.textSecondary} />
-              </Animated.View>
-            </View>
-          )}
+        <Pressable
+          onPress={toggle}
+          hitSlop={8}
+          onPressIn={() => Animated.spring(chevScale, { toValue: 0.84, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+          onPressOut={() => Animated.spring(chevScale, { toValue: 1,    speed: 40, bounciness: 5, useNativeDriver: true }).start()}
+        >
+          <Animated.View style={[styles.chevronCircle, { transform: [{ scale: chevScale }] }]}>
+            <Animated.View style={{ transform: [{ rotate: chevronRotate }] }}>
+              <MCI name="chevron-down" size={20} color={surface.textSecondary} />
+            </Animated.View>
+          </Animated.View>
         </Pressable>
       </View>
 

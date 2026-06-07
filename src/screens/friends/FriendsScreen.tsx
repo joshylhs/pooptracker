@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  LayoutAnimation,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -21,6 +22,7 @@ import LeaderboardList from '../../components/friends/LeaderboardList';
 import CompareSection from '../../components/friends/CompareSection';
 import { useFriendsStore } from '../../store/friendsStore';
 import { useLogStore } from '../../store/logStore';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { searchUser, UserSearchResult, LeaderboardWindow } from '../../services/friends';
 import { FriendsStackParamList } from '../../navigation/FriendsStack';
@@ -36,6 +38,7 @@ type SearchState =
   | { status: 'found'; result: UserSearchResult };
 
 export default function FriendsScreen() {
+  const { top: topInset } = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const { surface, colours } = useTheme();
   const [activeWindow, setActiveWindow] = useState<LeaderboardWindow>('week');
@@ -47,12 +50,36 @@ export default function FriendsScreen() {
   const searchAnim = useRef(new Animated.Value(0)).current;
   const inputRef = useRef<TextInput>(null);
 
-  const manageScaleUp = () => Animated.timing(manageScale, { toValue: 1.12, duration: 80, useNativeDriver: true }).start();
-  const manageScaleDown = () => Animated.timing(manageScale, { toValue: 1, duration: 120, useNativeDriver: true }).start();
+  const searchBtnScale  = useRef(new Animated.Value(1)).current;
+  const resultOp        = useRef(new Animated.Value(0)).current;
+  const addBtnScale     = useRef(new Animated.Value(1)).current;
+  const [showResult, setShowResult] = useState(false);
+  const [pillLabel, setPillLabel] = useState<'manage' | 'close'>('manage');
+  const manageScaleDown = () => Animated.spring(manageScale, { toValue: 1,    speed: 1, bounciness: 0, useNativeDriver: true }).start();
+  const manageScaleUp   = () => Animated.spring(manageScale, { toValue: 0.93, speed: 1, bounciness: 0, useNativeDriver: true }).start();
+  const animatePillLabel = (label: 'manage' | 'close') => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setPillLabel(label);
+  };
 
   const [query, setQuery] = useState('');
   const [searchState, setSearchState] = useState<SearchState>({ status: 'idle' });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchState.status === 'found') {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setShowResult(true);
+      Animated.timing(resultOp, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    } else {
+      Animated.timing(resultOp, { toValue: 0, duration: 140, useNativeDriver: true }).start(({ finished }) => {
+        if (finished) {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setShowResult(false);
+        }
+      });
+    }
+  }, [searchState.status]);
 
   const {
     friends,
@@ -95,10 +122,12 @@ export default function FriendsScreen() {
 
   const openPanel = () => {
     setPanelOpen(true);
+    animatePillLabel('close');
     Animated.spring(panelAnim, { toValue: 1, useNativeDriver: true, friction: 12, tension: 80 }).start();
   };
 
   const closePanel = () => {
+    animatePillLabel('manage');
     Animated.spring(panelAnim, { toValue: 0, useNativeDriver: true, friction: 20, tension: 200 }).start(({ finished }) => {
       if (finished) setPanelOpen(false);
     });
@@ -187,7 +216,7 @@ export default function FriendsScreen() {
       </Animated.View>
 
       {/* Title row + manage panel */}
-      <View style={styles.titleAnchor}>
+      <View style={[styles.titleAnchor, { paddingTop: topInset + 16 }]}>
         {/* Title mode */}
         <Animated.View
           pointerEvents={searchOpen ? 'none' : 'auto'}
@@ -195,13 +224,17 @@ export default function FriendsScreen() {
         >
           <AppText variant="screenTitle">Friends</AppText>
           <View style={styles.pills}>
-            <Pressable
-              onPress={openSearch}
-              hitSlop={8}
-              style={({ pressed }) => [styles.searchPill, { backgroundColor: surface.border, opacity: pressed ? 0.6 : 1 }]}
-            >
-              <MCI name="account-search" size={16} color={surface.textSecondary} />
-            </Pressable>
+            <Animated.View style={{ transform: [{ scale: searchBtnScale }] }}>
+              <Pressable
+                onPress={openSearch}
+                hitSlop={8}
+                onPressIn={() => Animated.spring(searchBtnScale, { toValue: 0.9, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+                onPressOut={() => Animated.spring(searchBtnScale, { toValue: 1,    speed: 40, bounciness: 5, useNativeDriver: true }).start()}
+                style={[styles.searchPill, { backgroundColor: surface.border }]}
+              >
+                <MCI name="account-search" size={16} color={surface.textSecondary} />
+              </Pressable>
+            </Animated.View>
             <Pressable
               onPress={togglePanel}
               onPressIn={manageScaleUp}
@@ -211,16 +244,14 @@ export default function FriendsScreen() {
             >
               <Animated.View style={[styles.pill, { backgroundColor: surface.border, transform: [{ scale: manageScale }] }]}>
                 <MCI name="book-account" size={14} color={surface.textSecondary} />
-                <AppText variant="caption" colour="textSecondary">
-                  {panelOpen ? 'close' : 'manage'}
-                </AppText>
-                {!panelOpen && pendingIncoming.length > 0 && (
+                <AppText variant="caption" colour="textSecondary">{pillLabel}</AppText>
+                {pillLabel === 'manage' && pendingIncoming.length > 0 && (
                   <View style={[styles.badge, { backgroundColor: colours.primary400 }]}>
                     <AppText style={styles.badgeText}>{pendingIncoming.length}</AppText>
                   </View>
                 )}
                 <AppText style={[styles.chevron, { color: surface.textSecondary }]}>
-                  {panelOpen ? '▴' : '▾'}
+                  {pillLabel === 'manage' ? '▾' : '▴'}
                 </AppText>
               </Animated.View>
             </Pressable>
@@ -232,7 +263,7 @@ export default function FriendsScreen() {
           pointerEvents={searchOpen ? 'auto' : 'none'}
           style={[
             styles.titleRow,
-            StyleSheet.absoluteFill,
+            { position: 'absolute', top: topInset + 16, left: 0, right: 0 },
             { opacity: searchOpacity, transform: [{ translateX: searchTranslateX }] },
           ]}
         >
@@ -269,13 +300,14 @@ export default function FriendsScreen() {
           pointerEvents={panelOpen ? 'auto' : 'none'}
           style={[
             styles.panel,
-            { backgroundColor: surface.surface, borderColor: surface.border },
+            { backgroundColor: surface.surface, borderColor: surface.border, top: topInset + 60 },
             { opacity: panelAnim, transform: [{ translateY: panelTranslateY }] },
           ]}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.panelContent}
+            scrollIndicatorInsets={{ right: 6 }}
+            indicatorStyle="white"
           >
             {pendingIncoming.length > 0 && (
               <>
@@ -346,7 +378,7 @@ export default function FriendsScreen() {
 
             {panelCount === 0 && (
               <AppText variant="caption" colour="textSecondary" style={styles.emptyMsg}>
-                No friends yet — tap the search icon to add someone.
+                No friends yet, tap the search icon to add someone!
               </AppText>
             )}
           </ScrollView>
@@ -363,30 +395,36 @@ export default function FriendsScreen() {
       {searchOpen && searchState.status === 'already-pending' && (
         <AppText variant="caption" colour="textSecondary" style={styles.searchMsg}>A request with this user is already pending.</AppText>
       )}
-      {searchOpen && searchState.status === 'found' && (
-        <View style={[styles.resultRow, { borderColor: surface.border }]}>
+      {searchOpen && showResult && searchState.status === 'found' && (
+        <Animated.View style={[styles.resultRow, { borderColor: surface.border, opacity: resultOp }]}>
           <Avatar initials={searchState.result.avatarInitials} colour={searchState.result.avatarColour} />
           <AppText variant="bodyEmphasis" style={styles.resultName}>{searchState.result.username}</AppText>
-          <Pressable
-            onPress={() => handleSend(searchState.result.uid)}
-            style={({ pressed }) => [styles.actionBtn, { backgroundColor: colours.primary400, opacity: pressed ? 0.6 : 1 }]}
-            disabled={actionLoading === searchState.result.uid}
-          >
-            {actionLoading === searchState.result.uid
-              ? <ActivityIndicator color="#fff" size="small" />
-              : <AppText variant="caption" style={{ color: '#fff', fontWeight: '600' }}>Add</AppText>
-            }
-          </Pressable>
-        </View>
+          <Animated.View style={{ transform: [{ scale: addBtnScale }] }}>
+            <Pressable
+              onPress={() => handleSend(searchState.result.uid)}
+              onPressIn={() => Animated.spring(addBtnScale, { toValue: 0.9, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+              onPressOut={() => Animated.spring(addBtnScale, { toValue: 1,   speed: 40, bounciness: 4, useNativeDriver: true }).start()}
+              style={({ pressed }) => [styles.actionBtn, { backgroundColor: colours.primary400, opacity: pressed ? 0.6 : 1 }]}
+              disabled={actionLoading === searchState.result.uid}
+            >
+              {actionLoading === searchState.result.uid
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <AppText variant="caption" style={{ color: '#fff', fontWeight: '600' }}>Add</AppText>
+              }
+            </Pressable>
+          </Animated.View>
+        </Animated.View>
       )}
 
       {/* Main scrollable content */}
       <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scroll, { paddingHorizontal: 24 }]}
+        style={{ marginHorizontal: -24 }}
+        scrollIndicatorInsets={{ right: 6 }}
+        indicatorStyle="white"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={surface.textPrimary} />}
       >
-        {stableMyProfile && friends.length > 0 && (
+        {stableMyProfile && (
           <CompareSection
             myProfile={stableMyProfile}
             friends={friends}
@@ -440,7 +478,6 @@ const styles = StyleSheet.create({
   chevron: { fontSize: 18 },
   panel: {
     position: 'absolute',
-    top: 44,
     left: 0,
     right: 0,
     zIndex: 10,

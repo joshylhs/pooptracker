@@ -14,6 +14,7 @@ import { useAuthStore } from '../store/authStore';
 import { formatDate, addDays } from '../utils/dateUtils';
 import { hashUsername } from '../utils/encryption';
 import { AvatarConfig } from '../components/avatar';
+import { calculateStreaks, DailySummary } from '../utils/streakUtils';
 
 export type LeaderboardWindow = 'day' | 'week' | 'month' | 'year';
 
@@ -50,6 +51,9 @@ export interface LeaderboardEntry {
   count: number;
   isSelf: boolean;
   allowPokes: boolean;
+  countToday: number;
+  currentStreak: number;
+  longestStreak: number;
 }
 
 export interface UserSearchResult {
@@ -256,31 +260,62 @@ async function fetchUserCountForWindow(
   }
 }
 
+async function fetchStreakData(userId: string): Promise<{ countToday: number; currentStreak: number; longestStreak: number }> {
+  const today = new Date();
+  const todayStr = formatDate(today);
+
+  // Last 30 days for streak calculation
+  const streakDates = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    return formatDate(d);
+  });
+
+  const streakSnaps = await Promise.all(
+    streakDates.map(d => getDoc(doc(db, 'users', userId, 'dailySummaries', d))),
+  );
+
+  const summaries: DailySummary[] = streakSnaps
+    .map((snap, i) => ({
+      date: streakDates[i],
+      count: snap.exists() ? ((snap.data() as { count?: number }).count ?? 0) : 0,
+    }))
+    .filter(s => s.count > 0);
+
+  const countToday = summaries.find(s => s.date === todayStr)?.count ?? 0;
+  const { currentStreak, longestStreak } = calculateStreaks(summaries);
+  return { countToday, currentStreak, longestStreak };
+}
+
 export async function fetchLeaderboardWindow(
   window: LeaderboardWindow,
   myUid: string,
   friends: FriendProfile[],
   myDisplayProfile: { username: string; avatarInitials: string; avatarColour: string; avatarConfig?: AvatarConfig },
 ): Promise<LeaderboardEntry[]> {
-  const [selfCount, friendEntries] = await Promise.all([
+  const allUids = [myUid, ...friends.map(f => f.uid)];
+
+  const [selfCount, friendCounts, streakResults] = await Promise.all([
     fetchUserCountForWindow(myUid, window),
-    Promise.all(
-      friends.map(async (f): Promise<LeaderboardEntry> => ({
-        uid: f.uid,
-        username: f.username,
-        avatarInitials: f.avatarInitials,
-        avatarColour: f.avatarColour,
-        avatarConfig: f.avatarConfig,
-        count: await fetchUserCountForWindow(f.uid, window),
-        isSelf: false,
-        allowPokes: f.allowPokes,
-      })),
-    ),
+    Promise.all(friends.map(f => fetchUserCountForWindow(f.uid, window))),
+    Promise.all(allUids.map(uid => fetchStreakData(uid))),
   ]);
 
+  const [selfStreaks, ...friendStreaks] = streakResults;
+
   const entries: LeaderboardEntry[] = [
-    { uid: myUid, ...myDisplayProfile, count: selfCount, isSelf: true, allowPokes: true },
-    ...friendEntries,
+    { uid: myUid, ...myDisplayProfile, count: selfCount, isSelf: true, allowPokes: true, ...selfStreaks },
+    ...friends.map((f, i): LeaderboardEntry => ({
+      uid: f.uid,
+      username: f.username,
+      avatarInitials: f.avatarInitials,
+      avatarColour: f.avatarColour,
+      avatarConfig: f.avatarConfig,
+      count: friendCounts[i],
+      isSelf: false,
+      allowPokes: f.allowPokes,
+      ...friendStreaks[i],
+    })),
   ];
   entries.sort((a, b) => b.count !== a.count ? b.count - a.count : a.username.localeCompare(b.username));
   return entries;

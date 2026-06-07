@@ -13,7 +13,7 @@ A social bowel movement tracker for iOS. Log your daily habits, visualise patter
 - **Streaks & stats** — current streak, daily count, monthly average
 - **Insights** — Bristol type distribution chart and 8-week frequency chart, collapsible on the home screen
 - **Health Signals** — Rome IV–based bowel health assessment over your last 90 days; flags patterns worth discussing with a GP; findings are snoozeable or dismissable with a history log
-- **Customisable avatar** — pixel avatar builder on your profile
+- **Customisable avatar** — pixel avatar builder on your profile; cat mood changes based on your streak and activity (inactive / proud / default)
 - **Friends & leaderboard** — compare counts with friends across day / week / month / year windows; raw log details stay private
 - **Daily reminders** — up to 5 configurable notification times with smart suppress (skips the reminder if you've already logged today)
 - **Privacy-first** — friends see counts only; individual logs, Bristol type, and notes are owner-only

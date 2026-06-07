@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 
 interface ScreenContainerProps {
@@ -17,27 +17,26 @@ export default function ScreenContainer({
   style,
 }: ScreenContainerProps) {
   const { surface } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.safeArea, { backgroundColor: surface.background }]}
-    >
+    <View style={[styles.safeArea, { backgroundColor: surface.background }]}>
       <View
         style={[
           styles.body,
           centered && styles.centered,
+          centered && { paddingTop: insets.top },
           style,
         ]}
       >
         {children}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  body: { flex: 1, padding: 24 },
+  body: { flex: 1, paddingHorizontal: 24 },
   centered: { justifyContent: 'center' },
 });

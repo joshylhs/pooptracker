@@ -1,7 +1,7 @@
 import React from 'react';
 import Svg, { Rect } from 'react-native-svg';
-import CatBody from './CatBody';
-import CatEyes, { EyeStyle, EyeColor, EyeSecondary } from './CatEyes';
+import CatBody, { MouthStyle } from './CatBody';
+import CatEyes, { AnyEyeStyle, EyeStyle, EyeColor, EyeSecondary } from './CatEyes';
 import CatBlush, { CheekStyle } from './CatBlush';
 import CatHeaddress, { HeaddressStyle } from './CatHeaddress';
 
@@ -41,6 +41,10 @@ interface Props {
   headdress?: HeaddressStyle;
   wallColor?: WallColor | string;
   size?: number;
+  viewBox?: string;
+  // Mood overrides — set by CatAvatarCircle, not by user config
+  moodEyes?: AnyEyeStyle;
+  mouthStyle?: MouthStyle;
 }
 
 export default function CatAvatar({
@@ -53,6 +57,9 @@ export default function CatAvatar({
   headdress = 'none',
   wallColor = 'none',
   size = 128,
+  viewBox = '0 0 32 32',
+  moodEyes,
+  mouthStyle,
 }: Props) {
   const resolveFill = (v: BodyColor | string) =>
     v in BODY_COLORS ? BODY_COLORS[v as BodyColor] : (v as string);
@@ -61,12 +68,13 @@ export default function CatAvatar({
     v in WALL_COLORS ? WALL_COLORS[v as WallColor] : (v as string);
 
   const wall = resolveWall(wallColor);
+  const resolvedBodyColor = resolveFill(bodyColor);
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 32 32">
+    <Svg width={size} height={size} viewBox={viewBox}>
       {wall !== 'transparent' && <Rect x={0} y={0} width={32} height={32} fill={wall} />}
-      <CatBody color={resolveFill(bodyColor)} snoutColor={resolveFill(snoutColor)} />
-      <CatEyes style={eyes} primaryColor={eyePrimary} secondaryColor={eyeSecondary} />
+      <CatBody color={resolvedBodyColor} snoutColor={resolveFill(snoutColor)} mouthStyle={mouthStyle} />
+      <CatEyes style={moodEyes ?? eyes} primaryColor={eyePrimary} secondaryColor={eyeSecondary} bodyColor={resolvedBodyColor} />
       <CatBlush style={cheekStyle} />
       <CatHeaddress style={headdress} />
     </Svg>
