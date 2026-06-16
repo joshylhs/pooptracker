@@ -216,7 +216,7 @@ export default function FriendsScreen() {
       </Animated.View>
 
       {/* Title row + manage panel */}
-      <View style={[styles.titleAnchor, {paddingTop: topInset}]}>
+      <View style={[styles.titleAnchor, { paddingTop: topInset, backgroundColor: surface.surface, borderBottomColor: surface.border }]}>
         {/* Title mode */}
         <Animated.View
           pointerEvents={searchOpen ? 'none' : 'auto'}
@@ -432,14 +432,16 @@ export default function FriendsScreen() {
           />
         )}
 
-        <LeaderboardList
-          entries={leaderboard?.entries ?? []}
-          loading={loading || (leaderboardLoading && (leaderboard?.entries ?? []).length === 0)}
-          activeWindow={activeWindow}
-          onWindowChange={handleWindowChange}
-          onFriendPress={uid => navigation.navigate('FriendDetail', { friendId: uid })}
-          lastUpdated={leaderboardFetchedAt}
-        />
+        <View style={{ marginTop: 16 }}>
+          <LeaderboardList
+            entries={leaderboard?.entries ?? []}
+            loading={loading || (leaderboardLoading && (leaderboard?.entries ?? []).length === 0)}
+            activeWindow={activeWindow}
+            onWindowChange={handleWindowChange}
+            onFriendPress={uid => navigation.navigate('FriendDetail', { friendId: uid })}
+            lastUpdated={leaderboardFetchedAt}
+          />
+        </View>
       </ScrollView>
     </ScreenContainer>
   );
@@ -452,7 +454,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     zIndex: 9,
   },
-  titleAnchor: { zIndex: 10, marginBottom: 16 },
+  titleAnchor: { zIndex: 10, marginHorizontal: -24, paddingHorizontal: 24, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -531,5 +533,5 @@ const styles = StyleSheet.create({
   },
   emptyMsg: { textAlign: 'center' },
   iconBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  scroll: { gap: 16, paddingBottom: 24 },
+  scroll: { gap: 16, paddingBottom: 24, paddingTop: 16 }, // paddingTop seems to set gap between header and first section
 });

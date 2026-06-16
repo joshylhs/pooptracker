@@ -83,7 +83,9 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
   const myAcknowledged = useSignalsStore(s => s.acknowledged);
 
   const pillScale = useRef(new Animated.Value(1)).current;
+  const bodyAnim = useRef(new Animated.Value(0)).current;
   const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null);
+  const [visibleFriend, setVisibleFriend] = useState<FriendProfile | null>(null);
   const [friendData, setFriendData] = useState<FriendData | null>(null);
   const [loading, setLoading] = useState(false);
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -100,6 +102,18 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
       if (f) setSelectedFriend(f);
     });
   }, [friends]);
+
+  // Animate body in/out when selection changes
+  useEffect(() => {
+    if (selectedFriend) {
+      setVisibleFriend(selectedFriend);
+      Animated.timing(bodyAnim, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+    } else {
+      Animated.timing(bodyAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start(({ finished }) => {
+        if (finished) setVisibleFriend(null);
+      });
+    }
+  }, [selectedFriend?.uid]);
 
   // Fetch friend data when selection changes
   useEffect(() => {
@@ -155,11 +169,11 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
   const friendWeekly = weeklyAverage(friendSummaries);
   const { currentStreak: friendStreak } = calculateStreaks(friendSummaries);
 
-  const friendSide: CompareSide = selectedFriend ? {
-    name: selectedFriend.username,
-    avatarInitials: selectedFriend.avatarInitials,
-    avatarColour: selectedFriend.avatarColour,
-    avatarConfig: selectedFriend.avatarConfig,
+  const friendSide: CompareSide = visibleFriend ? {
+    name: visibleFriend.username,
+    avatarInitials: visibleFriend.avatarInitials,
+    avatarColour: visibleFriend.avatarColour,
+    avatarConfig: visibleFriend.avatarConfig,
     value: '',
   } : { name: '', avatarInitials: '', avatarColour: '#888', value: '' };
 
@@ -190,7 +204,7 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
     clear:  { colour: '#1D9E75', label: 'No active signals',    icon: 'check-circle' },
   };
 
-  const cards = selectedFriend ? [
+  const cards = visibleFriend ? [
     { key: 'today',  label: 'today',      myValue: myToday,            friendValue: friendToday },
     { key: 'weekly', label: 'weekly avg', myValue: myWeekly.toFixed(1), friendValue: friendWeekly.toFixed(1) },
     { key: 'streak', label: 'day streak', myValue: myStreak,            friendValue: friendStreak },
@@ -256,12 +270,14 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
         <View style={styles.empty}>
           <AppText variant="caption" colour="textSecondary">Add a friend to start comparing</AppText>
         </View>
-      ) : !selectedFriend ? null : loading ? (
-        <View style={styles.empty}>
-          <ActivityIndicator size="small" color={colours.primary400} />
-        </View>
+      ) : !visibleFriend ? null : loading ? (
+        <Animated.View style={{ opacity: bodyAnim }}>
+          <View style={styles.empty}>
+            <ActivityIndicator size="small" color={colours.primary400} />
+          </View>
+        </Animated.View>
       ) : (
-        <View>
+        <Animated.View style={{ opacity: bodyAnim }}>
           <FlatList
             ref={flatRef}
             data={loopCards}
@@ -356,7 +372,7 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
               ))}
             </View>
           )}
-        </View>
+        </Animated.View>
       )}
 
       {/* Friend picker modal */}

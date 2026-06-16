@@ -68,6 +68,92 @@ function progressText(key: BadgeKey, ctx: BadgeEvalContext): string {
   }
 }
 
+function requirementText(key: BadgeKey): string {
+  switch (key) {
+    case 'shirt_plain':           return '1 log';
+    case 'shirt_ringer':          return '10 logs';
+    case 'shirt_collared':        return '25 logs';
+    case 'shirt_striped':         return '50 logs';
+    case 'shirt_suit':            return '75 logs';
+    case 'shirt_tuxedo':          return '100 logs';
+    case 'shirt_bathrobe':        return '200 logs';
+    case 'acc_cucumber':          return '300 logs';
+    case 'hd_tp_crown':           return '500 logs';
+    case 'hd_batman':             return '1 night log';
+    case 'shirt_batman_suit':     return '3 night logs';
+    case 'acc_spectacles_round':  return '7 day streak';
+    case 'acc_spectacles_oval':   return '30 day streak';
+    case 'acc_spectacles_tinted': return '100 day streak';
+    case 'acc_monocle':           return '365 day streak';
+    case 'hd_headband':           return '7 consecutive Mondays';
+    case 'hd_helmet':             return '7 consistent days';
+    case 'hd_beanie_1':           return '3–6 day gap';
+    case 'hd_beanie_2':           return '7–29 day gap';
+    case 'hd_beanie_3':           return '30+ day gap';
+    case 'hd_party_1':            return '1 friend';
+    case 'hd_party_2':            return '5 friends';
+    case 'hd_party_3':            return '10 friends';
+    case 'hd_party_4':            return '25 friends';
+    case 'hd_trophy_bronze':      return '#1 daily';
+    case 'hd_trophy_silver':      return '#1 weekly';
+    case 'hd_trophy_gold':        return '#1 monthly';
+    case 'hd_trophy_platinum':    return '#1 yearly';
+    case 'acc_brooch_1':          return '1 poke sent';
+    case 'acc_brooch_2':          return '5 pokes sent';
+    case 'acc_brooch_3':          return '25 pokes sent';
+    case 'acc_sheriff':           return '100 pokes sent';
+    case 'acc_shield_1':          return '1 poke received';
+    case 'acc_shield_2':          return '5 pokes received';
+    case 'acc_shield_3':          return '25 pokes received';
+    case 'acc_shield_4':          return '100 pokes received';
+    default:                      return '';
+  }
+}
+
+// ── Next milestone progress ───────────────────────────────────────────────────
+
+interface MilestoneProgress { current: number; target: number; label: string; key: BadgeKey }
+
+function nextMilestone(keys: BadgeKey[], earned: Set<BadgeKey>, ctx: BadgeEvalContext): MilestoneProgress | null {
+  const nextKey = keys.find(k => !earned.has(k));
+  if (!nextKey) return null;
+  const label = BADGE_META[nextKey].label;
+  let current: number; let target: number;
+  switch (nextKey) {
+    case 'shirt_plain':           current = ctx.totalLogs;          target = 1;   break;
+    case 'shirt_ringer':          current = ctx.totalLogs;          target = 10;  break;
+    case 'shirt_collared':        current = ctx.totalLogs;          target = 25;  break;
+    case 'shirt_striped':         current = ctx.totalLogs;          target = 50;  break;
+    case 'shirt_suit':            current = ctx.totalLogs;          target = 75;  break;
+    case 'shirt_tuxedo':          current = ctx.totalLogs;          target = 100; break;
+    case 'shirt_bathrobe':        current = ctx.totalLogs;          target = 200; break;
+    case 'acc_cucumber':          current = ctx.totalLogs;          target = 300; break;
+    case 'hd_tp_crown':           current = ctx.totalLogs;          target = 500; break;
+    case 'hd_batman':             current = ctx.nightOwlCount;      target = 1;   break;
+    case 'shirt_batman_suit':     current = ctx.nightOwlCount;      target = 3;   break;
+    case 'acc_spectacles_round':  current = ctx.currentStreak;      target = 7;   break;
+    case 'acc_spectacles_oval':   current = ctx.currentStreak;      target = 30;  break;
+    case 'acc_spectacles_tinted': current = ctx.currentStreak;      target = 100; break;
+    case 'acc_monocle':           current = ctx.currentStreak;      target = 365; break;
+    case 'hd_headband':           current = ctx.mondayStreakWeeks;  target = 7;   break;
+    case 'hd_helmet':             current = ctx.consistentCarlDays; target = 7;   break;
+    case 'hd_party_1':            current = ctx.friendCount;        target = 1;   break;
+    case 'hd_party_2':            current = ctx.friendCount;        target = 5;   break;
+    case 'hd_party_3':            current = ctx.friendCount;        target = 10;  break;
+    case 'hd_party_4':            current = ctx.friendCount;        target = 25;  break;
+    case 'acc_brooch_1':          current = ctx.pokesSent;          target = 1;   break;
+    case 'acc_brooch_2':          current = ctx.pokesSent;          target = 5;   break;
+    case 'acc_brooch_3':          current = ctx.pokesSent;          target = 25;  break;
+    case 'acc_sheriff':           current = ctx.pokesSent;          target = 100; break;
+    case 'acc_shield_1':          current = ctx.pokesReceived;      target = 1;   break;
+    case 'acc_shield_2':          current = ctx.pokesReceived;      target = 5;   break;
+    case 'acc_shield_3':          current = ctx.pokesReceived;      target = 25;  break;
+    case 'acc_shield_4':          current = ctx.pokesReceived;      target = 100; break;
+    default: return null;
+  }
+  return { key: nextKey, label, current: Math.min(current, target), target };
+}
+
 // ── Categories ────────────────────────────────────────────────────────────────
 
 interface Category {
@@ -80,7 +166,7 @@ interface Category {
 const CATEGORIES: Category[] = [
   {
     label: 'Log milestones',
-    description: 'Measures total log counts over time.',
+    description: 'Measures total log counts over time',
     icon: 'toilet',
     keys: [
       'shirt_plain', 'shirt_ringer', 'shirt_collared', 'shirt_striped',
@@ -89,7 +175,7 @@ const CATEGORIES: Category[] = [
   },
   {
     label: 'Streaks',
-    description: 'Log at least once a day to keep your streak alive.',
+    description: 'Log at least once a day to keep your streak alive',
     icon: 'fire',
     keys: [
       'acc_spectacles_round', 'acc_spectacles_oval',
@@ -105,31 +191,31 @@ const CATEGORIES: Category[] = [
   },
   {
     label: 'Comebacks',
-    description: 'Return to logging after a gap of 3 or more days.',
+    description: 'Return to logging after a gap of 3 or more days',
     icon: 'undo-variant',
     keys: ['hd_beanie_1', 'hd_beanie_2', 'hd_beanie_3'],
   },
   {
     label: 'Friends',
-    description: 'Based on your total friend count.',
+    description: 'Based on your total friend count',
     icon: 'account-group',
     keys: ['hd_party_1', 'hd_party_2', 'hd_party_3', 'hd_party_4'],
   },
   {
     label: 'Leaderboard',
-    description: 'Reach #1 on the daily, weekly, monthly, or yearly board.',
+    description: 'Reach #1 on the daily, weekly, monthly, or yearly board',
     icon: 'podium',
     keys: ['hd_trophy_bronze', 'hd_trophy_silver', 'hd_trophy_gold', 'hd_trophy_platinum'],
   },
   {
     label: 'Pokes sent',
-    description: 'Based on the total number of pokes you have sent.',
+    description: 'Based on the total number of pokes you have sent',
     icon: 'hand-pointing-right',
     keys: ['acc_brooch_1', 'acc_brooch_2', 'acc_brooch_3', 'acc_sheriff'],
   },
   {
     label: 'Pokes received',
-    description: 'Based on the total number of pokes you have received.',
+    description: 'Based on the total number of pokes you have received',
     icon: 'shield',
     keys: ['acc_shield_1', 'acc_shield_2', 'acc_shield_3', 'acc_shield_4'],
   },
@@ -137,7 +223,6 @@ const CATEGORIES: Category[] = [
 
 // ── Avatar chip — display only ────────────────────────────────────────────────
 
-const CHIP_SIZE = 64;
 const ITEM_SPAN = 16;
 
 const STYLE_OVERRIDES: Partial<Record<BadgeKey, string>> = {
@@ -149,6 +234,7 @@ function BadgeChip({ badgeKey, earned }: { badgeKey: BadgeKey; earned: boolean }
   const meta = BADGE_META[badgeKey];
   const vb = centredViewBox(badgeKey, ITEM_SPAN);
   const itemStyle = STYLE_OVERRIDES[badgeKey] ?? meta.key.replace(/^(hd_|shirt_|acc_)/, '');
+  const req = requirementText(badgeKey);
 
   return (
     <View style={styles.chipOuter}>
@@ -157,12 +243,11 @@ function BadgeChip({ badgeKey, earned }: { badgeKey: BadgeKey; earned: boolean }
           styles.chip,
           {
             backgroundColor: surface.border,
-   
             opacity: earned ? 1 : 0.38,
           },
         ]}
       >
-        <Svg width={CHIP_SIZE} height={CHIP_SIZE} viewBox={vb}>
+        <Svg width="100%" height="100%" viewBox={vb}>
           {meta.slot === 'headdress' && <CatHeaddress style={itemStyle as HeaddressStyle} />}
           {meta.slot === 'shirt'     && <CatShirt     style={itemStyle as ShirtStyle} />}
           {meta.slot === 'accessory' && <CatAccessory style={itemStyle as AccessoryStyle} />}
@@ -177,10 +262,36 @@ function BadgeChip({ badgeKey, earned }: { badgeKey: BadgeKey; earned: boolean }
         variant="caption"
         colour={earned ? 'textPrimary' : 'textSecondary'}
         style={styles.chipLabel}
-        numberOfLines={2}
+        numberOfLines={1}
       >
         {meta.label}
       </AppText>
+      {req !== '' && (
+        <AppText variant="caption" colour="textSecondary" style={styles.chipReq} numberOfLines={1}>
+          {req}
+        </AppText>
+      )}
+    </View>
+  );
+}
+
+// ── Mini chip for progress bars ───────────────────────────────────────────────
+
+const MINI_SIZE = 32;
+const MINI_SPAN = 12;
+
+function MiniChip({ badgeKey }: { badgeKey: BadgeKey }) {
+  const { surface } = useTheme();
+  const meta = BADGE_META[badgeKey];
+  const vb = centredViewBox(badgeKey, MINI_SPAN);
+  const itemStyle = STYLE_OVERRIDES[badgeKey] ?? meta.key.replace(/^(hd_|shirt_|acc_)/, '');
+  return (
+    <View style={[styles.miniChip, { backgroundColor: surface.border }]}>
+      <Svg width={MINI_SIZE} height={MINI_SIZE} viewBox={vb}>
+        {meta.slot === 'headdress' && <CatHeaddress style={itemStyle as HeaddressStyle} />}
+        {meta.slot === 'shirt'     && <CatShirt     style={itemStyle as ShirtStyle} />}
+        {meta.slot === 'accessory' && <CatAccessory style={itemStyle as AccessoryStyle} />}
+      </Svg>
     </View>
   );
 }
@@ -240,6 +351,8 @@ export default function AchievementsScreen() {
       >
         {CATEGORIES.map(cat => {
           const catEarned = cat.keys.filter(k => earned.has(k)).length;
+          const milestone = ctx ? nextMilestone(cat.keys, earned, ctx) : null;
+          const fillRatio = milestone ? milestone.current / milestone.target : 0;
           return (
             <View key={cat.label} style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -256,6 +369,28 @@ export default function AchievementsScreen() {
               </AppText>
 
               <View style={[styles.card, { backgroundColor: surface.surface, borderColor: surface.border }]}>
+                {/* Progress bar */}
+                {milestone && (
+                  <View style={[styles.progressBarInner, { borderBottomColor: surface.border }]}>
+                    <View style={styles.milestoneRow}>
+                      <MiniChip badgeKey={milestone.key} />
+                      <View style={styles.milestoneContent}>
+                        <AppText variant="caption" colour="textSecondary" style={{ opacity: 0.7 }}>
+                          {milestone.target - milestone.current} more to unlock {milestone.label}
+                        </AppText>
+                        <View style={styles.progressBarRow}>
+                          <View style={[styles.progressBarTrack, { backgroundColor: surface.border }]}>
+                            <View style={[styles.progressBarFill, { width: `${fillRatio * 100}%`, backgroundColor: '#7F77DD' }]} />
+                          </View>
+                          <AppText variant="caption" colour="textSecondary" style={styles.progressBarLabel}>
+                            {milestone.current}/{milestone.target}
+                          </AppText>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
                 <View style={styles.chipGrid}>
                   {cat.keys.map(key => (
                     <BadgeChip
@@ -265,23 +400,6 @@ export default function AchievementsScreen() {
                     />
                   ))}
                 </View>
-
-                {/* Progress hints for locked badges */}
-                {ctx && cat.keys.some(k => !earned.has(k)) && (
-                  <View style={[styles.progressBlock, { borderTopColor: surface.border }]}>
-                    {cat.keys.filter(k => !earned.has(k)).map(key => (
-                      <View key={key} style={styles.progressRow}>
-                        <MCI name="lock" size={12} color={surface.textSecondary} />
-                        <AppText variant="caption" colour="textSecondary" style={styles.progressLabel}>
-                          {BADGE_META[key].label}
-                        </AppText>
-                        <AppText variant="caption" colour="textSecondary" style={styles.progressValue}>
-                          {progressText(key, ctx)}
-                        </AppText>
-                      </View>
-                    ))}
-                  </View>
-                )}
               </View>
             </View>
           );
@@ -306,7 +424,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  section: { gap: 8 },
+  section: { gap: 6 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 4, marginTop: 8 },
   sectionLabel: { letterSpacing: 0.5, flex: 1 },
   sectionDesc: { marginLeft: 4, opacity: 0.7 },
@@ -316,12 +434,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     padding: 12,
-    gap: 10,
+    gap: 8,
   },
-  chipOuter: { alignItems: 'center', width: 76 },
+  chipOuter: { alignItems: 'center', flexBasis: '23%', flexGrow: 0, maxWidth: '25%' },
   chip: {
-    width: 68,
-    height: 68,
+    width: '100%',
+    aspectRatio: 1,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -333,22 +451,23 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 13,
   },
+  chipReq: {
+    textAlign: 'center',
+    fontSize: 9,
+    lineHeight: 12,
+    opacity: 0.6,
+  },
   lockOverlay: {
     position: 'absolute',
     bottom: 4,
     right: 4,
   },
-  progressBlock: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 6,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  progressLabel: { flex: 1 },
-  progressValue: { opacity: 0.7, textAlign: 'right' },
+  progressBarRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  progressBarInner: { borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 12, paddingVertical: 10 },
+  progressBarTrack: { flex: 1, flexDirection: 'row', height: 4, borderRadius: 2, overflow: 'hidden' },
+  progressBarFill: { borderRadius: 2 },
+  progressBarLabel: { opacity: 0.6, minWidth: 28, textAlign: 'right' },
+  miniChip: { width: MINI_SIZE, height: MINI_SIZE, borderRadius: 8, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  milestoneRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  milestoneContent: { flex: 1, gap: 4 },
 });

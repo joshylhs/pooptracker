@@ -109,6 +109,7 @@ export default function ProfileScreen() {
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [feedbackTopic, setFeedbackTopic] = useState<string | undefined>(undefined);
   const [feedbackText, setFeedbackText] = useState('');
+  const achievementsChevronScale = useRef(new Animated.Value(1)).current;
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
 
@@ -424,6 +425,8 @@ export default function ProfileScreen() {
         <Pressable
           style={[cardStyle, styles.achievementsRow]}
           onPress={() => navigation.navigate('Achievements')}
+          onPressIn={() => Animated.spring(achievementsChevronScale, { toValue: 0.75, speed: 40, bounciness: 0, useNativeDriver: true }).start()}
+          onPressOut={() => Animated.spring(achievementsChevronScale, { toValue: 1, speed: 40, bounciness: 5, useNativeDriver: true }).start()}
         >
           <View style={styles.achievementsLeft}>
             <MCI name="trophy" size={18} color={surface.textSecondary} style={styles.rowIcon} />
@@ -440,7 +443,9 @@ export default function ProfileScreen() {
               )}
             </View>
           </View>
-          <AppText variant="caption" colour="textSecondary">›</AppText>
+          <Animated.View style={{ transform: [{ scale: achievementsChevronScale }] }}>
+            <MCI name="chevron-right" size={20} color={surface.textSecondary} />
+          </Animated.View>
         </Pressable>
 
         {/* Notifications section */}
