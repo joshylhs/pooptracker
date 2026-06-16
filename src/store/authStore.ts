@@ -11,6 +11,7 @@ import {
 import { useLogStore } from './logStore';
 import { useFriendsStore } from './friendsStore';
 import { registerFcmToken } from '../services/pokes';
+import { checkAndAwardBadges } from '../services/badgeService';
 
 interface AuthState {
   user: FirebaseUser | null;
@@ -54,7 +55,10 @@ export function startAuthListener(): void {
     if (previousUid !== nextUid) {
       useLogStore.getState().clear();
       useFriendsStore.getState().clear();
-      if (user?.uid) void registerFcmToken(user.uid);
+      if (user?.uid) {
+        void registerFcmToken(user.uid);
+        void checkAndAwardBadges(user.uid);
+      }
     }
     useAuthStore.setState(state => ({
       user,

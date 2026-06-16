@@ -2,6 +2,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from './Text';
 import { AvatarPicker, AvatarConfig } from '../avatar';
+import type { BadgeKey } from '../../utils/badgeUtils';
 
 interface Props {
   visible: boolean;
@@ -9,9 +10,10 @@ interface Props {
   onSave: (config: AvatarConfig) => void;
   onClose: () => void;
   saving?: boolean;
+  earnedBadges?: Set<BadgeKey>;
 }
 
-export default function AvatarPickerModal({ visible, current, onSave, onClose, saving = false }: Props) {
+export default function AvatarPickerModal({ visible, current, onSave, onClose, saving = false, earnedBadges }: Props) {
   const { surface } = useTheme();
 
   const handleConfirm = (config: AvatarConfig) => {
@@ -31,6 +33,7 @@ export default function AvatarPickerModal({ visible, current, onSave, onClose, s
             ctaLabel="Save"
             onConfirm={handleConfirm}
             loading={saving}
+            earnedBadges={earnedBadges}
           />
         </Pressable>
       </Pressable>

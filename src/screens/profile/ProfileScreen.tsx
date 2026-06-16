@@ -12,6 +12,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ProfileStackParamList } from '../../navigation/ProfileStack';
 import DeviceInfo from 'react-native-device-info';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuthStore } from '../../store/authStore';
@@ -36,6 +39,7 @@ import AvatarPickerModal from '../../components/shared/AvatarPickerModal';
 import Avatar from '../../components/shared/Avatar';
 import { CatAvatarCircle, AvatarConfig, DEFAULT_AVATAR_CONFIG } from '../../components/avatar';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
+import type { BadgeKey } from '../../utils/badgeUtils';
 
 function RemoveSlotButton({ onPress }: { onPress: () => void }) {
   const scale = useRef(new Animated.Value(1)).current;
@@ -73,8 +77,11 @@ const FEEDBACK_TOPIC_ICONS: Record<string, string> = {
   'General feedback': 'chat',
 };
 
+type ProfileNav = NativeStackNavigationProp<ProfileStackParamList, 'ProfileMain'>;
+
 export default function ProfileScreen() {
   const { top: topInset } = useSafeAreaInsets();
+  const navigation = useNavigation<ProfileNav>();
   const user = useAuthStore(s => s.user);
   const logOut = useAuthStore(s => s.logOut);
   const { surface, colours } = useTheme();
@@ -349,7 +356,7 @@ export default function ProfileScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: topInset + 16, paddingHorizontal: 24 }]} style={{ marginHorizontal: -24 }} scrollIndicatorInsets={{ right: 6 }} indicatorStyle="white">
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: topInset, paddingHorizontal: 24 }]} style={{ marginHorizontal: -24 }} scrollIndicatorInsets={{ right: 6 }} indicatorStyle="white">
         <AppText variant="screenTitle" style={styles.title}>Profile</AppText>
 
         {/* Identity card */}
@@ -410,7 +417,31 @@ export default function ProfileScreen() {
           onSave={handleAvatarSave}
           onClose={() => setAvatarPickerVisible(false)}
           saving={savingAvatar}
+          earnedBadges={profile?.badges ? new Set(profile.badges as BadgeKey[]) : undefined}
         />
+
+        {/* Achievements */}
+        <Pressable
+          style={[cardStyle, styles.achievementsRow]}
+          onPress={() => navigation.navigate('Achievements')}
+        >
+          <View style={styles.achievementsLeft}>
+            <MCI name="trophy" size={18} color={surface.textSecondary} style={styles.rowIcon} />
+            <View style={styles.rowLabelBlock}>
+              <AppText variant="body">Achievements</AppText>
+              {profile?.badges && profile.badges.length > 0 ? (
+                <AppText variant="caption" colour="textSecondary">
+                  {profile.badges.length} earned
+                </AppText>
+              ) : (
+                <AppText variant="caption" colour="textSecondary">
+                  Earn items by logging and making friends
+                </AppText>
+              )}
+            </View>
+          </View>
+          <AppText variant="caption" colour="textSecondary">›</AppText>
+        </Pressable>
 
         {/* Notifications section */}
         <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
@@ -478,7 +509,7 @@ export default function ProfileScreen() {
                 <View style={styles.rowLabelBlock}>
                   <AppText variant="body">Smart suppress</AppText>
                   <AppText variant="caption" colour="textSecondary">
-                    Skip reminders on days you've already logged
+                    Skip on days you've already logged
                   </AppText>
                 </View>
                 <Switch
@@ -539,7 +570,7 @@ export default function ProfileScreen() {
                 <View style={styles.rowLabelBlock}>
                   <AppText variant="body">Trusted friends</AppText>
                   <AppText variant="caption" colour="textSecondary">
-                    Trusted friends can see your detailed stats
+                    Pick who can see your detailed stats!
                   </AppText>
                 </View>
                 <Animated.View style={{ transform: [{ scale: trustedBtnScale }] }}>
@@ -827,6 +858,8 @@ const styles = StyleSheet.create({
   dividerThick: { height: 1 },
   addLabel: { color: '#7F77DD' },
   accountButtons: { gap: 8 },
+  achievementsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, paddingHorizontal: 16 },
+  achievementsLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   trustAvatarRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   modalBackdrop: {
     flex: 1,

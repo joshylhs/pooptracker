@@ -13,6 +13,7 @@ import { db } from './firebase';
 import { hashUsername } from '../utils/encryption';
 import { NotificationPrefs } from './notificationPrefs';
 import type { AvatarConfig } from '../components/avatar/AvatarPicker';
+import type { BadgeKey } from '../utils/badgeUtils';
 
 export interface UserProfile {
   uid: string;
@@ -20,6 +21,7 @@ export interface UserProfile {
   avatarInitials: string;
   avatarColour: string;
   avatarConfig?: AvatarConfig;
+  badges: BadgeKey[];
   createdAt: number;
   allowPokes: boolean;
   trustedFriendIds: string[];
@@ -80,6 +82,7 @@ export async function createUserProfile(args: {
     avatarInitials: avatarInitialsFrom(username),
     avatarColour: pickAvatarColour(uid),
     ...(avatarConfig ? { avatarConfig } : {}),
+    badges: [],
     createdAt: Date.now(),
     allowPokes: true,
     trustedFriendIds: [],
@@ -132,6 +135,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     avatarInitials: data.avatarInitials,
     avatarColour: data.avatarColour,
     avatarConfig: data.avatarConfig ?? undefined,
+    badges: data.badges ?? [],
     createdAt: data.createdAt,
     allowPokes: data.allowPokes !== false,
     trustedFriendIds: data.trustedFriendIds ?? [],
@@ -188,7 +192,7 @@ export async function setTrustedFriend(uid: string, friendUid: string, trusted: 
 /** Patches fields on the user's own profile doc. */
 export async function updateUserProfile(
   uid: string,
-  patch: Partial<Pick<UserProfile, 'username' | 'avatarInitials' | 'avatarColour' | 'notifications' | 'allowPokes'>> & { avatarConfig?: AvatarConfig | null },
+  patch: Partial<Pick<UserProfile, 'username' | 'avatarInitials' | 'avatarColour' | 'notifications' | 'allowPokes' | 'badges'>> & { avatarConfig?: AvatarConfig | null },
 ): Promise<void> {
   await setDoc(
     doc(db, 'users', uid),

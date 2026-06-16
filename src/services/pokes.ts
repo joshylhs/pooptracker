@@ -7,6 +7,8 @@ import {
 } from '@react-native-firebase/messaging';
 import { getFirestore, doc, setDoc } from '@react-native-firebase/firestore';
 import { getApp } from '@react-native-firebase/app';
+import { useAuthStore } from '../store/authStore';
+import { incrementPokesSent, checkAndAwardBadges } from './badgeService';
 
 export async function registerFcmToken(uid: string): Promise<void> {
   try {
@@ -34,4 +36,8 @@ export async function registerFcmToken(uid: string): Promise<void> {
 export async function sendPoke(recipientId: string, message?: string): Promise<void> {
   const fn = httpsCallable(getFunctions(getApp(), 'asia-southeast1'), 'sendPoke');
   await fn({ recipientId, message });
+  const uid = useAuthStore.getState().user?.uid;
+  if (uid) {
+    void incrementPokesSent(uid).then(() => checkAndAwardBadges(uid));
+  }
 }

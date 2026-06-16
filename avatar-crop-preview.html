@@ -419,7 +419,7 @@ function eyes(style, p = '#2C1810', s = '#FFFFFF', bodyCol = '#F5DEB3', baseEyeS
         rect(21,11,1,1,'#6B4226'),
       ].join('');
     case 'closed':
-      return [rect(10,12,3,1,p), rect(20,12,3,1,p)].join('');
+      return [rect(10,11,3,1,p), rect(20,11,3,1,p)].join('');
     case 'strain':
       return [
         rect(10,10,3,3,s), rect(20,10,3,3,s),
@@ -771,5 +771,1728 @@ applyPreset(4); // start on locked app viewbox
 renderMoods();
 buildAnimSection();
 </script>
+
+<!-- ══════════════════════════════════════════════════ SECTION 4: BADGE ITEMS -->
+<script>
+// ── shirt variants ────────────────────────────────────────────────────────────
+function shirt(style, bodyCol) {
+  // All shirts draw over the shoulder/body area (y=23 downward)
+  const c = bodyCol || '#F5DEB3';
+  switch(style) {
+    case 'plain': {
+      const W = '#F8F8F8', SL = '#E0E0E0';
+      return [
+        rect(12,24,1,1,W), rect(19,24,1,1,W),
+        rect(11,25,10,1,W),
+        rect(9,26,14,1,W),
+        rect(8,27,16,1,W), rect(8,28,16,4,W)
+      ].join('');
+    }
+    case 'ringer': {
+      const W = '#F8F8F8', R = '#CC2200';
+      return [
+
+        rect(11,25,10,1,W), rect(9,26,14,1,W),
+        rect(8,27,16,1,W), rect(8,28,16,4,W),
+        // red neck rim
+        rect(12,24,1,1,R), rect(19,24,1,1,R),
+        rect(12,25,8,1,R),
+
+      ].join('');
+    }
+    case 'collared': {
+      // Plain collared shirt — light blue with white collar points
+      const B = '#A8C8E8', W = '#F8F8F8', BD = '#7AAAC8';
+      return [
+        // shirt body
+        rect(8,28,16,4,B),
+        // collar — blue shirt showing
+        rect(15.5,24,1,1,B), rect(11,25,1,1,B), rect(15,25,2,1,B), rect(20,25,1,1,B),
+        rect(9,26,4,1,B),  rect(14,26,4,1,B), rect(19,26,4,1,B),
+        rect(8,27,16,1,B),
+        // collar — white points
+        rect(12,24,3.5,1,W),rect(16.5,24,3.5,1,W),
+        rect(12,25,3,1,W), rect(17,25,3,1,W),
+        rect(13,26,1,1,W), rect(18,26,1,1,W),
+      ].join('');
+    }
+    case 'striped': {
+      const W = '#F8F8F8', P = '#F4A0B0', PD = '#D9607A';
+      return [
+        // 1. pink base
+        rect(8,27,16,5,P),
+        rect(9,26,14,1,P), rect(11,25,10,1,P),
+        // 2. collar pink areas
+        rect(15.5,24,1,1,P), rect(11,25,1,1,P), rect(15,25,2,1,P), rect(20,25,1,1,P),
+        rect(9,26,4,1,P), rect(14,26,4,1,P), rect(19,26,4,1,P),
+        // 3. white collar points
+        rect(12,24,3.5,1,W), rect(16.5,24,3.5,1,W),
+        rect(12,25,3,1,W), rect(17,25,3,1,W),
+        rect(13,26,1,1,W), rect(18,26,1,1,W),
+        // 4. darker pink stripes (on top of everything)
+        rect(11,25,1,1,PD), rect(20,25,1,1,PD),
+        rect(11,26,1,1,PD), rect(14,26,1,1,PD), rect(17,26,1,1,PD), rect(20,26,1,1,PD),
+        rect(8,27,1,1,PD),  rect(11,27,1,1,PD), rect(14,27,1,1,PD), rect(17,27,1,1,PD), rect(20,27,1,1,PD), rect(23,27,1,1,PD),
+        rect(8,28,1,1,PD),  rect(11,28,1,1,PD), rect(14,28,1,1,PD), rect(17,28,1,1,PD), rect(20,28,1,1,PD), rect(23,28,1,1,PD),
+        rect(8,29,1,1,PD),  rect(11,29,1,1,PD), rect(14,29,1,1,PD), rect(17,29,1,1,PD), rect(20,29,1,1,PD), rect(23,29,1,1,PD),
+        rect(8,30,1,1,PD),  rect(11,30,1,1,PD), rect(14,30,1,1,PD), rect(17,30,1,1,PD), rect(20,30,1,1,PD), rect(23,30,1,1,PD),
+        rect(8,31,1,1,PD),  rect(11,31,1,1,PD), rect(14,31,1,1,PD), rect(17,31,1,1,PD), rect(20,31,1,1,PD), rect(23,31,1,1,PD),
+      ].join('');
+    }
+    case 'suit': {
+      const D = '#002A00', C = '#C8C8C8', T = '#CC2200', W = '#F8F8F8';
+      return [
+        // 1. white-shadow shirt base
+        rect(12,24,8,1,C), rect(11,25,10,7,C), // rect(11,26,10,5,C), // rect(12,27,8,5,C),
+        // 2. white collar points on top
+        rect(12,24,3.5,1,W), rect(16.5,24,3.5,1,W),
+        rect(12,25,3,1,W), rect(17,25,3,1,W),
+        rect(13,26,1,1,W), rect(18,26,1,1,W),
+        // 3. tie
+        rect(14,24,4,1,T),
+        rect(14.5,25,3,0.5,T), rect(15,25.5,2,0.5,T), rect(15.25,26,1.5,0.5,T),
+        rect(15,26.5,2,0.5,T), rect(14.5,27,3,0.5,T), rect(14.25,27.5,3.5,4.5,T),
+        // 4. jacket body
+        rect(8,27,1,5,D), rect(9,25,3,7,D), rect(12,27,1,5,D), rect(13,29,1,3,D), rect(14,30,1,2,D), rect(15,31,1,1,D),
+        rect(23,27,1,5,D), rect(20,25,3,7,D), rect(19,27,1,5,D), rect(18,29,1,3,D), rect(17,30,1,2,D), rect(16,31,1,1,D),
+        // rect(8,27,16,5,D), rect(9,26,14,1,D), rect(10,25,12,1,D),
+        // rect(12,25,3,1,D), rect(17,25,3,1,D),
+        // rect(13,26,1,1,D), rect(18,26,1,1,D),
+        // rect(8,27,6,5,D),  rect(18,27,6,5,D),
+      ].join('');
+    }
+    case 'tuxedo': {
+      const J = '#333333', SH = '#E9E9E9', W = '#F8F8F8';
+      return [
+        // shirt body (darker white)
+        rect(8,28,16,4,SH), rect(9,26,14,1,SH), rect(11,25,10,1,SH),
+        rect(8,27,16,1,SH),
+        // jacket
+        rect(9,25,2,1,J), rect(21,25,2,1,J),
+        rect(8,26,4,6,J),  rect(20,26,4,6,J),
+        rect(12,27,2,5,J),  rect(18,27,2,5,J),
+        rect(14,30,1,2,J),  rect(17,30,1,2,J),
+        // // collar : shirt colour showing
+        // rect(11,25,1,1,SH), rect(20,25,1,1,SH),
+        // rect(9,26,4,1,SH), rect(14,26,4,1,SH), rect(19,26,4,1,SH),
+        // white collar points
+        rect(12,24,3.5,1,W), rect(16.5,24,3.5,1,W),
+        rect(12,25,3,1,W), rect(17,25,3,1,W),
+        rect(13,26,1,1,W), rect(18,26,1,1,W),
+        // // bow tie
+        rect(15.5,24,1,1,J), 
+        rect(16.5,23.5,1,2,J), rect(17.5,23,1,3,J), // right half of knot
+        rect(14.5,23.5,1,2,J), rect(13.5,23,1,3,J),
+
+        rect(15.5,25,1,7,W),
+
+      ].join('');
+    }
+    case 'batman_suit': {
+      const N = '#111118', R = '#111118', LB = '#FFFF00', J = '#333333'; //R = '#CC2200' R = '#111118'
+      return [
+        // body
+        rect(13,23,5,1,J), 
+        rect(8,24,16,8,J), 
+        // rect(10,25,1,1,J), rect(20,25,1,1,J),
+        // rect(9,26,2,1,J),  rect(20,26,2,1,J),
+        // rect(8,27,4,1,J),  rect(19,27,5,1,J),
+
+        // cape
+        // rect(14,21,3,1,N), 
+        rect(11,22.5,10,0.5,N), 
+        rect(9,23,4,1,N),  rect(18,23,5,1,N),
+        rect(8,24,3.5,1,N),  rect(20,24,4,1,N),
+        rect(8,25,2.5,1,N),  rect(21,25,3,1,N),
+        rect(8,26,1.5,1,N),  rect(22,26,2,1,N),
+        rect(8,27,1,1,N),  rect(23,27,1,1,N),
+        
+        // oval
+        rect(13.25,23.5,4.5,0.25,LB),
+        rect(12.75,23.75,5.5,0.25,LB),
+        rect(12.25,24,6.5,0.5,LB), 
+        rect(12,24.5,7,2.5,LB), 
+        // rect(11.5,25,8,2,LB),
+        rect(12.25,27,6.5,0.5,LB), 
+        rect(12.75,27.5,5.5,0.25,LB),
+        rect(13,27.75,5,0.25,LB),
+        // rect(11,26,1,1,LB), rect(13,26,1,1,LB), rect(17,26,1,1,LB), rect(19,26,1,1,LB),
+        // rect(12,27,3,1,LB), rect(16,27,3,1,LB),
+        // rect(13,28,5,0.5,LB),
+
+        // bat symbol
+        rect(13.125,24,0.5,0.5,R),                         rect(15,24,0.25,0.5,R), rect(15.75,24,0.25,0.5,R),                   rect(17.375,24,0.5,0.5,R),
+        rect(12.75,24.5,1,0.5,R),                                        rect(15,24.5,1,0.5,R),                                      rect(17.25,24.5,1,0.5,R),
+                                                                      rect(12.5,25,6,1,R),
+        rect(12.5,26,1,0.5,R),      rect(13.875,26,0.5,0.25,R),     rect(14.75,26,1.5,0.5,R),      rect(16.625,26,0.5,0.25,R),    rect(17.5,26,1,0.5,R),
+        rect(12.625,26.5,0.5,0.5,R),   rect(14,26.25,0.25,0.5,R),    rect(15,26.5,1,0.5,R),   rect(16.75,26.25,0.25,0.5,R),                                     rect(17.875,26.5,0.5,0.5,R),
+                                                  
+                                                  rect(15.25,27,0.5,0.5,R),
+      ].join('');
+    }
+    case 'bathrobe': {
+      const A = '#9AABBA', B = '#7A8E9E', W = '#F8F8F8', WL = '#F0F0F0', WD = '#D8D8D8';
+      return [
+        // outline
+        rect(12,23,2,1,A), rect(19,23,2,1,A),
+        rect(11,24,1,1,A), rect(14,24,1,1,A), rect(18,24,1,1,A), rect(21,24,1,1,A),
+        rect(10,25,1,1,A), rect(15,25,1,1,A), rect(21,25,1,1,A),
+        rect(9,26,1,1,A), rect(11,26,1,1,A), rect(20,26,1,1,A), rect(22,26,1,1,A),
+        rect(8,27,1,1,A), rect(20,27,1,1,A), rect(23,27,1,1,A),
+        rect(8,28,1,1,A), rect(23,28,1,1,A),
+        rect(8,29,1,1,A), rect(23,29,1,1,A),
+        rect(8,30,1,1,A), rect(23,30,1,1,A),
+        rect(19,31,1,1,A), rect(23,31,1,1,A),
+        // dark shadow
+        rect(17,25,1,1,B), rect(16,26,1,1,B), rect(12,27,1,1,B), rect(17,27,1,1,B),
+        rect(13,28,1,1,B), rect(17,28,1,1,B), rect(19,28,1,1,B),
+        rect(14,29,1,1,B), rect(18,29,1,1,B),
+        rect(15,30,1,1,B), rect(18,30,1,1,B),
+        rect(8,31,1,1,B), rect(16,31,1,1,B),
+        // bright white
+        rect(12,24,2,1,W), rect(19,24,2,1,W),
+        rect(12,25,3,1,W), rect(20,25,1,1,W),
+        rect(14,26,2,1,W),
+        rect(9,27,2,1,W), rect(15,27,2,1,W), rect(22,27,1,1,W),
+        rect(9,28,3,1,W), rect(15,28,2,1,W), rect(21,28,2,1,W),
+        rect(9,29,4,1,W), rect(20,29,3,1,W),
+        rect(9,30,5,1,W), rect(20,30,3,1,W),
+        rect(9,31,6,1,W), rect(21,31,2,1,W),
+        // mid white
+        rect(18,25,2,1,WL), rect(10,26,1,1,WL), rect(13,26,1,1,WL), rect(18,26,2,1,WL), rect(21,26,1,1,WL),
+        rect(11,27,1,1,WL), rect(14,27,1,1,WL), rect(19,27,1,1,WL), rect(21,27,1,1,WL),
+        rect(12,28,1,1,WL), rect(20,28,1,1,WL),
+        rect(13,29,1,1,WL), rect(16,29,2,1,WL), rect(19,29,1,1,WL),
+        rect(14,30,1,1,WL), rect(17,30,1,1,WL), rect(19,30,1,1,WL),
+        rect(15,31,1,1,WL), rect(18,31,1,1,WL), rect(20,31,1,1,WL),
+        // fold shadow
+        rect(11,25,1,1,WD), rect(12,26,1,1,WD), rect(17,26,1,1,WD),
+        rect(13,27,1,1,WD), rect(18,27,1,1,WD),
+        rect(14,28,1,1,WD), rect(18,28,1,1,WD),
+        rect(15,29,1,1,WD),
+        rect(16,30,1,1,WD),
+        rect(17,31,1,1,WD),
+      ].join('');
+    }
+    default: return '';
+  }
+}
+
+// ── accessory variants ────────────────────────────────────────────────────────
+function accessory(style, bodyCol, baseEyeStyle = 'round') {
+  const c = bodyCol || '#F5DEB3';
+  switch(style) {
+    case 'spectacles_round': {
+      const F = '#2C1810';
+      return [
+        rect(9,12,4,1,F), rect(9,15,4,1,F),
+        rect(9,12,1,4,F), rect(12,12,1,4,F),
+        rect(19,12,4,1,F), rect(19,15,4,1,F),
+        rect(19,12,1,4,F), rect(22,12,1,4,F),
+        rect(13,13,6,1,F),
+        rect(8,12,1,1,F), rect(23,12,1,1,F),
+      ].join('');
+    }
+    case 'spectacles_oval': {
+      const F = '#3A1A08';
+      return [
+        rect(8,12,5,1,F), rect(8,15,5,1,F),
+        rect(8,12,1,4,F), rect(12,12,1,4,F),
+        rect(19,12,5,1,F), rect(19,15,5,1,F),
+        rect(19,12,1,4,F), rect(23,12,1,4,F),
+        rect(13,13,6,1,F),
+        rect(7,12,1,1,F), rect(24,12,1,1,F),
+      ].join('');
+    }
+    case 'spectacles_tinted': {
+      const F = '#5A3A10', L = 'rgba(200,130,0,0.45)';
+      return [
+        rect(9,12,4,4,L), rect(9,12,4,1,F), rect(9,15,4,1,F),
+        rect(9,12,1,4,F), rect(12,12,1,4,F),
+        rect(19,12,4,4,L), rect(19,12,4,1,F), rect(19,15,4,1,F),
+        rect(19,12,1,4,F), rect(22,12,1,4,F),
+        rect(13,13,6,1,F),
+        rect(8,12,1,1,F), rect(23,12,1,1,F),
+      ].join('');
+    }
+    case 'monocle': {
+      const F = '#B8860B', CH = '#C8A830';
+      return [
+        rect(19,12,4,1,F), rect(19,15,4,1,F),
+        rect(19,12,1,4,F), rect(22,12,1,4,F),
+        rect(23,15,1,1,CH), rect(24,16,1,1,CH), rect(24,17,1,1,CH), rect(25,18,1,1,CH),
+      ].join('');
+    }
+    case 'shield_1': {
+      // Basic shield pin — small, left chest
+      const S = '#888', H = '#AAA';
+      return [rect(10,26,3,3,S), rect(11,26,1,1,H), rect(10,28,3,1,'#666'), rect(11,29,1,1,S)].join('');
+    }
+    case 'shield_2': {
+      // Reinforced — blue shield
+      const S = '#2255AA', H = '#4488DD', E = '#FFD700';
+      return [
+        rect(10,25,4,4,S), rect(10,28,4,1,'#1133AA'),
+        rect(11,25,2,1,H), rect(11,26,1,1,E),
+        rect(12,29,1,1,S),
+      ].join('');
+    }
+    case 'shield_3': {
+      // Ornate — purple + gold trim
+      const S = '#6633AA', G = '#FFD700', W = '#FFFFFF';
+      return [
+        rect(9,25,5,4,S), rect(9,28,5,1,'#441188'),
+        rect(9,25,5,1,G), rect(9,25,1,4,G), rect(13,25,1,4,G),
+        rect(11,26,1,1,W), rect(10,27,3,1,G),
+        rect(11,29,1,1,S),
+      ].join('');
+    }
+    case 'shield_4': {
+      // Legendary — gold + diamond
+      const G = '#FFD700', D = '#88EEFF', W = '#FFFFFF';
+      return [
+        rect(9,24,5,5,G), rect(9,28,5,1,'#CC9900'),
+        rect(10,24,3,1,W), rect(9,24,1,5,W), rect(13,24,1,5,W),
+        rect(11,25,1,1,D), rect(10,26,3,1,D),
+        rect(11,29,1,1,G),
+      ].join('');
+    }
+    case 'finger_1': {
+      // Brooch I — single silver circle pin on left lapel
+      const S = '#CCCCCC', SD = '#888888';
+      return [
+        rect(13,27,3,3,S),           // 3×3 circle base
+        rect(13,27,1,1,SD), rect(15,27,1,1,SD), // top corners dark
+        rect(13,29,1,1,SD), rect(15,29,1,1,SD), // bottom corners dark
+        rect(14,27,1,1,'#EEEEEE'),   // highlight
+      ].join('');
+    }
+    case 'finger_2': {
+      // Brooch II — silver with blue gem centre
+      const S = '#CCCCCC', SD = '#888888', G = '#4488FF';
+      return [
+        rect(13,27,3,3,S),
+        rect(13,27,1,1,SD), rect(15,27,1,1,SD),
+        rect(13,29,1,1,SD), rect(15,29,1,1,SD),
+        rect(14,28,1,1,G),           // blue gem centre
+        rect(14,27,1,1,'#EEEEEE'),
+      ].join('');
+    }
+    case 'finger_3': {
+      // Brooch III — gold with red gem centre
+      const G = '#FFD700', GD = '#AA7700', R = '#FF3333';
+      return [
+        rect(13,27,3,3,G),
+        rect(13,27,1,1,GD), rect(15,27,1,1,GD),
+        rect(13,29,1,1,GD), rect(15,29,1,1,GD),
+        rect(14,28,1,1,R),           // red gem centre
+        rect(14,27,1,1,'#FFEE88'),
+      ].join('');
+    }
+    case 'finger_4': {
+      // Sheriff badge — 5-point gold star on chest
+      const G = '#FFD700', GD = '#CC8800', W = '#FFFFFF'; 
+      return [
+        // star points (5-point cross shape)
+        rect(15,24,2,1,G),
+        rect(14,25,4,1,G),
+        rect(13,26,6,1,G),
+        rect(14,27,4,1,G),
+        rect(15,28,2,1,G),
+        // inner detail
+        rect(15,25,2,3,GD),
+        rect(14,26,1,1,GD), rect(17,26,1,1,GD),
+        // centre highlight
+        rect(15,26,2,1,W),
+      ].join('');
+    }
+    case 'cucumber': {
+      // Cucumber slices over eyes — green circles with lighter centre
+      const G = '#4A8A3A', GL = '#7ABB6A', GW = '#C8E8A0'; D = '#FFFFFF';
+      return [
+        // OUTLINE
+        rect(9.5,8,4,0.5,G),
+        rect(9.5,12.5,4,0.5,G),
+        rect(9,8.5,0.5,4,G),
+        rect(13.5,8.5,0.5,4,G),
+        // RIM
+        rect(9.5,8.5,4,0.5,GL),
+        rect(9.5,12,4,0.5,GL),
+        rect(9.5,9,0.5,3,GL),
+        rect(13,9,0.5,3,GL),
+        // FILL
+        rect(10,9,3,3,GW),
+        // dots
+        rect(10.375,9.5,0.75,0.75,D),
+        rect(11.75,9.5,0.75,0.75,D),
+        rect(11.25,10.75,0.75,0.75,D),
+        // right slice (left + 9)
+        // OUTLINE
+        rect(18.5,8,4,0.5,G),
+        rect(18.5,12.5,4,0.5,G),
+        rect(18,8.5,0.5,4,G),
+        rect(22.5,8.5,0.5,4,G),
+        // RIM
+        rect(18.5,8.5,4,0.5,GL),
+        rect(18.5,12,4,0.5,GL),
+        rect(18.5,9,0.5,3,GL),
+        rect(22,9,0.5,3,GL),
+        // FILL
+        rect(19,9,3,3,GW),
+        // dots
+        rect(19.375,9.5,0.75,0.75,D),
+        rect(20.75,9.5,0.75,0.75,D),
+        rect(20.25,10.75,0.75,0.75,D),
+
+
+        // // left slice (over left eye area x=10-12, y=10-12)
+        // rect(9,10,4,3,G),
+        // rect(10,10,2,3,GL),
+        // rect(10,11,2,1,GW),
+        // // right slice
+        // rect(19,10,4,3,G),
+        // rect(20,10,2,3,GL),
+        // rect(20,11,2,1,GW),
+      ].join('');
+    }
+    default: return '';
+  }
+}
+
+// ── badge headdress variants ──────────────────────────────────────────────────
+function badgeHeaddress(style) {
+  switch(style) {
+    case 'batman': {
+      const B = '#111118';
+      return [
+        rect(6,0,1,1,B),rect(25,0,1,1,B),rect(5,1,3,1,B),rect(24,1,3,1,B),
+        rect(5,2,5,1,B),rect(22,2,5,1,B),rect(5,3,6,1,B),rect(21,3,6,1,B),
+        rect(5,4,22,1,B),rect(5,5,22,1,B),rect(5,6,22,1,B),rect(5,7,22,1,B),
+        rect(5,8,22,1,B),rect(5,9,22,1,B),rect(5,10,22,1,B),
+        rect(5,11,4,1,B),rect(12,11,8,1,B),rect(23,11,4,1,B),
+        rect(5,12,5,1,B),rect(13,12,6,1,B),rect(22,12,5,1,B),
+        rect(5,13,22,1,B),rect(5,14,22,1,B),
+        rect(5,15,7,1,B),rect(13,15,5,1,B),rect(19,15,8,1,B),
+        rect(5,16,7,1,B),rect(14,16,3,1,B),rect(19,16,8,1,B),
+        rect(5,17,7,1,B),rect(19,17,8,1,B),
+        rect(5,18,7,1,B),rect(19,18,8,1,B),
+        rect(6,19,6,1,B),rect(19,19,7,1,B),
+        rect(7,20,6,1,B),rect(18,20,7,1,B),
+        rect(9,21,5,1,B),rect(17,21,6,1,B),
+        rect(11,22,3,1,B),rect(17,22,4,1,B),
+      ].join('');
+    }
+    case 'headband': {
+      // Monday warrior headband — white with coloured stripe
+      const W = '#F0F0F0', R = '#CC2200';
+      return [
+        rect(4.5,5,23,4,W),
+        rect(4.5,6,23,2,R),
+      ].join('');
+    }
+    case 'military': {
+      // Military helmet — olive green, hard dome
+      const O = '#556B2F', D = '#3D5016', S = '#6B8040';
+      return [
+        // dome
+        rect(11,0,10,1,O), rect(9,1,14,1,O), rect(7,2,18,1,O), 
+        rect(5.5,3,21,1,O), rect(4.5,4,23,2,O), rect(4,5,24,2,D),
+        // brim
+        rect(3,7,26,2,S),
+        // highlight
+        rect(11,3,4,1,S),
+      ].join('');
+    }
+    case 'beanie_light': {
+      const O = '#FF8C42', W = '#FFFFFF', OD = '#E06820';
+      return [
+        rect(14,-1,4,1,OD),                           // pom-pom
+        rect(12,0,8,1,O), rect(11,1,10,1,O),         // upper body
+        rect(10.5,2,11,1,O), rect(10.25,3,11.5,1,O),        // main body
+        rect(10,4,12,1,OD),                           // brim
+      ].join('');
+    }
+    case 'beanie_dark': {
+      const O = '#CC5500', W = '#DDDDDD', OD = '#883300';
+      return [
+        rect(14,-1,4,1,W),
+        rect(12,0,8,1,O), rect(11,1,10,1,O),
+        rect(10,2,12,1,O), rect(10,3,12,1,O),
+        rect(10,4,12,1,OD),
+        rect(12,1,1,1,OD), rect(20,2,1,1,OD),        // wear marks
+      ].join('');
+    }
+    case 'beanie_worn': {
+      const O = '#883300', W = '#AAAAAA', OD = '#552200', P = '#CC6633';
+      return [
+        rect(14,-1,4,1,W),
+        rect(12,0,8,1,O), rect(11,1,10,1,O),
+        rect(10,2,12,1,O), rect(10,3,12,1,O),
+        rect(10,4,12,1,OD),
+        rect(12,1,2,1,P), rect(19,2,2,1,P),          // patches
+        rect(11,3,1,1,OD), rect(21,3,1,1,OD),        // wear
+      ].join('');
+    }
+    case 'partyhat_1': {
+      // Basic — red/white
+      const R = '#EE3333', W = '#FFFFFF';
+      return [
+        rect(15,0,2,1,W),
+        rect(15,1,2,1,R), rect(14,2,4,1,R), rect(13,3,6,1,R),
+        rect(12,4,8,1,'#CC1111'),
+        rect(16,2,1,1,W), rect(14,3,1,1,W),
+      ].join('');
+    }
+    case 'partyhat_2': {
+      // Colourful — rainbow stripes
+      const cols = ['#FF4444','#FF8800','#FFDD00','#44BB44','#4488FF'];
+      return [
+        rect(15,0,2,1,'#FFFFFF'),
+        rect(15,1,2,1,cols[0]), rect(14,2,4,1,cols[1]),
+        rect(13,3,6,1,cols[2]), rect(12,4,8,1,cols[3]),
+        rect(11,5,10,1,cols[4]),
+        rect(16,2,1,1,'#FFFFFF'), rect(14,3,1,1,'#FFFFFF'), rect(13,4,1,1,'#FFFFFF'),
+      ].join('');
+    }
+    case 'partyhat_3': {
+      // Fancy — gold + stars
+      const G = '#FFD700', GD = '#CC9900', W = '#FFFFFF';
+      return [
+        rect(15,0,2,1,W),
+        rect(15,1,2,1,G), rect(14,2,4,1,G),
+        rect(13,3,6,1,G), rect(12,4,8,1,GD),
+        rect(11,5,10,1,GD),
+        // star dots
+        rect(15,2,1,1,W), rect(14,3,1,1,W), rect(16,4,1,1,W), rect(13,5,1,1,W),
+      ].join('');
+    }
+    case 'partyhat_4': {
+      // Legendary — dark purple + gold + gems
+      const P = '#6622CC', G = '#FFD700', GE = '#44FFEE', W = '#FFFFFF';
+      return [
+        rect(15,0,2,1,G),
+        rect(15,1,2,1,P), rect(14,2,4,1,P),
+        rect(13,3,6,1,P), rect(12,4,8,1,'#4411AA'),
+        rect(11,5,10,1,'#4411AA'),
+        // gold trim
+        rect(14,2,1,1,G), rect(17,2,1,1,G),
+        rect(13,3,1,1,G), rect(18,3,1,1,G),
+        // gems
+        rect(15,3,2,1,GE), rect(14,5,1,1,GE), rect(17,5,1,1,GE),
+      ].join('');
+    }
+    case 'trophy_bronze': {
+      const T = '#CD7F32', TD = '#8B4513', S = '#E8A060';
+      return [
+        rect(12,-2,8,1,TD),                                      // rim
+        rect(13,-1,6,1,T), rect(11,-1,2,1,T), rect(19,-1,2,1,T),
+        rect(13,0,6,1,T),  rect(11,0,2,1,T),  rect(19,0,2,1,T),
+        rect(13,1,6,1,T),                                        // cup bottom
+        rect(15,2,2,1,TD),                                       // stem (1px)
+        rect(13,3,6,1,T), rect(12,4,8,1,TD),                    // base
+        rect(14,-1,1,2,S),                                       // highlight
+      ].join('');
+    }
+    case 'trophy_silver': {
+      const T = '#B0B8C8', TD = '#606878', S = '#E0E8F0';
+      return [
+        rect(12,-2,8,1,TD),
+        rect(13,-1,6,1,T), rect(11,-1,2,1,T), rect(19,-1,2,1,T),
+        rect(13,0,6,1,T),  rect(11,0,2,1,T),  rect(19,0,2,1,T),
+        rect(13,1,6,1,T),
+        rect(15,2,2,1,TD),
+        rect(13,3,6,1,T), rect(12,4,8,1,TD),
+        rect(14,-1,1,2,S),
+        rect(16,0,1,1,S), rect(17,-1,1,1,S), rect(17,1,1,1,S),
+      ].join('');
+    }
+    case 'trophy_gold': {
+      const T = '#FFD700', TD = '#AA7700', S = '#FFF0A0';
+      return [
+        rect(12,-2,8,1,TD),
+        rect(13,-1,6,1,T), rect(11,-1,2,1,T), rect(19,-1,2,1,T),
+        rect(13,0,6,1,T),  rect(11,0,2,1,T),  rect(19,0,2,1,T),
+        rect(13,1,6,1,T),
+        rect(15,2,2,1,TD),
+        rect(13,3,6,1,T), rect(12,4,8,1,TD),
+        rect(14,-1,1,2,S),
+        rect(15,0,1,1,S), rect(16,0,1,1,S), rect(17,-1,1,1,S), rect(17,1,1,1,S),
+      ].join('');
+    }
+    case 'trophy_platinum': {
+      const T = '#D8E8FF', TD = '#6688BB', S = '#FFFFFF', G = '#66DDFF';
+      return [
+        rect(12,-2,8,1,TD),
+        rect(13,-1,6,1,T), rect(11,-1,2,1,T), rect(19,-1,2,1,T),
+        rect(13,0,6,1,T),  rect(11,0,2,1,T),  rect(19,0,2,1,T),
+        rect(13,1,6,1,T),
+        rect(15,2,2,1,TD),
+        rect(13,3,6,1,T), rect(12,4,8,1,TD),
+        rect(14,-1,1,2,S),
+        rect(16,-1,1,1,G), rect(15,0,3,1,G), rect(16,1,1,1,G),
+      ].join('');
+    }
+    case 'tp_crown': {
+      const O = '#CCCCCC', F = '#F5F5F0'; B = '#C4A484', DB = '#654321';
+      return [
+        // fill
+        rect(13,-1,6,1,F), rect(21,-1,1,1,F),
+        rect(12,0,7,1,F), rect(20,0,3,1,F),
+        rect(13,1,5,1,F), rect(19,1,3,1,F),
+        rect(12,2,1,1,F), rect(18,2,5,1,F),
+        rect(12,3,10,1,F),
+        rect(12,4,11,1,F),
+        rect(12,5,8,1,F),
+        rect(13,6,5,1,F), rect(19,6,1,1,F),
+        rect(14,7,4,1,F),
+        
+        // outline
+        rect(13,-2,5,1,O), rect(21,-2,3,1,O),
+        rect(12,-1,1,1,O), rect(18,-1,1,1,O), rect(20,-1,1,1,O), rect(22,-1,1,1,O),
+        rect(11,0,1,1,O), rect(19,0,1,1,O), rect(23,0,1,1,O),
+        rect(11,1,2,1,O), rect(18,1,1,1,O), rect(22,1,1,1,O),
+        rect(11,2,1,1,O), rect(13,2,5,1,O), rect(23,2,1,1,O),
+        rect(11,3,1,1,O), rect(22,3,1,1,O),
+        rect(11,4,1,1,O), rect(23,4,1,1,O),
+        rect(11,5,1,1,O), rect(20,5,3,1,O),
+        rect(12,6,1,1,O), rect(18,6,2,1,O),
+        rect(13,7,5,1,O),
+        // cutline
+        rect(18.25,2,0.5,0.5,O),
+        rect(18.25,3,0.5,0.5,O),
+        rect(18.25,4,0.5,0.5,O),
+        rect(18.25,5,0.5,0.5,O),
+
+        // hole outline
+        rect(14.5,-0.5,2,0.5,B),
+        rect(14,0,0.5,1,B), rect(16.5,0,0.5,1,B),
+        rect(14.5,1,2,0.5,B),
+        // hole fill
+        rect(14.5,0,2,1,DB),
+
+      ].join('');
+    }
+    default: return '';
+  }
+}
+
+function badgeCatSvg(opts, headdressKey, shirtKey, accessoryKey) {
+  const { bodyColor = '#F5DEB3', wallColor = 'transparent', eyeStyle = 'round' } = opts;
+  const wall = wallColor !== 'transparent' ? rect(0,0,32,32,wallColor) : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VB}" width="100%" height="100%">
+    ${wall}
+    ${body(bodyColor)}
+    ${shirt(shirtKey, bodyColor)}
+    ${eyes(eyeStyle,'#2C1810','#FFFFFF',bodyColor,'round')}
+    ${mouth('smile')}
+    ${cheeks('blush')}
+    ${accessory(accessoryKey, bodyColor, eyeStyle)}
+    ${badgeHeaddress(headdressKey) || headdress(headdressKey)}
+  </svg>`;
+}
+
+const BADGE_ITEMS = [
+  // Shirts
+  { key:'batman_suit',    slot:'shirt',     label:'Batman suit\n(night owl ×3)' },
+  { key:'plain',          slot:'shirt',     label:'Plain tee\n(first log)' },
+  { key:'ringer',         slot:'shirt',     label:'Ringer tee\n(10 logs)' },
+  { key:'collared',       slot:'shirt',     label:'Collared\n(25 logs)' },
+  { key:'striped',        slot:'shirt',     label:'Striped collar\n(50 logs)' },
+  { key:'suit',           slot:'shirt',     label:'Suit\n(75 logs)' },
+  { key:'tuxedo',         slot:'shirt',     label:'Tuxedo\n(100 logs)' },
+  { key:'bathrobe',       slot:'shirt',     label:'Bath robe\n(200 logs)' },
+  // Accessories
+  { key:'spectacles_round',  slot:'accessory', label:'Spectacles\n(7d streak)' },
+  { key:'spectacles_oval',   slot:'accessory', label:'Oval specs\n(30d streak)' },
+  { key:'spectacles_tinted', slot:'accessory', label:'Tinted specs\n(100d streak)' },
+  { key:'monocle',           slot:'accessory', label:'Monocle\n(365d streak)' },
+  { key:'cucumber',          slot:'accessory', label:'Cucumber slices\n(300 logs)' },
+  { key:'shield_1',          slot:'accessory', label:'Shield I\n(poked ×1)' },
+  { key:'shield_2',          slot:'accessory', label:'Shield II\n(poked ×5)' },
+  { key:'shield_3',          slot:'accessory', label:'Shield III\n(poked ×25)' },
+  { key:'shield_4',          slot:'accessory', label:'Shield IV\n(poked ×100)' },
+  { key:'finger_1',          slot:'accessory', label:'Brooch I\n(poker ×1)' },
+  { key:'finger_2',          slot:'accessory', label:'Brooch II\n(poker ×5)' },
+  { key:'finger_3',          slot:'accessory', label:'Brooch III\n(poker ×25)' },
+  { key:'finger_4',          slot:'accessory', label:'Sheriff badge\n(poker ×100)' },
+  // Headdresses
+  { key:'batman',        slot:'headdress',  label:'Batman mask\n(night owl ×1)' },
+  { key:'headband',      slot:'headdress',  label:'Headband\n(Mon warrior)' },
+  { key:'military',      slot:'headdress',  label:'Military helmet\n(Consistent Carl)' },
+  { key:'beanie_light',  slot:'headdress',  label:'Beanie I\n(comeback 3d)' },
+  { key:'beanie_dark',   slot:'headdress',  label:'Beanie II\n(comeback 7d)' },
+  { key:'beanie_worn',   slot:'headdress',  label:'Beanie III\n(comeback 30d)' },
+  { key:'partyhat_1',    slot:'headdress',  label:'Party hat I\n(1 friend)' },
+  { key:'partyhat_2',    slot:'headdress',  label:'Party hat II\n(5 friends)' },
+  { key:'partyhat_3',    slot:'headdress',  label:'Party hat III\n(10 friends)' },
+  { key:'partyhat_4',    slot:'headdress',  label:'Party hat IV\n(25 friends)' },
+  { key:'trophy_bronze', slot:'headdress',  label:'Trophy bronze\n(#1 day)' },
+  { key:'trophy_silver', slot:'headdress',  label:'Trophy silver\n(#1 week)' },
+  { key:'trophy_gold',   slot:'headdress',  label:'Trophy gold\n(#1 month)' },
+  { key:'trophy_platinum',slot:'headdress', label:'Trophy plat.\n(#1 year)' },
+  { key:'tp_crown',       slot:'headdress',  label:'TP crown\n(500 logs)' },
+];
+
+const SLOT_COLOURS = { shirt: '#2a3a1a', accessory: '#1a2a3a', headdress: '#2a1a3a' };
+const SLOT_LABELS  = { shirt: '👕 Shirts', accessory: '📌 Accessories', headdress: '🎩 Headdresses' };
+
+function buildBadgeSection() {
+  const slots = ['shirt','accessory','headdress'];
+  const eyeSel = document.getElementById('badgeEyeStyle');
+  const bodySel = document.getElementById('badgeBodyColor');
+  const badgeEyeStyle = eyeSel ? eyeSel.value : 'round';
+  const bodyColor = bodySel ? bodySel.value : '#F5DEB3';
+  const wallColor = 'transparent';
+  const wallBg = '#2a2a4a';
+  const SIZE = 64;
+
+  let html = '';
+  for (const slot of slots) {
+    const items = BADGE_ITEMS.filter(b => b.slot === slot);
+    html += `<h3 style="font-size:14px;color:#a89be8;margin:24px 0 12px;font-weight:700;">${SLOT_LABELS[slot]}</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:8px;">`;
+    for (const item of items) {
+      const hKey = slot === 'headdress' ? item.key : 'none';
+      const sKey = slot === 'shirt'     ? item.key : 'none';
+      const aKey = slot === 'accessory' ? item.key : 'none';
+      const svgContent = badgeCatSvg({ bodyColor, wallColor, eyeStyle: badgeEyeStyle }, hKey, sKey, aKey);
+      const circle = `<div style="border-radius:50%;overflow:hidden;width:${SIZE}px;height:${SIZE}px;background:${wallBg};display:flex;align-items:center;justify-content:center;">${svgContent}</div>`;
+      html += `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;background:${SLOT_COLOURS[slot]}44;border:1px solid ${SLOT_COLOURS[slot]}88;border-radius:10px;padding:10px;">
+        ${circle}
+        <span style="font-size:9px;color:#aaa;text-align:center;white-space:pre-line;line-height:1.4;">${item.label}</span>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+  document.getElementById('badgeSection').innerHTML = html;
+}
+
+
+</script>
+
+<hr class="divider">
+<h2>Full Avatar View</h2>
+<p class="sub">No circle clip — shows the full SVG so you can judge shirt and accessory visibility below the crop line.</p>
+<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-bottom:20px;background:#12122a;padding:14px 18px;border-radius:10px;border:1px solid #2a2a4a;">
+  <label style="font-size:12px;color:#a89be8;font-weight:600;">Eye:
+    <select id="fullEyeStyle" onchange="buildFullView()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:4px 8px;font-size:12px;margin-left:6px;">
+      <option value="round">Round</option>
+      <option value="button">Button</option>
+      <option value="almond">Almond</option>
+      <option value="sleepy">Sleepy</option>
+      <option value="wink">Wink</option>
+      <option value="closed">Closed</option>
+      <option value="halflidded">Half-lidded</option>
+      <option value="proud">Proud</option>
+    </select>
+  </label>
+  <label style="font-size:12px;color:#a89be8;font-weight:600;">Body:
+    <select id="fullBodyColor" onchange="buildFullView()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:4px 8px;font-size:12px;margin-left:6px;">
+      <option value="#F5DEB3">Cream</option>
+      <option value="#E8824A">Orange</option>
+      <option value="#4A4A4A">Dark grey</option>
+      <option value="#E0E0E0">White</option>
+    </select>
+  </label>
+  <label style="font-size:12px;color:#a89be8;font-weight:600;">Shirt:
+    <select id="fullShirt" onchange="buildFullView()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:4px 8px;font-size:12px;margin-left:6px;">
+      <option value="none">none</option>
+      <option value="plain">plain tee</option>
+      <option value="ringer">ringer tee</option>
+      <option value="collared">collared</option>
+      <option value="striped">striped</option>
+      <option value="suit">suit</option>
+      <option value="tuxedo">tuxedo</option>
+      <option value="batman_suit">batman suit</option>
+      <option value="bathrobe" selected>bath robe</option>
+    </select>
+  </label>
+  <label style="font-size:12px;color:#a89be8;font-weight:600;">Accessory:
+    <select id="fullAccessory" onchange="buildFullView()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:4px 8px;font-size:12px;margin-left:6px;">
+      <option value="none">none</option>
+      <option value="spectacles_round">spectacles round</option>
+      <option value="spectacles_oval">spectacles oval</option>
+      <option value="spectacles_tinted">spectacles tinted</option>
+      <option value="monocle">monocle</option>
+      <option value="cucumber">cucumber slices</option>
+      <option value="shield_1">shield I</option>
+      <option value="shield_2">shield II</option>
+      <option value="shield_3">shield III</option>
+      <option value="shield_4">shield IV</option>
+      <option value="finger_1">brooch I</option>
+      <option value="finger_2">brooch II</option>
+      <option value="finger_3">brooch III</option>
+      <option value="finger_4">sheriff badge</option>
+    </select>
+  </label>
+  <label style="font-size:12px;color:#a89be8;font-weight:600;">Headdress:
+    <select id="fullHeaddress" onchange="buildFullView()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:4px 8px;font-size:12px;margin-left:6px;">
+      <option value="none">none</option>
+      <option value="batman">batman</option>
+      <option value="headband">headband</option>
+      <option value="military">military</option>
+      <option value="beanie_light">beanie I</option>
+      <option value="beanie_dark">beanie II</option>
+      <option value="beanie_worn">beanie III</option>
+      <option value="partyhat_1">party hat I</option>
+      <option value="partyhat_2">party hat II</option>
+      <option value="partyhat_3">party hat III</option>
+      <option value="partyhat_4">party hat IV</option>
+      <option value="trophy_bronze">trophy bronze</option>
+      <option value="trophy_silver">trophy silver</option>
+      <option value="trophy_gold">trophy gold</option>
+      <option value="trophy_platinum">trophy platinum</option>
+      <option value="tp_crown">TP crown</option>
+    </select>
+  </label>
+</div>
+<div id="fullAvatarView" style="display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap;margin-bottom:32px;"></div>
+<script>
+function buildFullView() {
+  const eyeStyle  = document.getElementById('fullEyeStyle').value;
+  const bodyColor = document.getElementById('fullBodyColor').value;
+  const shirtKey  = document.getElementById('fullShirt').value;
+  const accKey    = document.getElementById('fullAccessory').value;
+  const hKey      = document.getElementById('fullHeaddress').value;
+  const wallBg    = '#2a2a4a';
+  const sizes     = [48, 64, 96, 128];
+  document.getElementById('fullAvatarView').innerHTML = sizes.map(sz => {
+    const catContent = `
+      ${body(bodyColor)}
+      ${shirt(shirtKey, bodyColor)}
+      ${eyes(eyeStyle,'#2C1810','#FFFFFF',bodyColor,'round')}
+      ${mouth('smile')}
+      ${cheeks('blush')}
+      ${accessory(accKey, bodyColor, eyeStyle)}
+      ${badgeHeaddress(hKey) || headdress(hKey)}
+    `;
+    const svgFull = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -8 36 44" width="${sz}" height="${sz}" style="display:block;">${catContent}</svg>`;
+    const svgCircle = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -4 32 32" width="${sz}" height="${sz}" style="display:block;">${catContent}</svg>`;
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <span style="font-size:9px;color:#666;">${sz}px — full</span>
+      <div style="background:${wallBg};padding:4px;">${svgFull}</div>
+      <span style="font-size:9px;color:#666;">circle clip</span>
+      <div style="border-radius:50%;overflow:hidden;width:${sz}px;height:${sz}px;background:${wallBg};">${svgCircle}</div>
+    </div>`;
+  }).join('');
+}
+buildFullView();
+</script>
+
+<hr class="divider">
+<h2>Badge Items Preview</h2>
+<p class="sub">All earnable avatar items. Body colour affects finger guns and shirt.</p>
+<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-bottom:20px;background:#12122a;padding:14px 18px;border-radius:10px;border:1px solid #2a2a4a;">
+  <label style="font-size:12px;color:#a89be8;font-weight:600;">Eye style:
+    <select id="badgeEyeStyle" onchange="buildBadgeSection()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:4px 8px;font-size:12px;margin-left:6px;">
+      <option value="round">Round</option>
+      <option value="button">Button</option>
+      <option value="almond">Almond</option>
+      <option value="sleepy">Sleepy</option>
+      <option value="wink">Wink</option>
+      <option value="closed">Closed (inactive)</option>
+      <option value="halflidded">Half-lidded</option>
+      <option value="proud">Proud</option>
+    </select>
+  </label>
+  <label style="font-size:12px;color:#a89be8;font-weight:600;">Body colour:
+    <select id="badgeBodyColor" onchange="buildBadgeSection()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:4px 8px;font-size:12px;margin-left:6px;">
+      <option value="#F5DEB3">Cream</option>
+      <option value="#E8824A">Orange</option>
+      <option value="#4A4A4A">Dark grey</option>
+      <option value="#E0E0E0">White</option>
+    </select>
+  </label>
+</div>
+<div id="badgeSection"></div>
+
+<script>
+buildBadgeSection();
+</script>
+
+<!-- ══════════════════════════════════════════════════ SECTION 5: MASK PAINTER -->
+<hr class="divider">
+<h2>Mask Painter</h2>
+<p class="sub">Click or drag to paint cells black. Right-click to erase. The cat is shown underneath — paint the mask coverage you want, then share the coordinates with me.</p>
+
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;margin-bottom:24px;">
+  <!-- Painter -->
+  <div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;">Paint grid (each cell = 1px in SVG space, viewBox 0 -4 32 32)</div>
+    <canvas id="maskCanvas" width="320" height="320" style="border:1px solid #3a3a5a;cursor:crosshair;image-rendering:pixelated;display:block;"></canvas>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+      <button onclick="clearMask()" style="background:#1e1e3a;border:1px solid #3a3a5a;color:#a89be8;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">Clear</button>
+      <button onclick="showCoords()" style="background:#2a2060;border:1px solid #7f77dd;color:#fff;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">Show coordinates</button>
+      <label style="font-size:11px;color:#888;">Cat colour:
+        <select id="maskBodyColor" onchange="drawAll()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:4px;padding:2px 6px;font-size:11px;margin-left:4px;">
+          <option value="#F5DEB3">cream</option>
+          <option value="#E8824A">orange</option>
+          <option value="#4A4A4A">dark grey</option>
+          <option value="#E0E0E0">white</option>
+        </select>
+      </label>
+    </div>
+  </div>
+  <!-- Live preview — all eye styles -->
+  <div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;">Live preview — all eye styles (64px)</div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;max-width:520px;" id="maskPreviewRow"></div>
+  </div>
+</div>
+<pre id="coordsOut" style="background:#0d0d1f;border:1px solid #2a2a4a;border-radius:8px;padding:12px;font-size:11px;color:#7fe8a8;white-space:pre-wrap;display:none;max-width:700px;"></pre>
+
+<style>
+  #maskCanvas { background: transparent; }
+</style>
+
+<script>
+(function() {
+  const COLS = 32, ROWS = 36; // 32 wide, 36 tall (viewBox 0 -4 32 32 = rows -4..31)
+  const CELL = 320 / COLS;    // 10px per cell
+  const ROW_OFFSET = 4;       // viewBox starts at y=-4, so canvas row 0 = SVG y=-4
+  const canvas = document.getElementById('maskCanvas');
+  const ctx = canvas.getContext('2d');
+  const painted = new Set(); // stores "x,y" in SVG coords
+  let painting = false;
+  let paintMode = true; // true=paint, false=erase
+
+  function svgCoord(canvasX, canvasY) {
+    const cx = Math.floor(canvasX / CELL);
+    const cy = Math.floor(canvasY / CELL);
+    const sx = cx;
+    const sy = cy - ROW_OFFSET; // SVG y
+    return { sx, sy, cx, cy };
+  }
+
+  function painterBodyColor() {
+    const sel = document.getElementById('maskBodyColor');
+    return sel ? sel.value : '#F5DEB3';
+  }
+
+  function drawAll() {
+    ctx.clearRect(0, 0, 320, 320);
+    const BC = painterBodyColor();
+    // Draw cat SVG as image underneath via a data URI
+    const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -4 32 32" width="320" height="320">
+      ${body(BC)}
+      ${eyes('round','#2C1810','#FFFFFF',BC,'round')}
+      ${mouth('smile')}
+      ${cheeks('blush')}
+    </svg>`;
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+      drawPainted();
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+  }
+
+  function drawPainted() {
+    ctx.fillStyle = 'rgba(0,0,0,0.82)';
+    for (const key of painted) {
+      const [sx, sy] = key.split(',').map(Number);
+      const cx = sx;
+      const cy = sy + ROW_OFFSET;
+      ctx.fillRect(cx * CELL, cy * CELL, CELL, CELL);
+    }
+    // Grid lines (faint)
+    ctx.strokeStyle = 'rgba(127,119,221,0.15)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x <= COLS; x++) { ctx.beginPath(); ctx.moveTo(x*CELL,0); ctx.lineTo(x*CELL,320); ctx.stroke(); }
+    for (let y = 0; y <= ROWS; y++) { ctx.beginPath(); ctx.moveTo(0,y*CELL); ctx.lineTo(320,y*CELL); ctx.stroke(); }
+    updatePreview();
+  }
+
+  function paint(e) {
+    const r = canvas.getBoundingClientRect();
+    const { sx, sy } = svgCoord(e.clientX - r.left, e.clientY - r.top);
+    if (sx < 0 || sx >= COLS || sy < -ROW_OFFSET || sy >= 32) return;
+    const key = `${sx},${sy}`;
+    if (paintMode) painted.add(key); else painted.delete(key);
+    drawAll();
+  }
+
+  canvas.addEventListener('mousedown', e => {
+    e.preventDefault();
+    painting = true;
+    paintMode = e.button !== 2;
+    paint(e);
+  });
+  canvas.addEventListener('mousemove', e => { if (painting) paint(e); });
+  canvas.addEventListener('mouseup',   () => { painting = false; });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  window.clearMask = function() { painted.clear(); drawAll(); };
+
+  window.showCoords = function() {
+    if (painted.size === 0) { document.getElementById('coordsOut').style.display='none'; return; }
+    // Group into rect(x, y, w, h) suggestions — simple run-length per row
+    const byRow = {};
+    for (const key of painted) {
+      const [x, y] = key.split(',').map(Number);
+      if (!byRow[y]) byRow[y] = [];
+      byRow[y].push(x);
+    }
+    let lines = ['// Painted cells as rect() calls:'];
+    for (const y of Object.keys(byRow).map(Number).sort((a,b)=>a-b)) {
+      const xs = byRow[y].sort((a,b)=>a-b);
+      // merge consecutive x into runs
+      let runs = [], start = xs[0], end = xs[0];
+      for (let i = 1; i < xs.length; i++) {
+        if (xs[i] === end + 1) { end = xs[i]; }
+        else { runs.push([start, end]); start = xs[i]; end = xs[i]; }
+      }
+      runs.push([start, end]);
+      for (const [s, e2] of runs) {
+        lines.push(`rect(${s}, ${y}, ${e2-s+1}, 1, MASK)`);
+      }
+    }
+    const out = document.getElementById('coordsOut');
+    out.textContent = lines.join('\n');
+    out.style.display = 'block';
+  };
+
+  function maskSvgOverlay() {
+    let rects = '';
+    for (const key of painted) {
+      const [sx, sy] = key.split(',').map(Number);
+      rects += `<rect x="${sx}" y="${sy}" width="1" height="1" fill="#111118"/>`;
+    }
+    return rects;
+  }
+
+  const EYE_STYLES = [
+    { key: 'round',      label: 'Round' },
+    { key: 'button',     label: 'Button' },
+    { key: 'almond',     label: 'Almond' },
+    { key: 'sleepy',     label: 'Sleepy' },
+    { key: 'wink',       label: 'Wink' },
+    { key: 'closed',     label: 'Closed\n(inactive)' },
+    { key: 'halflidded', label: 'Half-lidded' },
+    { key: 'proud',      label: 'Proud' },
+  ];
+
+  function updatePreview() {
+    const PREVIEW_SIZE = 64;
+    const wallBg = '#2a2a4a';
+    const BC = painterBodyColor();
+    document.getElementById('maskPreviewRow').innerHTML = EYE_STYLES.map(({ key, label }) => {
+      const eyeSvg = eyes(key, '#2C1810', '#FFFFFF', BC, 'round');
+      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -4 32 32" width="${PREVIEW_SIZE}" height="${PREVIEW_SIZE}">
+        ${body(BC)}
+        ${eyeSvg}
+        ${mouth('smile')}
+        ${cheeks('blush')}
+        ${maskSvgOverlay()}
+      </svg>`;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div style="border-radius:50%;overflow:hidden;width:${PREVIEW_SIZE}px;height:${PREVIEW_SIZE}px;background:${wallBg};">
+          ${svgStr}
+        </div>
+        <span style="font-size:9px;color:#888;text-align:center;white-space:pre-line;line-height:1.3;">${label}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Default batman mask
+  const DEFAULT_MASK = [
+    [6,0,1],[25,0,1],[5,1,3],[24,1,3],[5,2,5],[22,2,5],[5,3,6],[21,3,6],
+    [5,4,22],[5,5,22],[5,6,22],[5,7,22],[5,8,22],[5,9,22],[5,10,22],
+    [5,11,4],[12,11,8],[23,11,4],[5,12,5],[13,12,6],[22,12,5],
+    [5,13,22],[5,14,22],
+    [5,15,7],[13,15,5],[19,15,8],[5,16,7],[14,16,3],[19,16,8],
+    [5,17,7],[19,17,8],[5,18,7],[19,18,8],
+    [6,19,6],[19,19,7],[7,20,6],[18,20,7],[9,21,5],[17,21,6],
+    [11,22,3],[17,22,4],[17,28,1],
+  ];
+  for (const [x, y, w] of DEFAULT_MASK) {
+    for (let i = 0; i < w; i++) painted.add(`${x+i},${y}`);
+  }
+  drawAll();
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════ SECTION 6: SHIRT PAINTER -->
+<hr class="divider">
+<h2>Shirt Painter</h2>
+<p class="sub">Paint the shirt shape. Left-click/drag to paint, right-click to erase. Cat body shown underneath for reference. Click "Show coordinates" to get rect() calls.</p>
+
+<div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;margin-bottom:24px;">
+  <div>
+    <div style="font-size:11px;color:#888;margin-bottom:6px;">Paint grid — viewBox 0 -8 32 40</div>
+    <canvas id="shirtCanvas" width="320" height="400" style="border:1px solid #3a3a5a;cursor:crosshair;image-rendering:pixelated;display:block;"></canvas>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+      <button onclick="clearShirt()" style="background:#1e1e3a;border:1px solid #3a3a5a;color:#a89be8;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">Clear</button>
+      <button onclick="showShirtCoords()" style="background:#2a2060;border:1px solid #7f77dd;color:#fff;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">Show coordinates</button>
+      <label style="font-size:11px;color:#888;">Cat colour:
+        <select id="shirtBodyColor" onchange="drawShirtAll()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:4px;padding:2px 6px;font-size:11px;margin-left:4px;">
+          <option value="#F5DEB3">cream</option>
+          <option value="#E8824A">orange</option>
+          <option value="#4A4A4A">dark grey</option>
+          <option value="#E0E0E0">white</option>
+        </select>
+      </label>
+      <label style="font-size:11px;color:#888;">Base shirt:
+        <select id="shirtBase" onchange="drawShirtAll()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:4px;padding:2px 6px;font-size:11px;margin-left:4px;">
+          <option value="none" selected>none</option>
+          <option value="collared">collared</option>
+          <option value="striped">striped</option>
+          <option value="suit">suit</option>
+          <option value="tuxedo">tuxedo</option>
+        </select>
+      </label>
+      <label style="font-size:11px;color:#888;">Paint colour:
+        <select id="shirtPaintColor" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:4px;padding:2px 6px;font-size:11px;margin-left:4px;">
+          <option value="#F8F8F8">white</option>
+          <option value="#CC2200">red</option>
+          <option value="#A8C8E8">light blue</option>
+          <option value="#7AAAC8">mid blue</option>
+          <option value="#222244">navy</option>
+          <option value="#333333">dark</option>
+          <option value="#9AABBA">robe blue-gray</option>
+          <option value="#7A8E9E">robe blue-gray dark</option>
+          <option value="#F0F0F0">off-white</option>
+          <option value="#D8D8D8">light gray</option>
+        </select>
+      </label>
+    </div>
+  </div>
+  <div>
+    <div style="font-size:11px;color:#888;margin-bottom:8px;">Live preview (64px)</div>
+    <div id="shirtPreviewRow" style="display:flex;gap:12px;align-items:flex-end;"></div>
+  </div>
+</div>
+<pre id="shirtCoordsOut" style="background:#0d0d1f;border:1px solid #2a2a4a;border-radius:8px;padding:12px;font-size:11px;color:#7fe8a8;white-space:pre-wrap;display:none;max-width:700px;"></pre>
+
+<script>
+(function() {
+  const COLS = 32, ROWS = 40, CELL = 10, ROW_OFFSET = 8;
+  const canvas = document.getElementById('shirtCanvas');
+  const ctx = canvas.getContext('2d');
+  const painted = new Map();
+  let painting = false, paintMode = true;
+
+  // pre-load bathrobe outline
+  const BATHROBE_OUTLINE = '#9AABBA';
+  [
+    [12,23],[13,23],[19,23],[20,23],
+    [11,24],[14,24],[18,24],[21,24],
+    [10,25],[15,25],[17,25],[21,25],[22,25],
+    [9,26],[11,26],[15,26],[16,26],[20,26],[23,26],
+    [8,27],[12,27],[16,27],[19,27],[23,27],
+  ].forEach(([x,y]) => painted.set(`${x},${y}`, BATHROBE_OUTLINE));
+
+  function shirtBodyColor() {
+    return document.getElementById('shirtBodyColor').value;
+  }
+  function paintColor() {
+    return document.getElementById('shirtPaintColor').value;
+  }
+
+  function svgCoord(cx, cy) {
+    return { sx: Math.floor(cx / CELL), sy: Math.floor(cy / CELL) - ROW_OFFSET };
+  }
+
+  function shirtBase() {
+    const sel = document.getElementById('shirtBase');
+    return sel ? sel.value : 'none';
+  }
+
+  function drawShirtAll() {
+    ctx.clearRect(0, 0, 320, 400);
+    const BC = shirtBodyColor();
+    const base = shirtBase();
+    const baseShirt = base !== 'none' ? shirt(base, BC) : '';
+    const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -8 32 40" width="320" height="400">
+      ${body(BC)}
+      ${baseShirt}
+      ${eyes('round','#2C1810','#FFFFFF',BC,'round')}
+      ${mouth('smile')}
+      ${cheeks('blush')}
+    </svg>`;
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, 0, 0); drawShirtPainted(); };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+  }
+  window.drawShirtAll = drawShirtAll;
+
+  function drawShirtPainted() {
+    for (const [key, col] of painted) {
+      const [sx, sy] = key.split(',').map(Number);
+      ctx.fillStyle = col;
+      ctx.fillRect(sx * CELL, (sy + ROW_OFFSET) * CELL, CELL, CELL);
+    }
+    // grid
+    ctx.strokeStyle = 'rgba(127,119,221,0.15)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x <= COLS; x++) { ctx.beginPath(); ctx.moveTo(x*CELL,0); ctx.lineTo(x*CELL,400); ctx.stroke(); }
+    for (let y = 0; y <= ROWS; y++) { ctx.beginPath(); ctx.moveTo(0,y*CELL); ctx.lineTo(320,y*CELL); ctx.stroke(); }
+    updateShirtPreview();
+  }
+
+  function paint(e) {
+    const r = canvas.getBoundingClientRect();
+    const { sx, sy } = svgCoord(e.clientX - r.left, e.clientY - r.top);
+    if (sx < 0 || sx >= COLS || sy < -ROW_OFFSET || sy >= 40) return;
+    const key = `${sx},${sy}`;
+    if (paintMode) painted.set(key, paintColor()); else painted.delete(key);
+    drawShirtAll();
+  }
+
+  canvas.addEventListener('mousedown', e => { e.preventDefault(); painting = true; paintMode = e.button !== 2; paint(e); });
+  canvas.addEventListener('mousemove', e => { if (painting) paint(e); });
+  canvas.addEventListener('mouseup', () => { painting = false; });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  window.clearShirt = () => { painted.clear(); drawShirtAll(); };
+
+  window.showShirtCoords = function() {
+    if (painted.size === 0) { document.getElementById('shirtCoordsOut').style.display='none'; return; }
+    // group by colour then by row
+    const byColRow = {};
+    for (const [key, col] of painted) {
+      const [x, y] = key.split(',').map(Number);
+      if (!byColRow[col]) byColRow[col] = {};
+      if (!byColRow[col][y]) byColRow[col][y] = [];
+      byColRow[col][y].push(x);
+    }
+    let lines = ['// Shirt cells as rect() calls (grouped by colour):'];
+    for (const col of Object.keys(byColRow)) {
+      lines.push(`// colour: ${col}`);
+      const rows = byColRow[col];
+      for (const y of Object.keys(rows).map(Number).sort((a,b)=>a-b)) {
+        const xs = rows[y].sort((a,b)=>a-b);
+        let runs = [], start = xs[0], end = xs[0];
+        for (let i = 1; i < xs.length; i++) {
+          if (xs[i] === end + 1) end = xs[i];
+          else { runs.push([start,end]); start = xs[i]; end = xs[i]; }
+        }
+        runs.push([start,end]);
+        for (const [s,e2] of runs) lines.push(`rect(${s}, ${y}, ${e2-s+1}, 1, C)`);
+      }
+    }
+    const out = document.getElementById('shirtCoordsOut');
+    out.textContent = lines.join('\n');
+    out.style.display = 'block';
+  };
+
+  function shirtOverlaySvg() {
+    return [...painted].map(([key, col]) => {
+      const [sx, sy] = key.split(',').map(Number);
+      return `<rect x="${sx}" y="${sy}" width="1" height="1" fill="${col}"/>`;
+    }).join('');
+  }
+
+  function updateShirtPreview() {
+    const sizes = [32, 48, 64, 96];
+    const wallBg = '#2a2a4a';
+    const BC = shirtBodyColor();
+    const base = shirtBase();
+    const baseShirt = base !== 'none' ? shirt(base, BC) : '';
+    document.getElementById('shirtPreviewRow').innerHTML = sizes.map(sz => {
+      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -8 32 40" width="${sz}" height="${sz}">
+        ${body(BC)}
+        ${baseShirt}
+        ${shirtOverlaySvg()}
+        ${eyes('round','#2C1810','#FFFFFF',BC,'round')}
+        ${mouth('smile')}
+        ${cheeks('blush')}
+      </svg>`;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <div style="border-radius:50%;overflow:hidden;width:${sz}px;height:${sz}px;background:${wallBg};">${svgStr}</div>
+        <span style="font-size:9px;color:#666;">${sz}px</span>
+      </div>`;
+    }).join('');
+  }
+
+  drawShirtAll();
+})();
+</script>
+<!-- ══════════════════════════════════════ SECTION 7: CENTRED ITEM VIEWBOX -->
+<hr class="divider">
+<h2>Centred Item ViewBox Preview</h2>
+<p class="sub">Each item is centred in a fixed viewBox. Tune the controls to find the right balance before updating React Native.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:24px;margin-bottom:24px;background:#12122a;padding:16px 20px;border-radius:10px;border:1px solid #2a2a4a;">
+  <div class="ctrl-group">
+    <label style="font-size:12px;color:#a89be8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">ViewBox span (px)</label>
+    <input type="range" id="cvbSpan" min="8" max="32" step="1" value="16" oninput="buildCentred()">
+    <div class="val" id="cvbSpanVal">16</div>
+  </div>
+  <div class="ctrl-group">
+    <label style="font-size:12px;color:#a89be8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Chip size (px)</label>
+    <input type="range" id="cvbSize" min="32" max="96" step="4" value="64" oninput="buildCentred()">
+    <div class="val" id="cvbSizeVal">64</div>
+  </div>
+  <div class="ctrl-group">
+    <label style="font-size:12px;color:#a89be8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Show cat body</label>
+    <select id="cvbShowCat" onchange="buildCentred()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:4px 8px;font-size:13px;">
+      <option value="0">Item only</option>
+      <option value="1">With cat</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label style="font-size:12px;color:#a89be8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Cat body colour</label>
+    <select id="cvbBodyColor" onchange="buildCentred()" style="background:#1e1e3a;color:#e0e0e0;border:1px solid #3a3a5a;border-radius:6px;padding:4px 8px;font-size:13px;">
+      <option value="#F5DEB3">cream</option>
+      <option value="#E8824A">orange</option>
+      <option value="#3C3C3C">black</option>
+      <option value="#F0F0F0">white</option>
+    </select>
+  </div>
+</div>
+
+<div id="centredSection"></div>
+
+<script>
+// ── Item bounds — [yMin, yMax] in SVG coordinate space ───────────────────────
+// These are read off the pixel art directly.
+const ITEM_BOUNDS = {
+  // headdresses
+  batman:          { yMin: 0,   yMax: 22, xMin: 5,  xMax: 27 },
+  headband:        { yMin: 5,   yMax: 9,  xMin: 4,  xMax: 27 },
+  helmet:          { yMin: 0,   yMax: 9,  xMin: 3,  xMax: 29 },
+  beanie_light:    { yMin: -1,  yMax: 4,  xMin: 10, xMax: 22 },
+  beanie_dark:     { yMin: -1,  yMax: 4,  xMin: 10, xMax: 22 },
+  beanie_worn:     { yMin: -1,  yMax: 4,  xMin: 10, xMax: 22 },
+  partyhat_1:      { yMin: 0,   yMax: 4,  xMin: 12, xMax: 20 },
+  partyhat_2:      { yMin: 0,   yMax: 5,  xMin: 11, xMax: 21 },
+  partyhat_3:      { yMin: 0,   yMax: 5,  xMin: 11, xMax: 21 },
+  partyhat_4:      { yMin: 0,   yMax: 5,  xMin: 11, xMax: 21 },
+  trophy_bronze:   { yMin: -2,  yMax: 4,  xMin: 11, xMax: 21 },
+  trophy_silver:   { yMin: -2,  yMax: 4,  xMin: 11, xMax: 21 },
+  trophy_gold:     { yMin: -2,  yMax: 4,  xMin: 11, xMax: 21 },
+  trophy_platinum: { yMin: -2,  yMax: 4,  xMin: 11, xMax: 21 },
+  tp_crown:        { yMin: -2,  yMax: 7,  xMin: 11, xMax: 24 },
+  // shirts
+  plain:           { yMin: 24,  yMax: 31, xMin: 8,  xMax: 24 },
+  ringer:          { yMin: 24,  yMax: 31, xMin: 8,  xMax: 24 },
+  collared:        { yMin: 24,  yMax: 31, xMin: 8,  xMax: 24 },
+  striped:         { yMin: 24,  yMax: 31, xMin: 8,  xMax: 24 },
+  suit:            { yMin: 24,  yMax: 31, xMin: 8,  xMax: 24 },
+  tuxedo:          { yMin: 23,  yMax: 31, xMin: 8,  xMax: 24 },
+  bathrobe:        { yMin: 23,  yMax: 31, xMin: 8,  xMax: 24 },
+  batman_suit:     { yMin: 22,  yMax: 31, xMin: 8,  xMax: 24 },
+  // accessories
+  spectacles_round:  { yMin: 12, yMax: 15, xMin: 8,  xMax: 24 },
+  spectacles_oval:   { yMin: 12, yMax: 15, xMin: 7,  xMax: 25 },
+  spectacles_tinted: { yMin: 12, yMax: 15, xMin: 8,  xMax: 24 },
+  monocle:           { yMin: 12, yMax: 18, xMin: 19, xMax: 26 },
+  cucumber:          { yMin: 8,  yMax: 13, xMin: 9,  xMax: 23 },
+  shield_1:          { yMin: 26, yMax: 29, xMin: 10, xMax: 13 },
+  shield_2:          { yMin: 25, yMax: 29, xMin: 10, xMax: 14 },
+  shield_3:          { yMin: 25, yMax: 29, xMin: 9,  xMax: 14 },
+  shield_4:          { yMin: 24, yMax: 29, xMin: 9,  xMax: 14 },
+  finger_1:          { yMin: 27, yMax: 29, xMin: 13, xMax: 16 },
+  finger_2:          { yMin: 27, yMax: 29, xMin: 13, xMax: 16 },
+  finger_3:          { yMin: 27, yMax: 29, xMin: 13, xMax: 16 },
+  finger_4:          { yMin: 24, yMax: 28, xMin: 13, xMax: 19 },
+};
+
+// Map badge item keys to their render functions
+function renderItem(key, bodyCol) {
+  // headdresses
+  if (['batman','headband','helmet','beanie_light','beanie_dark','beanie_worn',
+       'partyhat_1','partyhat_2','partyhat_3','partyhat_4',
+       'trophy_bronze','trophy_silver','trophy_gold','trophy_platinum','tp_crown'].includes(key)) {
+    return badgeHeaddress(key);
+  }
+  // shirts
+  if (['plain','ringer','collared','striped','suit','tuxedo','bathrobe','batman_suit'].includes(key)) {
+    return shirt(key, bodyCol);
+  }
+  // accessories
+  return accessory(key, bodyCol);
+}
+
+function computeViewBox(key, span) {
+  const b = ITEM_BOUNDS[key];
+  const ySpan = b.yMax - b.yMin;
+  const xSpan = b.xMax - b.xMin;
+  const itemSpan = Math.max(ySpan, xSpan); // use largest dimension
+
+  // Centre the item within the requested span
+  const vbSize = Math.max(span, itemSpan + 2); // ensure item always fits with min 1px padding
+  const yCentre = (b.yMin + b.yMax) / 2;
+  const xCentre = (b.xMin + b.xMax) / 2;
+  const vbX = xCentre - vbSize / 2;
+  const vbY = yCentre - vbSize / 2;
+  return { vb: `${vbX} ${vbY} ${vbSize} ${vbSize}`, vbSize, itemSpan };
+}
+
+const CENTRED_SLOTS = [
+  { label: '🎩 Headdresses', keys: ['batman','headband','helmet','beanie_light','beanie_dark','beanie_worn','partyhat_1','partyhat_2','partyhat_3','partyhat_4','trophy_bronze','trophy_silver','trophy_gold','trophy_platinum','tp_crown'] },
+  { label: '👕 Shirts',      keys: ['plain','ringer','collared','striped','suit','tuxedo','bathrobe','batman_suit'] },
+  { label: '📌 Accessories', keys: ['spectacles_round','spectacles_oval','spectacles_tinted','monocle','cucumber','shield_1','shield_2','shield_3','shield_4','finger_1','finger_2','finger_3','finger_4'] },
+];
+
+const CENTRED_LABELS = {
+  batman:'Batman mask', headband:'Headband', helmet:'Helmet', beanie_light:'Beanie I',
+  beanie_dark:'Beanie II', beanie_worn:'Beanie III', partyhat_1:'Party hat I',
+  partyhat_2:'Party hat II', partyhat_3:'Party hat III', partyhat_4:'Party hat IV',
+  trophy_bronze:'Trophy bronze', trophy_silver:'Trophy silver', trophy_gold:'Trophy gold',
+  trophy_platinum:'Trophy plat.', tp_crown:'TP crown',
+  plain:'Plain tee', ringer:'Ringer tee', collared:'Collared', striped:'Striped',
+  suit:'Suit', tuxedo:'Tuxedo', bathrobe:'Bathrobe', batman_suit:'Batman suit',
+  spectacles_round:'Round specs', spectacles_oval:'Oval specs', spectacles_tinted:'Tinted specs',
+  monocle:'Monocle', cucumber:'Cucumber', shield_1:'Shield I', shield_2:'Shield II',
+  shield_3:'Shield III', shield_4:'Shield IV', finger_1:'Brooch I', finger_2:'Brooch II',
+  finger_3:'Brooch III', finger_4:'Sheriff',
+};
+
+function buildCentred() {
+  const span      = parseInt(document.getElementById('cvbSpan').value);
+  const chipSize  = parseInt(document.getElementById('cvbSize').value);
+  const showCat   = document.getElementById('cvbShowCat').value === '1';
+  const bodyColor = document.getElementById('cvbBodyColor').value;
+  document.getElementById('cvbSpanVal').textContent = span;
+  document.getElementById('cvbSizeVal').textContent = chipSize;
+
+  const wallBg = '#2a2a4a';
+  let html = '';
+
+  for (const slot of CENTRED_SLOTS) {
+    html += `<h3 style="font-size:13px;color:#a89be8;margin:20px 0 10px;font-weight:700;">${slot.label}</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:4px;">`;
+
+    for (const key of slot.keys) {
+      const { vb, vbSize, itemSpan } = computeViewBox(key, span);
+      const itemContent = renderItem(key, bodyColor);
+      const catContent  = showCat ? body(bodyColor) : '';
+
+      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" width="${chipSize}" height="${chipSize}" style="display:block;image-rendering:pixelated;">
+        ${catContent}
+        ${itemContent}
+      </svg>`;
+
+      const spanLabel = `item:${itemSpan}px vb:${vbSize}px`;
+
+      html += `<div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <div style="border-radius:10px;overflow:hidden;width:${chipSize}px;height:${chipSize}px;background:${wallBg};display:flex;align-items:center;justify-content:center;">
+          ${svgStr}
+        </div>
+        <span style="font-size:9px;color:#aaa;text-align:center;line-height:1.3;">${CENTRED_LABELS[key]}</span>
+        <span style="font-size:8px;color:#555;text-align:center;">${spanLabel}</span>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById('centredSection').innerHTML = html;
+}
+
+buildCentred();
+</script>
+
+<!-- ── Section 8: Header colour preview ──────────────────────────────────── -->
+<h2>Section 8 — Header colour options</h2>
+<p class="sub">Simulates the Achievements screen sticky header against the scroll content below.</p>
+
+<style>
+  .hc-screen {
+    width: 320px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #333;
+    font-family: system-ui, sans-serif;
+    display: inline-block;
+    vertical-align: top;
+    margin: 0 16px 24px 0;
+  }
+  .hc-header {
+    padding: 12px 20px 10px;
+    border-bottom: 1px solid;
+    display: flex;
+    align-items: center;
+  }
+  .hc-back {
+    width: 34px; height: 34px; border-radius: 17px;
+    background: rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #aaa; flex-shrink: 0;
+  }
+  .hc-title-block {
+    flex: 1; text-align: center;
+  }
+  .hc-title { font-size: 17px; font-weight: 700; color: #e8e8e8; }
+  .hc-sub   { font-size: 11px; color: #888; margin-top: 2px; }
+  .hc-spacer { width: 34px; flex-shrink: 0; }
+  .hc-scroll {
+    padding: 12px 16px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .hc-card {
+    border-radius: 10px; border: 1px solid;
+    padding: 12px; font-size: 12px; color: #bbb;
+  }
+  .hc-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.6px;
+    color: #666; margin-bottom: 4px; text-transform: uppercase;
+  }
+  .hc-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hc-chip {
+    width: 52px; height: 52px; border-radius: 10px; border: 1px solid #555;
+    background: #3c3a38;
+  }
+  .hc-option-label {
+    font-size: 12px; color: #a89be8; font-weight: 600;
+    margin-bottom: 6px; display: block;
+  }
+</style>
+
+<div style="display:flex; flex-wrap:wrap; gap:0; margin-top:16px;">
+
+  <!-- A: Warm grey lift -->
+  <div>
+    <span class="hc-option-label">A — Warm grey lift #4a4745</span>
+    <div class="hc-screen" style="background:#2b2928;">
+      <div class="hc-header" style="background:#4a4745; border-color:#4A4239;">
+        <div class="hc-back">‹</div>
+        <div class="hc-title-block">
+          <div class="hc-title">Achievements</div>
+          <div class="hc-sub">12/38 earned</div>
+        </div>
+        <div class="hc-spacer"></div>
+      </div>
+      <div class="hc-scroll" style="background:#2b2928;">
+        <div class="hc-card" style="background:#3c3a38; border-color:#4A4239;">
+          <div class="hc-label">Log milestones</div>
+          <div class="hc-chips"><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div></div>
+        </div>
+        <div class="hc-card" style="background:#3c3a38; border-color:#4A4239;">
+          <div class="hc-label">Streaks</div>
+          <div class="hc-chips"><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: Purple tint -->
+  <div>
+    <span class="hc-option-label">B — Purple tint #3a3650</span>
+    <div class="hc-screen" style="background:#2b2928;">
+      <div class="hc-header" style="background:#3a3650; border-color:#4a3f6a;">
+        <div class="hc-back">‹</div>
+        <div class="hc-title-block">
+          <div class="hc-title">Achievements</div>
+          <div class="hc-sub">12/38 earned</div>
+        </div>
+        <div class="hc-spacer"></div>
+      </div>
+      <div class="hc-scroll" style="background:#2b2928;">
+        <div class="hc-card" style="background:#3c3a38; border-color:#4A4239;">
+          <div class="hc-label">Log milestones</div>
+          <div class="hc-chips"><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div></div>
+        </div>
+        <div class="hc-card" style="background:#3c3a38; border-color:#4A4239;">
+          <div class="hc-label">Streaks</div>
+          <div class="hc-chips"><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C: Deep dark -->
+  <div>
+    <span class="hc-option-label">C — Deep dark #232120</span>
+    <div class="hc-screen" style="background:#2b2928;">
+      <div class="hc-header" style="background:#232120; border-color:#1a1918;">
+        <div class="hc-back">‹</div>
+        <div class="hc-title-block">
+          <div class="hc-title">Achievements</div>
+          <div class="hc-sub">12/38 earned</div>
+        </div>
+        <div class="hc-spacer"></div>
+      </div>
+      <div class="hc-scroll" style="background:#2b2928;">
+        <div class="hc-card" style="background:#3c3a38; border-color:#4A4239;">
+          <div class="hc-label">Log milestones</div>
+          <div class="hc-chips"><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div></div>
+        </div>
+        <div class="hc-card" style="background:#3c3a38; border-color:#4A4239;">
+          <div class="hc-label">Streaks</div>
+          <div class="hc-chips"><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- D: Border tone -->
+  <div>
+    <span class="hc-option-label">D — Border tone #4A4239</span>
+    <div class="hc-screen" style="background:#2b2928;">
+      <div class="hc-header" style="background:#4A4239; border-color:#5a5048;">
+        <div class="hc-back">‹</div>
+        <div class="hc-title-block">
+          <div class="hc-title">Achievements</div>
+          <div class="hc-sub">12/38 earned</div>
+        </div>
+        <div class="hc-spacer"></div>
+      </div>
+      <div class="hc-scroll" style="background:#2b2928;">
+        <div class="hc-card" style="background:#3c3a38; border-color:#4A4239;">
+          <div class="hc-label">Log milestones</div>
+          <div class="hc-chips"><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div></div>
+        </div>
+        <div class="hc-card" style="background:#3c3a38; border-color:#4A4239;">
+          <div class="hc-label">Streaks</div>
+          <div class="hc-chips"><div class="hc-chip"></div><div class="hc-chip"></div><div class="hc-chip"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Section 9: Tab bar colour preview ─────────────────────────────────── -->
+<h2>Section 9 — Tab bar colour options</h2>
+<p class="sub">Simulates the bottom tab bar against the screen background. Active icon = purple #7F77DD, inactive = #B8AE9F.</p>
+
+<style>
+  .tb-screen {
+    width: 320px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #333;
+    font-family: system-ui, sans-serif;
+    display: inline-block;
+    vertical-align: top;
+    margin: 0 16px 24px 0;
+  }
+  .tb-content {
+    height: 160px;
+    background: #2b2928;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tb-content-card {
+    flex: 1;
+    border-radius: 10px;
+    background: #3c3a38;
+    border: 1px solid #4A4239;
+  }
+  .tb-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 10px 0 14px;
+    border-top-width: 1px;
+    border-top-style: solid;
+  }
+  .tb-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .tb-icon {
+    width: 24px; height: 24px;
+    border-radius: 4px;
+  }
+  .tb-dot {
+    width: 4px; height: 4px;
+    border-radius: 2px;
+  }
+  .tb-label { font-size: 9px; }
+</style>
+
+<div style="display:flex; flex-wrap:wrap; gap:0; margin-top:16px;">
+
+  <!-- A: Warm grey lift -->
+  <div>
+    <span class="hc-option-label">A — Warm grey lift #4a4745</span>
+    <div class="tb-screen">
+      <div class="tb-content"><div class="tb-content-card"></div><div class="tb-content-card"></div></div>
+      <div class="tb-bar" style="background:#4a4745; border-top-color:#4A4239;">
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#7F77DD; border-radius:12px;"></div>
+          <div class="tb-dot" style="background:#7F77DD;"></div>
+          <span class="tb-label" style="color:#7F77DD;">Home</span>
+        </div>
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#B8AE9F; border-radius:12px; opacity:0.5;"></div>
+          <span class="tb-label" style="color:#B8AE9F;">Friends</span>
+        </div>
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#B8AE9F; border-radius:12px; opacity:0.5;"></div>
+          <span class="tb-label" style="color:#B8AE9F;">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: Purple tint -->
+  <div>
+    <span class="hc-option-label">B — Purple tint #3a3650</span>
+    <div class="tb-screen">
+      <div class="tb-content"><div class="tb-content-card"></div><div class="tb-content-card"></div></div>
+      <div class="tb-bar" style="background:#3a3650; border-top-color:#4a3f6a;">
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#7F77DD; border-radius:12px;"></div>
+          <div class="tb-dot" style="background:#7F77DD;"></div>
+          <span class="tb-label" style="color:#7F77DD;">Home</span>
+        </div>
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#B8AE9F; border-radius:12px; opacity:0.5;"></div>
+          <span class="tb-label" style="color:#B8AE9F;">Friends</span>
+        </div>
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#B8AE9F; border-radius:12px; opacity:0.5;"></div>
+          <span class="tb-label" style="color:#B8AE9F;">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C: Deep dark -->
+  <div>
+    <span class="hc-option-label">C — Deep dark #232120</span>
+    <div class="tb-screen">
+      <div class="tb-content"><div class="tb-content-card"></div><div class="tb-content-card"></div></div>
+      <div class="tb-bar" style="background:#232120; border-top-color:#1a1918;">
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#7F77DD; border-radius:12px;"></div>
+          <div class="tb-dot" style="background:#7F77DD;"></div>
+          <span class="tb-label" style="color:#7F77DD;">Home</span>
+        </div>
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#B8AE9F; border-radius:12px; opacity:0.5;"></div>
+          <span class="tb-label" style="color:#B8AE9F;">Friends</span>
+        </div>
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#B8AE9F; border-radius:12px; opacity:0.5;"></div>
+          <span class="tb-label" style="color:#B8AE9F;">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- D: Border tone -->
+  <div>
+    <span class="hc-option-label">D — Border tone #4A4239</span>
+    <div class="tb-screen">
+      <div class="tb-content"><div class="tb-content-card"></div><div class="tb-content-card"></div></div>
+      <div class="tb-bar" style="background:#4A4239; border-top-color:#5a5048;">
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#7F77DD; border-radius:12px;"></div>
+          <div class="tb-dot" style="background:#7F77DD;"></div>
+          <span class="tb-label" style="color:#7F77DD;">Home</span>
+        </div>
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#B8AE9F; border-radius:12px; opacity:0.5;"></div>
+          <span class="tb-label" style="color:#B8AE9F;">Friends</span>
+        </div>
+        <div class="tb-tab">
+          <div class="tb-icon" style="background:#B8AE9F; border-radius:12px; opacity:0.5;"></div>
+          <span class="tb-label" style="color:#B8AE9F;">Profile</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 </body>
 </html>

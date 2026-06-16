@@ -172,7 +172,7 @@ export default function HomeScreen() {
 
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={[styles.scroll, { paddingTop: topInset + 16, paddingHorizontal: 24 }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: topInset, paddingHorizontal: 24 }]}
         onScroll={e => { scrollYRef.current = e.nativeEvent.contentOffset.y; }}
         scrollEventThrottle={100}
         style={{ marginHorizontal: -24 }}
@@ -261,7 +261,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: 140, gap: 16 },
+  scroll: { paddingBottom: 140, gap: 12 },
   barTab: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -272,11 +272,11 @@ const styles = StyleSheet.create({
   },
   barTabStripe: { width: 4, alignSelf: 'stretch' },
   barTabText: { flex: 1, fontSize: 13, fontWeight: '500', paddingHorizontal: 12, paddingVertical: 10 },
-  stats: { flexDirection: 'row', gap: 8 },
+  stats: { flexDirection: 'row', gap: 12 },
   fab: {
     position: 'absolute',
     left: 24,
     right: 24,
-    bottom: 24,
+    bottom: 8,
   },
 });

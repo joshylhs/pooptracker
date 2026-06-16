@@ -216,7 +216,7 @@ export default function FriendsScreen() {
       </Animated.View>
 
       {/* Title row + manage panel */}
-      <View style={[styles.titleAnchor, { paddingTop: topInset + 16 }]}>
+      <View style={[styles.titleAnchor, {paddingTop: topInset}]}>
         {/* Title mode */}
         <Animated.View
           pointerEvents={searchOpen ? 'none' : 'auto'}
@@ -263,7 +263,7 @@ export default function FriendsScreen() {
           pointerEvents={searchOpen ? 'auto' : 'none'}
           style={[
             styles.titleRow,
-            { position: 'absolute', top: topInset + 16, left: 0, right: 0 },
+            { position: 'absolute', top: topInset, left: 0, right: 0 },
             { opacity: searchOpacity, transform: [{ translateX: searchTranslateX }] },
           ]}
         >

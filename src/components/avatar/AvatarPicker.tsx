@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
-  Animated, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent,
+  Alert, Animated, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
 import Svg, { Rect as SvgRect } from 'react-native-svg';
@@ -14,6 +14,9 @@ import CatEyes, { EYE_COLORS, EYE_SECONDARY_COLORS, EyeColor, EyeSecondary, EyeS
 import CatBody from './CatBody';
 import CatBlush, { CheekStyle } from './CatBlush';
 import CatHeaddress, { HeaddressStyle } from './CatHeaddress';
+import CatShirt, { ShirtStyle } from './CatShirt';
+import CatAccessory, { AccessoryStyle } from './CatAccessory';
+import { BadgeKey, BADGE_META, centredViewBox } from '../../utils/badgeUtils';
 
 export interface AvatarConfig {
   bodyColor:    BodyColor;
@@ -24,6 +27,8 @@ export interface AvatarConfig {
   cheekStyle:   CheekStyle;
   headdress:    HeaddressStyle;
   wallColor:    WallColor;
+  shirt:        ShirtStyle;
+  accessory:    AccessoryStyle;
 }
 
 const CHEEK_STYLES: CheekStyle[] = ['blush', 'freckles', 'none'];
@@ -34,6 +39,7 @@ interface Props {
   onConfirm: (config: AvatarConfig) => void;
   loading?: boolean;
   headerBorderRadius?: number;
+  earnedBadges?: Set<BadgeKey>;
 }
 
 const BODY_COLOR_KEYS:  BodyColor[]      = Object.keys(BODY_COLORS) as BodyColor[];
@@ -41,9 +47,84 @@ const WALL_COLOR_KEYS:  WallColor[]      = Object.keys(WALL_COLORS) as WallColor
 const EYE_STYLES:       EyeStyle[]       = ['round', 'button'];
 const EYE_PRIMARIES:    EyeColor[]       = Object.keys(EYE_COLORS) as EyeColor[];
 const EYE_SECONDARIES:  EyeSecondary[]   = Object.keys(EYE_SECONDARY_COLORS) as EyeSecondary[];
-const HEADDRESSES:      HeaddressStyle[] = ['none', 'flower', 'bow', 'crown', 'partyhat', 'beanie', 'tophat'];
+
+// All badge keys per slot, in display order (unlocked-first sorting done at render time)
+const HD_BADGE_KEYS: BadgeKey[] = [
+  'hd_flower', 'hd_bow', 'hd_striped_beanie', 'hd_tophat', 'hd_partyhat', 'hd_crown',
+  'hd_batman', 'hd_headband', 'hd_helmet',
+  'hd_beanie_1', 'hd_beanie_2', 'hd_beanie_3',
+  'hd_party_1', 'hd_party_2', 'hd_party_3', 'hd_party_4',
+  'hd_trophy_bronze', 'hd_trophy_silver', 'hd_trophy_gold', 'hd_trophy_platinum',
+  'hd_tp_crown',
+];
+
+const SHIRT_BADGE_KEYS: BadgeKey[] = [
+  'shirt_plain', 'shirt_ringer', 'shirt_collared', 'shirt_striped',
+  'shirt_suit', 'shirt_tuxedo', 'shirt_bathrobe', 'shirt_batman_suit',
+];
+
+const ACC_BADGE_KEYS: BadgeKey[] = [
+  'acc_spectacles_round', 'acc_spectacles_oval', 'acc_spectacles_tinted', 'acc_monocle',
+  'acc_brooch_1', 'acc_brooch_2', 'acc_brooch_3', 'acc_sheriff',
+  'acc_shield_1', 'acc_shield_2', 'acc_shield_3', 'acc_shield_4',
+  'acc_cucumber',
+];
+
+const BADGE_HINTS: Record<BadgeKey, string> = {
+  hd_flower:            'Free',
+  hd_bow:               'Free',
+  hd_striped_beanie:    'Free',
+  hd_tophat:            'Free',
+  hd_partyhat:          'Add 1 friend',
+  hd_crown:             'Finish #1 on any leaderboard',
+  shirt_plain:          'Log once',
+  shirt_ringer:         'Log 10 times',
+  shirt_collared:       'Log 25 times',
+  shirt_striped:        'Log 50 times',
+  shirt_suit:           'Log 75 times',
+  shirt_tuxedo:         'Log 100 times',
+  shirt_bathrobe:       'Log 200 times',
+  shirt_batman_suit:    '3 logs between 12am–4am',
+  acc_spectacles_round: '7 day streak',
+  acc_spectacles_oval:  '30 day streak',
+  acc_spectacles_tinted:'100 day streak',
+  acc_monocle:          '365 day streak',
+  acc_cucumber:         'Log 300 times',
+  acc_brooch_1:         'Poke a friend',
+  acc_brooch_2:         'Poke 5 times',
+  acc_brooch_3:         'Poke 25 times',
+  acc_sheriff:          'Poke 100 times',
+  acc_shield_1:         'Be poked once',
+  acc_shield_2:         'Be poked 5 times',
+  acc_shield_3:         'Be poked 25 times',
+  acc_shield_4:         'Be poked 100 times',
+  hd_batman:            '1 log between 12am–4am',
+  hd_headband:          'Log every Monday for 7 weeks',
+  hd_helmet:            'Log within ±30min same time for 7 days',
+  hd_beanie_1:          'Return after 3–6 day gap',
+  hd_beanie_2:          'Return after 7–29 day gap',
+  hd_beanie_3:          'Return after 30+ day gap',
+  hd_party_1:           'Add 1 friend',
+  hd_party_2:           'Add 5 friends',
+  hd_party_3:           'Add 10 friends',
+  hd_party_4:           'Add 25 friends',
+  hd_trophy_bronze:     'Finish #1 on daily leaderboard',
+  hd_trophy_silver:     'Finish #1 on weekly leaderboard',
+  hd_trophy_gold:       'Finish #1 on monthly leaderboard',
+  hd_trophy_platinum:   'Finish #1 on yearly leaderboard',
+  hd_tp_crown:          'Log 500 times',
+};
+
+const STYLE_OVERRIDES: Partial<Record<BadgeKey, string>> = {
+  hd_striped_beanie: 'beanie',
+};
+
+function badgeKeyToStyle(key: BadgeKey): string {
+  return STYLE_OVERRIDES[key] ?? key.replace(/^(hd_|shirt_|acc_)/, '');
+}
 
 const PREVIEW_W = 64;
+const CHIP_SIZE = 52;
 
 // ── Per-chip animated scale ───────────────────────────────────────────────────
 
@@ -104,7 +185,6 @@ function ScrollRow({ children, colours, itemHeight }: ScrollRowProps) {
 
   return (
     <View style={styles.scrollRowOuter}>
-      {/* Left chevron */}
       {canLeft && (
         <Pressable onPress={() => nudge('left')} style={[styles.edgeLeft, { height: itemHeight + 12 }]}
           hitSlop={4}>
@@ -129,7 +209,6 @@ function ScrollRow({ children, colours, itemHeight }: ScrollRowProps) {
         {children}
       </ScrollView>
 
-      {/* Right chevron */}
       {canRight && (
         <Pressable onPress={() => nudge('right')} style={[styles.edgeRight, { height: itemHeight + 12 }]}
           hitSlop={4}>
@@ -146,7 +225,7 @@ function ScrollRow({ children, colours, itemHeight }: ScrollRowProps) {
 
 // ── Main picker ───────────────────────────────────────────────────────────────
 
-export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = false, headerBorderRadius = 28 }: Props) {
+export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = false, headerBorderRadius = 28, earnedBadges }: Props) {
   const { surface, colours } = useTheme();
   const [cfg, setCfg] = useState<AvatarConfig>(initial);
 
@@ -175,7 +254,7 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
 
   return (
     <View style={styles.root}>
-      {/* ── Scrollable trait sections — fills root, scrolls under the header ── */}
+      {/* ── Scrollable trait sections ── */}
       <ScrollView
         ref={verticalScrollRef}
         contentContainerStyle={[styles.sectionsScroll, { paddingTop: headerH || 200 }]}
@@ -261,9 +340,37 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
           </TraitRow>
 
           <TraitRow label="Headdress" divStyle={divStyle}>
-            <HeaddressRow
+            <BadgeItemRow
+              badgeKeys={HD_BADGE_KEYS}
               selected={cfg.headdress}
-              onSelect={h => set('headdress', h)}
+              noneValue="none"
+              onSelect={style => set('headdress', style as HeaddressStyle)}
+              earnedBadges={earnedBadges}
+              renderItem={(key) => <CatHeaddress style={badgeKeyToStyle(key) as HeaddressStyle} />}
+              surface={surface} colours={colours}
+            />
+          </TraitRow>
+
+          <TraitRow label="Shirt" divStyle={divStyle}>
+            <BadgeItemRow
+              badgeKeys={SHIRT_BADGE_KEYS}
+              selected={cfg.shirt}
+              noneValue="none"
+              onSelect={style => set('shirt', style as ShirtStyle)}
+              earnedBadges={earnedBadges}
+              renderItem={(key) => <CatShirt style={badgeKeyToStyle(key) as ShirtStyle} bodyColor={BODY_COLORS[cfg.bodyColor]} />}
+              surface={surface} colours={colours}
+            />
+          </TraitRow>
+
+          <TraitRow label="Accessory" divStyle={divStyle}>
+            <BadgeItemRow
+              badgeKeys={ACC_BADGE_KEYS}
+              selected={cfg.accessory}
+              noneValue="none"
+              onSelect={style => set('accessory', style as AccessoryStyle)}
+              earnedBadges={earnedBadges}
+              renderItem={(key) => <CatAccessory style={badgeKeyToStyle(key) as AccessoryStyle} />}
               surface={surface} colours={colours}
             />
           </TraitRow>
@@ -275,14 +382,14 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
           : null}
       </ScrollView>
 
-      {/* ── Scroll-down hint — fades out when at the bottom ── */}
+      {/* ── Scroll-down hint ── */}
       <Animated.View style={[styles.scrollHint, { opacity: scrollHintOpacity }]}>
         <Pressable onPress={() => verticalScrollRef.current?.scrollToEnd({ animated: true })} style={styles.scrollHintCircle}>
           <MCI name="arrow-down" size={22} color="#fff" />
         </Pressable>
       </Animated.View>
 
-      {/* ── Blurred sticky header — height driven by avatarCardWrap measurement ── */}
+      {/* ── Blurred sticky header ── */}
       {headerH > 0 && (
         <View style={[styles.stickyHeader, { height: headerH, borderRadius: headerBorderRadius }]} pointerEvents="none">
           <BlurView
@@ -294,7 +401,7 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
         </View>
       )}
 
-      {/* Avatar card — measured so blur strip can match its height ── */}
+      {/* Avatar card ── */}
       <View
         style={styles.avatarCardWrap}
         pointerEvents="none"
@@ -309,6 +416,8 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
             eyeSecondary={cfg.eyeSecondary}
             cheekStyle={cfg.cheekStyle}
             headdress={cfg.headdress}
+            shirt={cfg.shirt}
+            accessory={cfg.accessory}
             wallColor="none"
             size={128}
           />
@@ -392,70 +501,28 @@ function EyeStyleRow({
   const scales = useChipScales(EYE_STYLES.length, selectedIndex);
 
   return (
-    <ScrollRow colours={colours} itemHeight={EYE_H + 20}>
+    <ScrollRow colours={colours} itemHeight={EYE_H + 28}>
       {EYE_STYLES.map((s, i) => {
         const isSel = s === selected;
         return (
-          <Pressable
-            key={s}
-            onPress={() => onSelect(s)}
-            style={[styles.previewChip, {
-              backgroundColor: surface.surface,
-              borderColor: isSel ? colours.primary400 : surface.border,
-              borderWidth: 2,
-            }]}
-          >
-            <Animated.View style={{ transform: [{ scale: scales[i] }] }}>
-              <Svg width={PREVIEW_W} height={EYE_H} viewBox={EYE_VB}>
-                <SvgRect x={4} y={6} width={24} height={12} fill={surface.surface} />
-                <CatEyes style={s} primaryColor={eyePrimary} secondaryColor={eyeSecondary} />
-              </Svg>
-            </Animated.View>
+          <View key={s} style={styles.previewChipOuter}>
+            <Pressable
+              onPress={() => onSelect(s)}
+              style={[styles.previewChip, {
+                backgroundColor: surface.surface,
+                borderColor: isSel ? colours.primary400 : surface.border,
+                borderWidth: 2,
+              }]}
+            >
+              <Animated.View style={{ transform: [{ scale: scales[i] }] }}>
+                <Svg width={PREVIEW_W} height={EYE_H} viewBox={EYE_VB}>
+                  <SvgRect x={4} y={6} width={24} height={12} fill={surface.surface} />
+                  <CatEyes style={s} primaryColor={eyePrimary} secondaryColor={eyeSecondary} />
+                </Svg>
+              </Animated.View>
+            </Pressable>
             <AppText variant="caption" colour="textSecondary" style={styles.chipLabel}>{s}</AppText>
-          </Pressable>
-        );
-      })}
-    </ScrollRow>
-  );
-}
-
-// ── HeaddressRow ─────────────────────────────────────────────────────────────
-
-const HDRESS_VB = '2 0 28 10';
-const HDRESS_H  = Math.round(PREVIEW_W * 10 / 28);
-
-function HeaddressRow({
-  selected, onSelect, surface, colours,
-}: {
-  selected: HeaddressStyle; onSelect: (h: HeaddressStyle) => void;
-  surface: ReturnType<typeof useTheme>['surface'];
-  colours: ReturnType<typeof useTheme>['colours'];
-}) {
-  const selectedIndex = HEADDRESSES.indexOf(selected);
-  const scales = useChipScales(HEADDRESSES.length, selectedIndex);
-
-  return (
-    <ScrollRow colours={colours} itemHeight={HDRESS_H + 20}>
-      {HEADDRESSES.map((h, i) => {
-        const isSel = h === selected;
-        return (
-          <Pressable
-            key={h}
-            onPress={() => onSelect(h)}
-            style={[styles.previewChip, {
-              backgroundColor: surface.surface,
-              borderColor: isSel ? colours.primary400 : surface.border,
-              borderWidth: 2,
-            }]}
-          >
-            <Animated.View style={{ transform: [{ scale: scales[i] }] }}>
-              <Svg width={PREVIEW_W} height={HDRESS_H} viewBox={HDRESS_VB}>
-                <SvgRect x={2} y={0} width={28} height={10} fill={surface.surface} />
-                <CatHeaddress style={h} />
-              </Svg>
-            </Animated.View>
-            <AppText variant="caption" colour="textSecondary" style={styles.chipLabel}>{h}</AppText>
-          </Pressable>
+          </View>
         );
       })}
     </ScrollRow>
@@ -479,28 +546,116 @@ function CheekStyleRow({
   const scales = useChipScales(CHEEK_STYLES.length, selectedIndex);
 
   return (
-    <ScrollRow colours={colours} itemHeight={CHEEK_H + 20}>
+    <ScrollRow colours={colours} itemHeight={CHEEK_H + 28}>
       {CHEEK_STYLES.map((s, i) => {
         const isSel = s === selected;
         return (
-          <Pressable
-            key={s}
-            onPress={() => onSelect(s)}
-            style={[styles.previewChip, {
-              backgroundColor: surface.surface,
-              borderColor: isSel ? colours.primary400 : surface.border,
-              borderWidth: 2,
-            }]}
-          >
-            <Animated.View style={{ transform: [{ scale: scales[i] }] }}>
-              <Svg width={PREVIEW_W} height={CHEEK_H} viewBox={CHEEK_VB}>
-                <SvgRect x={4} y={12} width={24} height={8} fill={surface.surface} />
-                <CatBody color={BODY_COLORS[bodyColor]} snoutColor={BODY_COLORS[snoutColor]} />
-                <CatBlush style={s} />
-              </Svg>
-            </Animated.View>
+          <View key={s} style={styles.previewChipOuter}>
+            <Pressable
+              onPress={() => onSelect(s)}
+              style={[styles.previewChip, {
+                backgroundColor: surface.surface,
+                borderColor: isSel ? colours.primary400 : surface.border,
+                borderWidth: 2,
+              }]}
+            >
+              <Animated.View style={{ transform: [{ scale: scales[i] }] }}>
+                <Svg width={PREVIEW_W} height={CHEEK_H} viewBox={CHEEK_VB}>
+                  <SvgRect x={4} y={12} width={24} height={8} fill={surface.surface} />
+                  <CatBody color={BODY_COLORS[bodyColor]} snoutColor={BODY_COLORS[snoutColor]} />
+                  <CatBlush style={s} />
+                </Svg>
+              </Animated.View>
+            </Pressable>
             <AppText variant="caption" colour="textSecondary" style={styles.chipLabel}>{s}</AppText>
-          </Pressable>
+          </View>
+        );
+      })}
+    </ScrollRow>
+  );
+}
+
+// ── BadgeItemRow — headdress / shirt / accessory ──────────────────────────────
+
+function BadgeItemRow({
+  badgeKeys, selected, noneValue, onSelect, earnedBadges, renderItem, surface, colours,
+}: {
+  badgeKeys: BadgeKey[];
+  selected: string;
+  noneValue: string;
+  onSelect: (style: string) => void;
+  earnedBadges?: Set<BadgeKey>;
+  renderItem: (key: BadgeKey) => React.ReactNode;
+  surface: ReturnType<typeof useTheme>['surface'];
+  colours: ReturnType<typeof useTheme>['colours'];
+}) {
+  // Sort: unlocked first, locked after; within each group preserve original order
+  const unlocked = badgeKeys.filter(k => !earnedBadges || earnedBadges.has(k));
+  const locked   = badgeKeys.filter(k =>  earnedBadges && !earnedBadges.has(k));
+  const ordered  = [...unlocked, ...locked];
+
+  const selectedIndex = ordered.findIndex(k => badgeKeyToStyle(k) === selected);
+  const scales = useChipScales(ordered.length + 1, selected === noneValue ? 0 : selectedIndex + 1);
+
+  const noneSelected = selected === noneValue;
+
+  return (
+    <ScrollRow colours={colours} itemHeight={CHIP_SIZE + 28}>
+      {/* "None" chip */}
+      <View style={styles.badgeChipOuter}>
+        <Pressable
+          onPress={() => onSelect(noneValue)}
+          style={[styles.badgeChip, {
+            backgroundColor: surface.surface,
+            borderColor: noneSelected ? colours.primary400 : surface.border,
+            borderWidth: 2,
+          }]}
+        >
+          <Animated.View style={{ transform: [{ scale: scales[0] }] }}>
+            <MCI name="close" size={20} color={surface.textSecondary} />
+          </Animated.View>
+        </Pressable>
+        <AppText variant="caption" colour="textSecondary" style={styles.chipLabel}>none</AppText>
+      </View>
+
+      {ordered.map((key, i) => {
+        const style  = badgeKeyToStyle(key);
+        const isSel  = style === selected;
+        const isLocked = earnedBadges ? !earnedBadges.has(key) : false;
+        const vb = centredViewBox(key, 16);
+        const meta = BADGE_META[key];
+
+        return (
+          <View key={key} style={[styles.badgeChipOuter, isLocked && { opacity: 0.45 }]}>
+            <Pressable
+              onPress={() => {
+                if (isLocked) {
+                  Alert.alert(meta.label, `Unlock: ${BADGE_HINTS[key]}`);
+                } else {
+                  onSelect(style);
+                }
+              }}
+              style={[styles.badgeChip, {
+                backgroundColor: surface.surface,
+                borderColor: isSel ? colours.primary400 : surface.border,
+                borderWidth: 2,
+              }]}
+            >
+              <Animated.View style={{ transform: [{ scale: scales[i + 1] }] }}>
+                <Svg width={CHIP_SIZE - 12} height={CHIP_SIZE - 12} viewBox={vb}>
+                  {renderItem(key)}
+                </Svg>
+              </Animated.View>
+              {isLocked && (
+                <View style={styles.lockOverlay}>
+                  <MCI name="lock" size={12} color="#fff" />
+                </View>
+              )}
+            </Pressable>
+            <AppText variant="caption" colour="textSecondary" style={styles.chipLabel} numberOfLines={2}>
+              {meta.label}
+            </AppText>
+          </View>
         );
       })}
     </ScrollRow>
@@ -535,8 +690,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-
-  // Full-width blurred strip, absolutely positioned so scroll content passes under it
   stickyHeader: {
     position: 'absolute',
     top: 0,
@@ -547,7 +700,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  // Centres the avatar card over the blurred strip
   avatarCardWrap: {
     position: 'absolute',
     top: 0,
@@ -579,7 +731,7 @@ const styles = StyleSheet.create({
 
   chipScroll: {
     gap: SWATCH_GAP,
-    paddingHorizontal: EDGE_W,   // reserve space so chips clear the edge overlays
+    paddingHorizontal: EDGE_W,
     paddingVertical: 6,
     flexGrow: 1,
     justifyContent: 'center',
@@ -589,7 +741,6 @@ const styles = StyleSheet.create({
 
   scrollRowOuter: { position: 'relative' },
 
-  // Left edge: absolutely positioned over the scroll row
   edgeLeft: {
     position: 'absolute',
     left: 0,
@@ -599,7 +750,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Right edge
   edgeRight: {
     position: 'absolute',
     right: 0,
@@ -643,8 +793,9 @@ const styles = StyleSheet.create({
     borderRadius: SWATCH_INNER / 2,
   },
 
-  // ── Preview chips (eyes / headdress) ──
+  // ── Preview chips (eyes / cheeks) ──
 
+  previewChipOuter: { alignItems: 'center' },
   previewChip: {
     width: PREVIEW_W,
     borderRadius: 10,
@@ -653,5 +804,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     overflow: 'hidden',
   },
-  chipLabel: { fontSize: 9, marginTop: 3 },
+  chipLabel: { fontSize: 9, marginTop: 3, textAlign: 'center', maxWidth: CHIP_SIZE },
+
+  // ── Badge item chips ──
+
+  badgeChipOuter: { alignItems: 'center' },
+  badgeChip: {
+    width: CHIP_SIZE,
+    height: CHIP_SIZE,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  lockOverlay: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

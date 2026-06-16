@@ -278,7 +278,7 @@ export default function HealthSignalsScreen() {
         )}
 
         <AppText variant="caption" colour="textSecondary" style={styles.disclaimer}>
-          These patterns are informational only — not a medical diagnosis. Based on self-reported data from the last 90 days. Always speak to a healthcare professional if concerned.
+          These patterns are not medical diagnoses but informational flags based on self-reported data from the last 90 days. Always speak to a healthcare professional if concerned!
         </AppText>
       </ScrollView>
     </ScreenContainer>

@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import HomeStack from './HomeStack';
 import FriendsStack from './FriendsStack';
-import ProfileScreen from '../screens/profile/ProfileScreen';
+import ProfileStack from './ProfileStack';
 import { useHealthFindings } from '../hooks/useHealthFindings';
 
 export type AppTabsParamList = {
@@ -98,7 +98,7 @@ export default function AppTabs() {
         name="Profile"
         options={{ tabBarIcon: ({ color, size }) => <MCI name="account" size={size} color={color} /> }}
       >
-        {() => <FadeTab><ProfileScreen /></FadeTab>}
+        {() => <FadeTab><ProfileStack /></FadeTab>}
       </Tab.Screen>
     </Tab.Navigator>
   </Animated.View>

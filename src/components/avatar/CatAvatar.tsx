@@ -4,6 +4,8 @@ import CatBody, { MouthStyle } from './CatBody';
 import CatEyes, { AnyEyeStyle, EyeStyle, EyeColor, EyeSecondary } from './CatEyes';
 import CatBlush, { CheekStyle } from './CatBlush';
 import CatHeaddress, { HeaddressStyle } from './CatHeaddress';
+import CatShirt, { ShirtStyle } from './CatShirt';
+import CatAccessory, { AccessoryStyle } from './CatAccessory';
 
 export const BODY_COLORS = {
   cream:    '#F5DEB3',
@@ -39,6 +41,8 @@ interface Props {
   eyeSecondary?: EyeSecondary;
   cheekStyle?: CheekStyle;
   headdress?: HeaddressStyle;
+  shirt?: ShirtStyle;
+  accessory?: AccessoryStyle;
   wallColor?: WallColor | string;
   size?: number;
   viewBox?: string;
@@ -55,6 +59,8 @@ export default function CatAvatar({
   eyeSecondary = 'white',
   cheekStyle = 'blush',
   headdress = 'none',
+  shirt = 'none',
+  accessory = 'none',
   wallColor = 'none',
   size = 128,
   viewBox = '0 0 32 32',
@@ -74,8 +80,10 @@ export default function CatAvatar({
     <Svg width={size} height={size} viewBox={viewBox}>
       {wall !== 'transparent' && <Rect x={0} y={0} width={32} height={32} fill={wall} />}
       <CatBody color={resolvedBodyColor} snoutColor={resolveFill(snoutColor)} mouthStyle={mouthStyle} />
+      <CatShirt style={shirt} bodyColor={resolvedBodyColor} />
       <CatEyes style={moodEyes ?? eyes} primaryColor={eyePrimary} secondaryColor={eyeSecondary} bodyColor={resolvedBodyColor} />
       <CatBlush style={cheekStyle} />
+      <CatAccessory style={accessory} />
       <CatHeaddress style={headdress} />
     </Svg>
   );
