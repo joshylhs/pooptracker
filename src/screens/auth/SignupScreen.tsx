@@ -17,6 +17,7 @@ import AppText from '../../components/shared/Text';
 import Button from '../../components/shared/Button';
 import TextField from '../../components/shared/TextField';
 import { AvatarPicker, AvatarConfig, DEFAULT_AVATAR_CONFIG } from '../../components/avatar';
+import { BadgeKey } from '../../utils/badgeUtils';
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/i;
 
@@ -129,7 +130,7 @@ export default function SignupScreen() {
   return (
     <ScreenContainer>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
-        <AppText variant="screenTitle" style={styles.title}>
+        <AppText variant="screenTitle" style={[styles.title, { paddingTop: 16 }]}>
           Create account
         </AppText>
 
@@ -142,15 +143,7 @@ export default function SignupScreen() {
           autoCorrect={false}
           placeholder="you@example.com"
           error={emailError}
-        />
-
-        <TextField
-          label="Password"
-          value={password}
-          onChangeText={v => { setPassword(v); setPasswordError(null); }}
-          secureTextEntry
-          placeholder="6+ characters"
-          error={passwordError}
+          hint="Use a valid email, you might need it for password recovery!"
         />
 
         <TextField
@@ -159,10 +152,22 @@ export default function SignupScreen() {
           onChangeText={text => { setUsername(text); setUsernameError(null); }}
           autoCapitalize="none"
           autoCorrect={false}
-          placeholder="e.g. josh_l"
+          placeholder="superPooper_1"
           error={usernameError}
-          hint="3–20 characters: letters, numbers, underscores only"
+          hint="3-20 characters: letters, numbers, underscores only"
         />
+        
+        <TextField
+          label="Password"
+          value={password}
+          onChangeText={v => { setPassword(v); setPasswordError(null); }}
+          secureTextEntry
+          placeholder="••••••••"
+          error={passwordError}
+          hint="6+ characters"
+        />
+
+        
 
         <AppText variant="bodyEmphasis" style={styles.sectionTitle}>Your avatar</AppText>
         <View style={[styles.card, { backgroundColor: surface.surface, borderColor: surface.border }]}>
@@ -183,7 +188,13 @@ export default function SignupScreen() {
           <Animated.View style={{ height: avatarHeight, overflow: 'hidden' }}>
             <View style={[styles.divider, { backgroundColor: surface.border }]} />
             <View style={styles.pickerContainer}>
-              <AvatarPicker initial={avatarConfig} onConfirm={setAvatarConfig} headerBorderRadius={0} />
+              <AvatarPicker
+                initial={avatarConfig}
+                onConfirm={setAvatarConfig}
+                onChange={setAvatarConfig}
+                headerBorderRadius={0}
+                earnedBadges={new Set<BadgeKey>(['hd_flower', 'hd_bow', 'hd_striped_beanie', 'hd_tophat'])}
+              />
             </View>
           </Animated.View>
         </View>

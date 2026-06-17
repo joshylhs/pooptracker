@@ -4,7 +4,6 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import Svg, { Rect as SvgRect } from 'react-native-svg';
-import { BlurView } from '@react-native-community/blur';
 import MCI from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../hooks/useTheme';
 import AppText from '../shared/Text';
@@ -37,6 +36,7 @@ interface Props {
   initial: AvatarConfig;
   ctaLabel?: string;
   onConfirm: (config: AvatarConfig) => void;
+  onChange?: (config: AvatarConfig) => void;
   loading?: boolean;
   headerBorderRadius?: number;
   earnedBadges?: Set<BadgeKey>;
@@ -225,12 +225,12 @@ function ScrollRow({ children, colours, itemHeight }: ScrollRowProps) {
 
 // ── Main picker ───────────────────────────────────────────────────────────────
 
-export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = false, headerBorderRadius = 28, earnedBadges }: Props) {
+export default function AvatarPicker({ initial, ctaLabel, onConfirm, onChange, loading = false, headerBorderRadius = 28, earnedBadges }: Props) {
   const { surface, colours } = useTheme();
   const [cfg, setCfg] = useState<AvatarConfig>(initial);
 
   const set = <K extends keyof AvatarConfig>(key: K, value: AvatarConfig[K]) =>
-    setCfg(c => ({ ...c, [key]: value }));
+    setCfg(c => { const next = { ...c, [key]: value }; onChange?.(next); return next; });
 
   const cardStyle = { backgroundColor: surface.surface, borderColor: surface.border };
   const divStyle  = { backgroundColor: surface.border };
@@ -389,16 +389,9 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, loading = f
         </Pressable>
       </Animated.View>
 
-      {/* ── Blurred sticky header ── */}
+      {/* ── Sticky header background ── */}
       {headerH > 0 && (
-        <View style={[styles.stickyHeader, { height: headerH, borderRadius: headerBorderRadius }]} pointerEvents="none">
-          <BlurView
-            style={StyleSheet.absoluteFill}
-            blurType="dark"
-            blurAmount={15}
-            reducedTransparencyFallbackColor={surface.background}
-          />
-        </View>
+        <View style={[styles.stickyHeader, { height: headerH, borderRadius: headerBorderRadius, backgroundColor: surface.background }]} pointerEvents="none" />
       )}
 
       {/* Avatar card ── */}
@@ -642,9 +635,11 @@ function BadgeItemRow({
               }]}
             >
               <Animated.View style={{ transform: [{ scale: scales[i + 1] }] }}>
-                <Svg width={CHIP_SIZE - 12} height={CHIP_SIZE - 12} viewBox={vb}>
-                  {renderItem(key)}
-                </Svg>
+                <View style={{ transform: [{ scale: 0.5 }] }}>
+                  <Svg width={(CHIP_SIZE - 12) * 2} height={(CHIP_SIZE - 12) * 2} viewBox={vb}>
+                    {renderItem(key)}
+                  </Svg>
+                </View>
               </Animated.View>
               {isLocked && (
                 <View style={styles.lockOverlay}>
@@ -716,7 +711,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  sectionsScroll: { gap: 12, paddingBottom: 8, paddingHorizontal: 20 },
+  sectionsScroll: { gap: 12, paddingBottom: 32, paddingHorizontal: 20 },
 
   sections: {
     borderRadius: 16,
