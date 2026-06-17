@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -25,48 +24,6 @@ import type { ShirtStyle } from '../../components/avatar/CatShirt';
 import type { AccessoryStyle } from '../../components/avatar/CatAccessory';
 
 // ── Progress descriptions per badge key ───────────────────────────────────────
-
-function progressText(key: BadgeKey, ctx: BadgeEvalContext): string {
-  switch (key) {
-    case 'shirt_plain':           return `${ctx.totalLogs}/1 logs`;
-    case 'shirt_ringer':          return `${ctx.totalLogs}/10 logs`;
-    case 'shirt_collared':        return `${ctx.totalLogs}/25 logs`;
-    case 'shirt_striped':         return `${ctx.totalLogs}/50 logs`;
-    case 'shirt_suit':            return `${ctx.totalLogs}/75 logs`;
-    case 'shirt_tuxedo':          return `${ctx.totalLogs}/100 logs`;
-    case 'shirt_bathrobe':        return `${ctx.totalLogs}/200 logs`;
-    case 'acc_cucumber':          return `${ctx.totalLogs}/300 logs`;
-    case 'hd_tp_crown':           return `${ctx.totalLogs}/500 logs`;
-    case 'hd_batman':             return `${ctx.nightOwlCount}/1 night logs`;
-    case 'shirt_batman_suit':     return `${ctx.nightOwlCount}/3 night logs`;
-    case 'acc_spectacles_round':  return `${ctx.currentStreak}/7 day streak`;
-    case 'acc_spectacles_oval':   return `${ctx.currentStreak}/30 day streak`;
-    case 'acc_spectacles_tinted': return `${ctx.currentStreak}/100 day streak`;
-    case 'acc_monocle':           return `${ctx.currentStreak}/365 day streak`;
-    case 'hd_headband':           return `${ctx.mondayStreakWeeks}/7 consecutive Mondays`;
-    case 'hd_helmet':             return `${ctx.consistentCarlDays}/7 consistent days`;
-    case 'hd_beanie_1':           return 'Return after 3–6 day gap';
-    case 'hd_beanie_2':           return 'Return after 7–29 day gap';
-    case 'hd_beanie_3':           return 'Return after 30+ day gap';
-    case 'hd_party_1':            return `${ctx.friendCount}/1 friend`;
-    case 'hd_party_2':            return `${ctx.friendCount}/5 friends`;
-    case 'hd_party_3':            return `${ctx.friendCount}/10 friends`;
-    case 'hd_party_4':            return `${ctx.friendCount}/25 friends`;
-    case 'hd_trophy_bronze':      return '#1 on daily leaderboard';
-    case 'hd_trophy_silver':      return '#1 on weekly leaderboard';
-    case 'hd_trophy_gold':        return '#1 on monthly leaderboard';
-    case 'hd_trophy_platinum':    return '#1 on yearly leaderboard';
-    case 'acc_brooch_1':          return `${ctx.pokesSent}/1 poke sent`;
-    case 'acc_brooch_2':          return `${ctx.pokesSent}/5 pokes sent`;
-    case 'acc_brooch_3':          return `${ctx.pokesSent}/25 pokes sent`;
-    case 'acc_sheriff':           return `${ctx.pokesSent}/100 pokes sent`;
-    case 'acc_shield_1':          return `${ctx.pokesReceived}/1 poke received`;
-    case 'acc_shield_2':          return `${ctx.pokesReceived}/5 pokes received`;
-    case 'acc_shield_3':          return `${ctx.pokesReceived}/25 pokes received`;
-    case 'acc_shield_4':          return `${ctx.pokesReceived}/100 pokes received`;
-    default:                      return '';
-  }
-}
 
 function requirementText(key: BadgeKey): string {
   switch (key) {
@@ -203,7 +160,7 @@ const CATEGORIES: Category[] = [
   },
   {
     label: 'Leaderboard',
-    description: 'Reach #1 on the daily, weekly, monthly, or yearly board',
+    description: '#1 on leaderboard at the end of a day, week, month or year',
     icon: 'podium',
     keys: ['hd_trophy_bronze', 'hd_trophy_silver', 'hd_trophy_gold', 'hd_trophy_platinum'],
   },
@@ -296,6 +253,59 @@ function MiniChip({ badgeKey }: { badgeKey: BadgeKey }) {
   );
 }
 
+// ── Milestone bar — fades in when ctx arrives ─────────────────────────────────
+
+interface MilestoneBarProps {
+  milestone: MilestoneProgress | null;
+  surface: ReturnType<typeof useTheme>['surface'];
+}
+
+const MILESTONE_BAR_HEIGHT = 52;
+
+function MilestoneBar({ milestone, surface }: MilestoneBarProps) {
+  const animHeight = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(8)).current;
+
+  useEffect(() => {
+    if (milestone) {
+      Animated.parallel([
+        Animated.timing(animHeight, { toValue: MILESTONE_BAR_HEIGHT, duration: 350, useNativeDriver: false }),
+        Animated.timing(opacity,    { toValue: 1, duration: 350, useNativeDriver: true }),
+        Animated.timing(translateY, { toValue: 0, duration: 350, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [milestone]);
+
+  const fillRatio = milestone ? milestone.current / milestone.target : 0;
+
+  if (!milestone) return null;
+
+  return (
+    <Animated.View style={{ height: animHeight, overflow: 'hidden' }}>
+      {/* Render at full opacity:0 so layout engine measures true height before animation starts */}
+      <View style={styles.progressBarInner}>
+        <Animated.View style={[styles.milestoneRow, { opacity, transform: [{ translateY }] }]}>
+          <MiniChip badgeKey={milestone.key} />
+          <View style={styles.milestoneContent}>
+            <AppText variant="caption" colour="textSecondary" style={{ opacity: 0.7 }}>
+              {milestone.target - milestone.current} more to unlock {milestone.label}
+            </AppText>
+            <View style={styles.progressBarRow}>
+              <View style={[styles.progressBarTrack, { backgroundColor: surface.border }]}>
+                <View style={[styles.progressBarFill, { width: `${fillRatio * 100}%`, backgroundColor: '#7F77DD' }]} />
+              </View>
+              <AppText variant="caption" colour="textSecondary" style={styles.progressBarLabel}>
+                {milestone.current}/{milestone.target}
+              </AppText>
+            </View>
+          </View>
+        </Animated.View>
+      </View>
+    </Animated.View>
+  );
+}
+
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function AchievementsScreen() {
@@ -306,14 +316,20 @@ export default function AchievementsScreen() {
 
   const [earned, setEarned] = useState<Set<BadgeKey>>(new Set());
   const [ctx, setCtx] = useState<BadgeEvalContext | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  useEffect(() => {
+    if (!user || !ready) return;
     Promise.all([getUserProfile(user.uid), buildBadgeContext(user.uid)]).then(([profile, context]) => {
       setEarned(new Set((profile?.badges ?? []) as BadgeKey[]));
       setCtx(context);
     });
-  }, [user?.uid]);
+  }, [user?.uid, ready]);
 
   const earnedCount = earned.size;
   const totalCount = Object.keys(BADGE_META).length;
@@ -343,18 +359,19 @@ export default function AchievementsScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
+      <Animated.FlatList
+        data={CATEGORIES}
+        keyExtractor={cat => cat.label}
         contentContainerStyle={[styles.scroll, { paddingHorizontal: 24 }]}
         style={{ marginHorizontal: -24 }}
         scrollIndicatorInsets={{ right: 6 }}
         indicatorStyle="white"
-      >
-        {CATEGORIES.map(cat => {
+        ListFooterComponent={<View style={{ height: 32 }} />}
+        renderItem={({ item: cat }) => {
           const catEarned = cat.keys.filter(k => earned.has(k)).length;
           const milestone = ctx ? nextMilestone(cat.keys, earned, ctx) : null;
-          const fillRatio = milestone ? milestone.current / milestone.target : 0;
           return (
-            <View key={cat.label} style={styles.section}>
+            <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <MCI name={cat.icon} size={15} color={surface.textSecondary} />
                 <AppText variant="caption" colour="textSecondary" style={styles.sectionLabel}>
@@ -369,44 +386,17 @@ export default function AchievementsScreen() {
               </AppText>
 
               <View style={[styles.card, { backgroundColor: surface.surface, borderColor: surface.border }]}>
-                {/* Progress bar */}
-                {milestone && (
-                  <View style={[styles.progressBarInner, { borderBottomColor: surface.border }]}>
-                    <View style={styles.milestoneRow}>
-                      <MiniChip badgeKey={milestone.key} />
-                      <View style={styles.milestoneContent}>
-                        <AppText variant="caption" colour="textSecondary" style={{ opacity: 0.7 }}>
-                          {milestone.target - milestone.current} more to unlock {milestone.label}
-                        </AppText>
-                        <View style={styles.progressBarRow}>
-                          <View style={[styles.progressBarTrack, { backgroundColor: surface.border }]}>
-                            <View style={[styles.progressBarFill, { width: `${fillRatio * 100}%`, backgroundColor: '#7F77DD' }]} />
-                          </View>
-                          <AppText variant="caption" colour="textSecondary" style={styles.progressBarLabel}>
-                            {milestone.current}/{milestone.target}
-                          </AppText>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-                )}
-
+                <MilestoneBar milestone={milestone} surface={surface} />
                 <View style={styles.chipGrid}>
                   {cat.keys.map(key => (
-                    <BadgeChip
-                      key={key}
-                      badgeKey={key}
-                      earned={earned.has(key)}
-                    />
+                    <BadgeChip key={key} badgeKey={key} earned={earned.has(key)} />
                   ))}
                 </View>
               </View>
             </View>
           );
-        })}
-
-        <View style={{ height: 32 }} />
-      </ScrollView>
+        }}
+      />
     </ScreenContainer>
   );
 }
@@ -463,7 +453,7 @@ const styles = StyleSheet.create({
     right: 4,
   },
   progressBarRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  progressBarInner: { borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 12, paddingVertical: 10 },
+  progressBarInner: { paddingHorizontal: 12, paddingVertical: 10 },
   progressBarTrack: { flex: 1, flexDirection: 'row', height: 4, borderRadius: 2, overflow: 'hidden' },
   progressBarFill: { borderRadius: 2 },
   progressBarLabel: { opacity: 0.6, minWidth: 28, textAlign: 'right' },
