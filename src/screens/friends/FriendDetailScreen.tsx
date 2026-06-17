@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  PanResponder,
-  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
@@ -31,7 +29,6 @@ import CalendarHeatmap from '../../components/heatmap/CalendarHeatmap';
 import BristolDistributionChart from '../../components/home/BristolDistributionChart';
 import WeeklyFrequencyChart from '../../components/home/WeeklyFrequencyChart';
 import Button from '../../components/shared/Button';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = NativeStackScreenProps<FriendsStackParamList, 'FriendDetail'>;
 
@@ -63,7 +60,6 @@ const SIGNAL_META: Record<FriendSignalStatus, { colour: string; label: string; i
 
 export default function FriendDetailScreen({ route, navigation }: Props) {
   const { colours, surface } = useTheme();
-  const { bottom: bottomInset } = useSafeAreaInsets();
   const { friendId } = route.params;
   const remove = useFriendsStore(s => s.remove);
   const trustedFriendIds = useFriendsStore(s => s.trustedFriendIds);
@@ -113,15 +109,6 @@ export default function FriendDetailScreen({ route, navigation }: Props) {
   const todayVal = todayCount(summaries);
   const weekly = weeklyAverage(summaries);
 
-  const pan = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => g.dy > 8 && Math.abs(g.dy) > Math.abs(g.dx),
-      onPanResponderRelease: (_, g) => {
-        if (g.dy > 60 || g.vy > 0.4) navigation.goBack();
-      },
-    }),
-  ).current;
-
   const handleUnfriend = async () => {
     setUnfriending(true);
     try {
@@ -133,25 +120,17 @@ export default function FriendDetailScreen({ route, navigation }: Props) {
   };
 
   return (
-    <View style={styles.overlay}>
-      {/* Tap the dim area to dismiss */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={() => navigation.goBack()} />
-
-      <View style={[styles.card, { paddingBottom: bottomInset + 16, backgroundColor: surface.background }]}>
-        {/* Drag handle — larger hit area so the gesture fires reliably */}
-        <View style={styles.handleArea} {...pan.panHandlers}>
-          <View style={styles.handle} />
-        </View>
-
-        {loading ? (
-          <ActivityIndicator style={styles.spinner} />
-        ) : (
-          <ScrollView
-            contentContainerStyle={styles.scroll}
-            style={{ marginHorizontal: -16 }}
-            scrollIndicatorInsets={{ right: 6 }}
-            indicatorStyle="white"
-          >
+    <View style={[styles.root, { backgroundColor: surface.background }]}>
+      <View style={[styles.handle, { backgroundColor: surface.border }]} />
+      {loading ? (
+        <ActivityIndicator style={styles.spinner} />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          style={{ marginHorizontal: -16 }}
+          scrollIndicatorInsets={{ right: 6 }}
+          indicatorStyle="white"
+        >
             <View style={styles.identity}>
               {profile?.avatarConfig ? (
                 <CatAvatarCircle config={profile.avatarConfig} size={64} />
@@ -243,45 +222,32 @@ export default function FriendDetailScreen({ route, navigation }: Props) {
               onPress={handleUnfriend}
               loading={unfriending}
             />
-          </ScrollView>
-        )}
-      </View>
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  root: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    justifyContent: 'flex-end',
-  },
-  card: {
-    backgroundColor: '#3c3a38',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
     paddingTop: 12,
     paddingHorizontal: 16,
-    maxHeight: '82%',
-  },
-  handleArea: {
-    alignItems: 'center',
-    paddingVertical: 10,
-    marginBottom: 10,
   },
   handle: {
+    alignSelf: 'center',
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#7A6F60',
+    marginBottom: 10,
   },
   spinner: { paddingVertical: 48 },
-  scroll: { gap: 16, paddingBottom: 8, paddingHorizontal: 16 },
+  scroll: { gap: 12, paddingBottom: 32, paddingHorizontal: 16 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   nameBlock: { gap: 8 },
   pokePill: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  stats: { flexDirection: 'row', gap: 8 },
-  insightsCard: { borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
+  stats: { flexDirection: 'row', gap: 12 },
+  insightsCard: { borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
   insightsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
   signalPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
   signalLabel: { fontWeight: '600' },

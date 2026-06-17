@@ -113,6 +113,7 @@ export default function LogEntryModal({
       onRequestClose={() => onClose()}
     >
       <View style={[styles.root, { backgroundColor: surface.background }]}>
+        <View style={[styles.handle, { backgroundColor: surface.border }]} />
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={styles.scroll}
@@ -184,7 +185,7 @@ export default function LogEntryModal({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1},
   scroll: { padding: 24, gap: 12 },
   headerRow: {
     flexDirection: 'row',
@@ -204,4 +205,5 @@ const styles = StyleSheet.create({
   },
   notesInput: { minHeight: 60, textAlignVertical: 'top' },
   actions: { gap: 12, marginTop: 8 },
+  handle: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, marginTop: 8, marginBottom: 4 },
 });

@@ -16,7 +16,7 @@ export default function FriendsStack() {
       <Stack.Screen
         name="FriendDetail"
         component={FriendDetailScreen}
-        options={{ presentation: 'transparentModal', animation: 'slide_from_bottom', gestureEnabled: true }}
+        options={{ presentation: 'modal', gestureEnabled: true }}
       />
     </Stack.Navigator>
   );
