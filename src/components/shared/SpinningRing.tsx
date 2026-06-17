@@ -7,16 +7,29 @@ interface Props {
   avatarSize: number; // inner content size — gap = (size - avatarSize) / 2
   color?: string;
   children: React.ReactNode;
+  dashCount?: number;   // number of dash segments (default 32)
+  dashRatio?: number;   // dash fraction of one segment 0–1 (default 0.5)
+  rounded?: boolean;    // rounded dash caps (default false)
+  duration?: number;    // rotation duration ms (default 7000)
 }
 
-export default function SpinningRing({ size, avatarSize, color = '#7F77DD', children }: Props) {
+export default function SpinningRing({
+  size,
+  avatarSize,
+  color = '#7F77DD',
+  children,
+  dashCount = 32,
+  dashRatio = 0.5,
+  rounded = false,
+  duration = 7000,
+}: Props) {
   const rotation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.loop(
       Animated.timing(rotation, {
         toValue: 1,
-        duration: 7000,
+        duration,
         easing: Easing.linear,
         useNativeDriver: true,
       })
@@ -28,8 +41,9 @@ export default function SpinningRing({ size, avatarSize, color = '#7F77DD', chil
   const strokeWidth = 2;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  // more dashes, smaller gaps
-  const dashLen = circumference / 32;
+  const segmentLen = circumference / dashCount;
+  const dashLen = segmentLen * dashRatio;
+  const gapLen = segmentLen * (1 - dashRatio);
 
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
@@ -49,7 +63,8 @@ export default function SpinningRing({ size, avatarSize, color = '#7F77DD', chil
             r={radius}
             stroke={color}
             strokeWidth={strokeWidth}
-            strokeDasharray={`${dashLen} ${dashLen}`}
+            strokeDasharray={`${dashLen} ${gapLen}`}
+            strokeLinecap={rounded ? 'round' : 'butt'}
             fill="none"
           />
         </Svg>
