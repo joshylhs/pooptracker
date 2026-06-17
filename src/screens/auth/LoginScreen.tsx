@@ -84,7 +84,7 @@ export default function LoginScreen() {
         if (!addr) return;
         try {
           await sendPasswordReset(addr);
-          Alert.alert('Email sent', `Check ${addr} for a reset link.`);
+          Alert.alert('Email sent', `Check ${addr} for a reset link. If you don't see it, check your spam folder!`);
         } catch (e) {
           Alert.alert('Error', friendlyAuthError(e));
         }
