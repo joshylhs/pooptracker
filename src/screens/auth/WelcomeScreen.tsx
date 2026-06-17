@@ -42,7 +42,7 @@ export default function WelcomeScreen({ navigation }: Props) {
       <View style={[styles.privacyNote, { backgroundColor: surface.surface, borderColor: surface.border }]}>
         <MCI name="shield-account" size={14} color={surface.textSecondary} />
         <AppText variant="caption" colour="textSecondary" style={styles.privacyText}>
-          Shared details only with friends you trust!
+          Share details only with friends you trust!
         </AppText>
       </View>
 
@@ -63,8 +63,8 @@ const styles = StyleSheet.create({
   appIcon: { width: 48, height: 48, borderRadius: 12 },
   title: { fontSize: 32 },
   subtitle: { textAlign: 'center', marginBottom: 28 },
-  featureList: { gap: 14, marginBottom: 20, alignSelf: 'stretch' },
-  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  featureList: { gap: 14, marginBottom: 20, alignSelf: 'center' },
+  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 14, width: 318 },
   featureIconWrap: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   featureText: { flex: 1 },
   privacyNote: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 28, alignSelf: 'center' },
