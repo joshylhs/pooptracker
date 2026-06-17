@@ -268,7 +268,7 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
       {/* Body */}
       {friends.length === 0 ? (
         <View style={styles.empty}>
-          <AppText variant="caption" colour="textSecondary">Add a friend to start comparing</AppText>
+          <AppText variant="caption" colour="textSecondary">Add a friend to start comparing!</AppText>
         </View>
       ) : !visibleFriend ? null : loading ? (
         <Animated.View style={{ opacity: bodyAnim }}>

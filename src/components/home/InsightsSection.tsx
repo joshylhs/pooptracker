@@ -102,7 +102,7 @@ export default function InsightsSection({ logs, onToggle }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     overflow: 'hidden',
   },

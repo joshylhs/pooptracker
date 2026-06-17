@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   barTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     overflow: 'hidden',
     marginTop: -4,

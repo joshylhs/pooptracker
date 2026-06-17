@@ -91,7 +91,7 @@ export default function FriendRow({ rank, entry, mood, onPress }: FriendRowProps
               <Animated.View
                 style={[
                   styles.pokeBtn,
-                  { borderColor: surface.border },
+                  { backgroundColor: surface.border, borderWidth: 0 },
                   (poking || poked) && styles.pokeBtnDim,
                   { transform: [{ scale: pokeScale }] },
                 ]}
