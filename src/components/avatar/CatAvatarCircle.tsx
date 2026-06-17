@@ -61,28 +61,37 @@ export default function CatAvatarCircle({ config, size, mood = 'default' }: Prop
   // Scale zzz font size proportionally to avatar size
   const zSize = Math.max(8, Math.round(size * 0.18));
 
+  const renderSize = size * 2;
+  const avatarProps = {
+    bodyColor: config.bodyColor,
+    snoutColor: config.snoutColor,
+    eyes: config.eyeStyle,
+    eyePrimary: config.eyePrimary,
+    eyeSecondary: config.eyeSecondary,
+    cheekStyle: config.cheekStyle,
+    headdress: config.headdress,
+    shirt: config.shirt,
+    accessory: config.accessory,
+    wallColor: config.wallColor,
+    size: renderSize,
+    viewBox: VIEWBOX,
+    moodEyes,
+    mouthStyle,
+  };
+
   return (
     <View style={{ width: size, height: size }}>
       {/* Circle is fixed — only the SVG inside translates */}
       <View style={[styles.circle, { width: size, height: size, borderRadius: size / 2, backgroundColor: wallBg }]}>
-        <Animated.View style={{ transform: [{ translateY }] }}>
-          <CatAvatar
-            bodyColor={config.bodyColor}
-            snoutColor={config.snoutColor}
-            eyes={config.eyeStyle}
-            eyePrimary={config.eyePrimary}
-            eyeSecondary={config.eyeSecondary}
-            cheekStyle={config.cheekStyle}
-            headdress={config.headdress}
-            shirt={config.shirt}
-            accessory={config.accessory}
-            wallColor={config.wallColor}
-            size={size}
-            viewBox={VIEWBOX}
-            moodEyes={moodEyes}
-            mouthStyle={mouthStyle}
-          />
-        </Animated.View>
+        {mood === 'default' ? (
+          <View style={{ transform: [{ scale: 0.5 }] }}>
+            <CatAvatar {...avatarProps} />
+          </View>
+        ) : (
+          <Animated.View style={{ transform: [{ translateY: Animated.multiply(translateY, 2) }, { scale: 0.5 }] }}>
+            <CatAvatar {...avatarProps} />
+          </Animated.View>
+        )}
       </View>
       {/* zzz overlay sits outside the circle so it isn't clipped */}
       {mood === 'inactive' && (

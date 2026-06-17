@@ -32,27 +32,23 @@ export default function CatHeaddress({ style = 'none' }: Props) {
   }
 
   if (style === 'bow') {
-    // X shape: two diagonals crossing at centre (cols 14–17), rows 0–4
-    // Each stripe is 2px wide, stepping ~2px inward per row
+    const C = '#CC2200';
     return (
       <G>
-        {/* Top-left → bottom-right diagonal */}
-        <Rect x={7}  y={0} width={2} height={1} fill="#FF8FAB" />
-        <Rect x={9}  y={1} width={2} height={1} fill="#FF8FAB" />
-        <Rect x={11} y={2} width={2} height={1} fill="#FF8FAB" />
-        <Rect x={13} y={3} width={2} height={1} fill="#FF8FAB" />
-        {/* Top-right → bottom-left diagonal */}
-        <Rect x={23} y={0} width={2} height={1} fill="#FF8FAB" />
-        <Rect x={21} y={1} width={2} height={1} fill="#FF8FAB" />
-        <Rect x={19} y={2} width={2} height={1} fill="#FF8FAB" />
-        <Rect x={17} y={3} width={2} height={1} fill="#FF8FAB" />
-        {/* Centre knot at crossing point */}
-        <Rect x={14} y={3} width={4} height={2} fill="#E0607E" />
-        {/* Lower arms spreading out */}
-        <Rect x={11} y={4} width={2} height={1} fill="#FF8FAB" />
-        <Rect x={19} y={4} width={2} height={1} fill="#FF8FAB" />
-        <Rect x={9}  y={5} width={2} height={1} fill="#FF8FAB" />
-        <Rect x={21} y={5} width={2} height={1} fill="#FF8FAB" />
+        {/* left wing */}
+        <Rect x={11} y={0} width={2} height={1} fill={C} />
+        <Rect x={11} y={1} width={3} height={1} fill={C} />
+        <Rect x={11} y={2} width={9} height={1} fill={C} />
+        <Rect x={11} y={3} width={9} height={1} fill={C} />
+        <Rect x={11} y={4} width={3} height={1} fill={C} />
+        <Rect x={10} y={5} width={1} height={1} fill={C} />
+        <Rect x={12} y={5} width={1} height={1} fill={C} />
+        {/* right wing */}
+        <Rect x={18} y={0} width={2} height={1} fill={C} />
+        <Rect x={17} y={1} width={3} height={1} fill={C} />
+        <Rect x={17} y={4} width={3} height={1} fill={C} />
+        <Rect x={18} y={5} width={1} height={1} fill={C} />
+        <Rect x={20} y={5} width={1} height={1} fill={C} />
       </G>
     );
   }
@@ -135,25 +131,24 @@ export default function CatHeaddress({ style = 'none' }: Props) {
     const B = '#111118';
     return (
       <G>
+        {/* ear tips */}
         <Rect x={6}  y={0}  width={1}  height={1} fill={B} /><Rect x={25} y={0}  width={1}  height={1} fill={B} />
         <Rect x={5}  y={1}  width={3}  height={1} fill={B} /><Rect x={24} y={1}  width={3}  height={1} fill={B} />
         <Rect x={5}  y={2}  width={5}  height={1} fill={B} /><Rect x={22} y={2}  width={5}  height={1} fill={B} />
         <Rect x={5}  y={3}  width={6}  height={1} fill={B} /><Rect x={21} y={3}  width={6}  height={1} fill={B} />
-        <Rect x={5}  y={4}  width={22} height={1} fill={B} />
-        <Rect x={5}  y={5}  width={22} height={1} fill={B} />
-        <Rect x={5}  y={6}  width={22} height={1} fill={B} />
-        <Rect x={5}  y={7}  width={22} height={1} fill={B} />
-        <Rect x={5}  y={8}  width={22} height={1} fill={B} />
-        <Rect x={5}  y={9}  width={22} height={1} fill={B} />
-        <Rect x={5}  y={10} width={22} height={1} fill={B} />
+        {/* solid band rows 4–10 */}
+        <Rect x={5}  y={4}  width={22} height={7} fill={B} />
+        {/* eye cutouts row 11 */}
         <Rect x={5}  y={11} width={4}  height={1} fill={B} /><Rect x={12} y={11} width={8}  height={1} fill={B} /><Rect x={23} y={11} width={4}  height={1} fill={B} />
         <Rect x={5}  y={12} width={5}  height={1} fill={B} /><Rect x={13} y={12} width={6}  height={1} fill={B} /><Rect x={22} y={12} width={5}  height={1} fill={B} />
-        <Rect x={5}  y={13} width={22} height={1} fill={B} />
-        <Rect x={5}  y={14} width={22} height={1} fill={B} />
+        {/* solid band rows 13–14 */}
+        <Rect x={5}  y={13} width={22} height={2} fill={B} />
+        {/* nose cutout rows 15–16 */}
         <Rect x={5}  y={15} width={7}  height={1} fill={B} /><Rect x={13} y={15} width={5}  height={1} fill={B} /><Rect x={19} y={15} width={8}  height={1} fill={B} />
         <Rect x={5}  y={16} width={7}  height={1} fill={B} /><Rect x={14} y={16} width={3}  height={1} fill={B} /><Rect x={19} y={16} width={8}  height={1} fill={B} />
-        <Rect x={5}  y={17} width={7}  height={1} fill={B} /><Rect x={19} y={17} width={8}  height={1} fill={B} />
-        <Rect x={5}  y={18} width={7}  height={1} fill={B} /><Rect x={19} y={18} width={8}  height={1} fill={B} />
+        {/* solid band rows 17–18 */}
+        <Rect x={5}  y={17} width={7}  height={2} fill={B} /><Rect x={19} y={17} width={8}  height={2} fill={B} />
+        {/* chin taper */}
         <Rect x={6}  y={19} width={6}  height={1} fill={B} /><Rect x={19} y={19} width={7}  height={1} fill={B} />
         <Rect x={7}  y={20} width={6}  height={1} fill={B} /><Rect x={18} y={20} width={7}  height={1} fill={B} />
         <Rect x={9}  y={21} width={5}  height={1} fill={B} /><Rect x={17} y={21} width={6}  height={1} fill={B} />
