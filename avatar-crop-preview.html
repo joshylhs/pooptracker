@@ -1471,6 +1471,130 @@ function buildBadgeSection() {
 </script>
 
 <hr class="divider">
+<h2>Zzz Animation Options</h2>
+<p class="sub">Three animation styles for the sleeping z's. Each shows the inactive cat with a different z animation approach.</p>
+
+<style>
+  .zzz-demo-row { display: flex; flex-wrap: wrap; gap: 40px; margin-bottom: 24px; }
+  .zzz-demo-card { display: flex; flex-direction: column; align-items: center; gap: 12px; background: #12122a; border: 1px solid #2a2a4a; border-radius: 12px; padding: 20px; min-width: 160px; }
+  .zzz-demo-title { font-size: 13px; font-weight: 700; color: #a89be8; }
+  .zzz-demo-desc { font-size: 11px; color: #666; text-align: center; max-width: 140px; line-height: 1.5; }
+  .zzz-wrap { position: relative; width: 96px; height: 96px; }
+  .zzz-circle { border-radius: 50%; overflow: hidden; width: 96px; height: 96px; }
+  .zzz-overlay { position: absolute; top: 0; left: 0; width: 96px; height: 96px; pointer-events: none; }
+
+  /* Option 1: Float upward along arc */
+  .z-float { position: absolute; font-weight: 700; color: #B0C4DE; opacity: 0; }
+  /* small z — bottom of arc, rises up-right */
+  .z-float.z1 { right: 22px; top: 30px; font-size: 10px; animation: floatArc1 2.4s ease-in-out infinite 0s; }
+  /* medium z — middle of arc */
+  .z-float.z2 { right: 12px; top: 18px; font-size: 13px; animation: floatArc2 2.4s ease-in-out infinite 0.8s; }
+  /* large z — top of arc, rises up-right */
+  .z-float.z3 { right: 2px; top: 6px; font-size: 16px; animation: floatArc3 2.4s ease-in-out infinite 1.6s; }
+  @keyframes floatArc1 {
+    0%   { opacity: 0;    transform: translate(0px, 0px); }
+    15%  { opacity: 0.55; }
+    70%  { opacity: 0.85; transform: translate(4px, -12px); }
+    100% { opacity: 0;    transform: translate(6px, -18px); }
+  }
+  @keyframes floatArc2 {
+    0%   { opacity: 0;    transform: translate(0px, 0px); }
+    15%  { opacity: 0.65; }
+    70%  { opacity: 0.85; transform: translate(4px, -12px); }
+    100% { opacity: 0;    transform: translate(6px, -18px); }
+  }
+  @keyframes floatArc3 {
+    0%   { opacity: 0;    transform: translate(0px, 0px); }
+    15%  { opacity: 0.75; }
+    70%  { opacity: 0.85; transform: translate(4px, -12px); }
+    100% { opacity: 0;    transform: translate(6px, -18px); }
+  }
+
+  /* Option 2: Pulse opacity */
+  .z-pulse { position: absolute; font-weight: 700; color: #B0C4DE; }
+  .z-pulse.z1 { right: 18px; top: 24px; font-size: 11px; opacity: 0; animation: pulse1 3s ease-in-out infinite; }
+  .z-pulse.z2 { right: 10px; top: 16px; font-size: 13px; opacity: 0; animation: pulse2 3s ease-in-out infinite; }
+  .z-pulse.z3 { right: 2px; top: 8px; font-size: 15px; opacity: 0; animation: pulse3 3s ease-in-out infinite; }
+  @keyframes pulse1 { 0%{opacity:0} 10%{opacity:0.55} 60%{opacity:0.55} 75%{opacity:0} 100%{opacity:0} }
+  @keyframes pulse2 { 0%{opacity:0} 25%{opacity:0} 35%{opacity:0.7} 60%{opacity:0.7} 75%{opacity:0} 100%{opacity:0} }
+  @keyframes pulse3 { 0%{opacity:0} 45%{opacity:0} 55%{opacity:0.85} 65%{opacity:0.85} 75%{opacity:0} 100%{opacity:0} }
+
+  /* Option 3: Scale + fade */
+  .z-scale { position: absolute; font-weight: 700; color: #B0C4DE; transform-origin: center; }
+  .z-scale.z1 { right: 14px; top: 18px; font-size: 12px; opacity: 0; animation: scaleFade 2.4s ease-out infinite 0s; }
+  .z-scale.z2 { right: 8px; top: 12px; font-size: 12px; opacity: 0; animation: scaleFade 2.4s ease-out infinite 0.8s; }
+  .z-scale.z3 { right: 2px; top: 6px; font-size: 12px; opacity: 0; animation: scaleFade 2.4s ease-out infinite 1.6s; }
+  @keyframes scaleFade {
+    0%   { opacity: 0;    transform: scale(0.6); }
+    15%  { opacity: 0.85; transform: scale(1.0); }
+    80%  { opacity: 0;    transform: scale(1.5); }
+    100% { opacity: 0;    transform: scale(1.5); }
+  }
+</style>
+
+<div class="zzz-demo-row">
+  <!-- Option 1: Float upward -->
+  <div class="zzz-demo-card">
+    <div class="zzz-demo-title">1 — Float upward</div>
+    <div class="zzz-wrap">
+      <div class="zzz-circle" id="zzzCircle1"></div>
+      <div class="zzz-overlay">
+        <span class="z-float z1">z</span>
+        <span class="z-float z2">z</span>
+        <span class="z-float z3">z</span>
+      </div>
+    </div>
+    <div class="zzz-demo-desc">Each z rises and fades independently, staggered. Feels like breath.</div>
+  </div>
+
+  <!-- Option 2: Pulse opacity -->
+  <div class="zzz-demo-card">
+    <div class="zzz-demo-title">2 — Pulse in sequence</div>
+    <div class="zzz-wrap">
+      <div class="zzz-circle" id="zzzCircle2"></div>
+      <div class="zzz-overlay">
+        <span class="z-pulse z1">z</span>
+        <span class="z-pulse z2">z</span>
+        <span class="z-pulse z3">z</span>
+      </div>
+    </div>
+    <div class="zzz-demo-desc">z's appear one by one, hold, then all fade out together.</div>
+  </div>
+
+  <!-- Option 3: Scale + fade -->
+  <div class="zzz-demo-card">
+    <div class="zzz-demo-title">3 — Scale + fade</div>
+    <div class="zzz-wrap">
+      <div class="zzz-circle" id="zzzCircle3"></div>
+      <div class="zzz-overlay">
+        <span class="z-scale z1">z</span>
+        <span class="z-scale z2">z</span>
+        <span class="z-scale z3">z</span>
+      </div>
+    </div>
+    <div class="zzz-demo-desc">Each z grows and fades out like a bubble floating away.</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Render the inactive cat into each zzz demo circle
+  const ids = ['zzzCircle1', 'zzzCircle2', 'zzzCircle3'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = renderAvatar({
+      bodyColor: 'black', snoutColor: 'white', eyeStyle: 'closed',
+      eyePrimary: '#2C1810', eyeSecondary: '#1a1a1a',
+      cheekStyle: 'none', headdressStyle: 'none',
+      shirtStyle: 'none', accessoryStyle: 'none',
+      wallColor: 'dusk', mouthStyle: 'flat',
+    }, 96, '0 -4 32 32');
+  });
+})();
+</script>
+
+<hr class="divider">
 <h2>Full Avatar View</h2>
 <p class="sub">No circle clip — shows the full SVG so you can judge shirt and accessory visibility below the crop line.</p>
 <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-bottom:20px;background:#12122a;padding:14px 18px;border-radius:10px;border:1px solid #2a2a4a;">

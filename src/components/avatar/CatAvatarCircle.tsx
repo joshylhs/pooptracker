@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, View, StyleSheet, Text } from 'react-native';
+import { Animated, Easing, View, StyleSheet } from 'react-native';
 import CatAvatar, { WALL_COLORS } from './CatAvatar';
 import { AvatarConfig } from './AvatarPicker';
 import { Mood } from '../../utils/moodUtils';
@@ -34,6 +34,47 @@ const ANIM_CONFIG: Record<Mood, { amplitude: number; upMs: number; downMs: numbe
   proud:    { amplitude: 4, upMs: 800,  downMs: 600 },
   default:  null,
 };
+
+function ZLetter({ fontSize, delay, right, top }: { fontSize: number; delay: number; right: number; top: number }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translate = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(opacity, { toValue: 0.85, duration: 300, useNativeDriver: true }),
+            Animated.delay(800),
+            Animated.timing(opacity, { toValue: 0, duration: 600, useNativeDriver: true }),
+          ]),
+          Animated.timing(translate, { toValue: { x: fontSize * 0.4, y: -fontSize * 1.2 }, duration: 1700, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(opacity,   { toValue: 0, duration: 0, useNativeDriver: true }),
+          Animated.timing(translate, { toValue: { x: 0, y: 0 }, duration: 0, useNativeDriver: true }),
+        ]),
+        Animated.delay(2400 - delay - 1700),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  return (
+    <Animated.Text style={{
+      position: 'absolute',
+      right,
+      top,
+      fontSize,
+      fontWeight: '700',
+      color: '#B0C4DE',
+      opacity,
+      transform: translate.getTranslateTransform(),
+    }}>z</Animated.Text>
+  );
+}
 
 export default function CatAvatarCircle({ config, size, mood = 'default' }: Props) {
   const wallBg = config.wallColor === 'none' ? 'transparent' : WALL_COLORS[config.wallColor];
@@ -96,9 +137,9 @@ export default function CatAvatarCircle({ config, size, mood = 'default' }: Prop
       {/* zzz overlay sits outside the circle so it isn't clipped */}
       {mood === 'inactive' && (
         <View style={[styles.zzzOverlay, { right: -zSize * 0.6, top: size * 0.05 }]} pointerEvents="none">
-          <Text style={[styles.zzz, { fontSize: zSize * 0.7, opacity: 0.55 }]}>z</Text>
-          <Text style={[styles.zzz, { fontSize: zSize * 0.85, opacity: 0.7, marginLeft: zSize * 0.3, marginTop: -zSize * 0.15 }]}>z</Text>
-          <Text style={[styles.zzz, { fontSize: zSize, opacity: 0.85, marginLeft: zSize * 0.3, marginTop: -zSize * 0.15 }]}>z</Text>
+          <ZLetter fontSize={zSize * 0.7}  delay={0}    right={zSize * 0.9} top={zSize * 1.2} />
+          <ZLetter fontSize={zSize * 0.85} delay={800}  right={zSize * 0.4} top={zSize * 0.5} />
+          <ZLetter fontSize={zSize}        delay={1600} right={0}           top={0} />
         </View>
       )}
     </View>
