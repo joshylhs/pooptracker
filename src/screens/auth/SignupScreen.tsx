@@ -185,7 +185,7 @@ export default function SignupScreen() {
               style={styles.switch}
             />
           </View>
-          <Animated.View style={{ height: avatarHeight, overflow: 'hidden' }}>
+          <Animated.View style={{ height: avatarHeight, overflow: 'hidden', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
             <View style={[styles.divider, { backgroundColor: surface.border }]} />
             <View style={styles.pickerContainer}>
               <AvatarPicker

@@ -33,6 +33,7 @@ export default function AvatarPickerModal({ visible, current, onSave, onClose, s
           loading={saving}
           earnedBadges={earnedBadges}
           headerBorderRadius={0}
+          bottomPadding={32}
         />
       </View>
     </Modal>

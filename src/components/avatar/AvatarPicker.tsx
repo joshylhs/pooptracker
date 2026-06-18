@@ -40,6 +40,7 @@ interface Props {
   loading?: boolean;
   headerBorderRadius?: number;
   earnedBadges?: Set<BadgeKey>;
+  bottomPadding?: number;
 }
 
 const BODY_COLOR_KEYS:  BodyColor[]      = Object.keys(BODY_COLORS) as BodyColor[];
@@ -225,7 +226,7 @@ function ScrollRow({ children, colours, itemHeight }: ScrollRowProps) {
 
 // ── Main picker ───────────────────────────────────────────────────────────────
 
-export default function AvatarPicker({ initial, ctaLabel, onConfirm, onChange, loading = false, headerBorderRadius = 28, earnedBadges }: Props) {
+export default function AvatarPicker({ initial, ctaLabel, onConfirm, onChange, loading = false, headerBorderRadius = 28, earnedBadges, bottomPadding = 0 }: Props) {
   const { surface, colours } = useTheme();
   const [cfg, setCfg] = useState<AvatarConfig>(initial);
 
@@ -257,7 +258,7 @@ export default function AvatarPicker({ initial, ctaLabel, onConfirm, onChange, l
       {/* ── Scrollable trait sections ── */}
       <ScrollView
         ref={verticalScrollRef}
-        contentContainerStyle={[styles.sectionsScroll, { paddingTop: headerH || 200 }]}
+        contentContainerStyle={[styles.sectionsScroll, { paddingTop: headerH || 200, paddingBottom: bottomPadding }]}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled
         onScroll={onVerticalScroll}
@@ -711,7 +712,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  sectionsScroll: { gap: 12, paddingBottom: 32, paddingHorizontal: 20 },
+  sectionsScroll: { gap: 12, paddingBottom: 20, paddingHorizontal: 20 },
 
   sections: {
     borderRadius: 16,
