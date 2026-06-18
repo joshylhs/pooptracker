@@ -59,14 +59,13 @@ export default function HomeScreen() {
   const insightsYRef = useRef(0);
   const preExpandY = useRef(0);
 
+
   const handleInsightsToggle = (expanded: boolean) => {
     if (expanded) {
       preExpandY.current = scrollYRef.current;
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({ y: Math.max(0, insightsYRef.current - 8), animated: true });
-      }, 30);
-    } else {
-      scrollRef.current?.scrollTo({ y: preExpandY.current, animated: true });
+      });
     }
   };
 

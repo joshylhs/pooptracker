@@ -202,9 +202,7 @@ export default function BristolDistributionChart({ logs, windowDays = 90 }: Prop
       </View>
 
       <AppText style={styles.hint}>Hold a segment to see the breakdown</AppText>
-      {untypedCount > 0 && (
-        <AppText style={styles.untypedNote}>{untypedCount} untyped</AppText>
-      )}
+   
       <AppText variant="caption" colour="textSecondary" style={styles.footnote}>
         Last {windowDays} days · {total} log{total !== 1 ? 's' : ''}
       </AppText>

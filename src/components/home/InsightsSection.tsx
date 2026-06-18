@@ -28,12 +28,12 @@ export default function InsightsSection({ logs, onToggle }: Props) {
   const toggle = () => {
     const newExpanded = !expanded;
     LayoutAnimation.configureNext({
-      duration: 220,
+      duration: 400,
       create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
       update: { type: LayoutAnimation.Types.easeInEaseOut },
       delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
     });
-    Animated.timing(rotateAnim, { toValue: newExpanded ? 1 : 0, duration: 220, useNativeDriver: true }).start();
+    Animated.timing(rotateAnim, { toValue: newExpanded ? 1 : 0, duration: 400, useNativeDriver: true }).start();
     setExpanded(newExpanded);
     onToggle?.(newExpanded);
   };
