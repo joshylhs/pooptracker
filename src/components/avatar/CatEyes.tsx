@@ -15,13 +15,14 @@ export const EYE_COLORS: Record<EyeColor, string> = {
   orange: '#B85A00',
 };
 
-export type EyeSecondary = 'white' | 'green' | 'pink' | 'yellow';
+export type EyeSecondary = 'white' | 'green' | 'pink' | 'yellow' | 'lightblue';
 
 export const EYE_SECONDARY_COLORS: Record<EyeSecondary, string> = {
-  white:  '#FFFFFF',
-  green:  '#A8D8A8',
-  pink:   '#FFB3C6',
-  yellow: '#FFE066',
+  white:     '#FFFFFF',
+  green:     '#A8D8A8',
+  pink:      '#FFB3C6',
+  yellow:    '#FFE066',
+  lightblue: '#A8D4F0',
 };
 
 interface Props {
@@ -29,11 +30,21 @@ interface Props {
   primaryColor?: EyeColor;
   secondaryColor?: EyeSecondary;
   bodyColor?: string;
+  baseEyeStyle?: EyeStyle;
 }
 
-export default function CatEyes({ style = 'round', primaryColor = 'dark', secondaryColor = 'white', bodyColor = '#F5DEB3' }: Props) {
+function blendWhite(hex: string, pct: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const mix = (v: number) => Math.round(v + (255 - v) * pct);
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+}
+
+export default function CatEyes({ style = 'round', primaryColor = 'dark', secondaryColor = 'white', bodyColor = '#F5DEB3', baseEyeStyle = 'round' }: Props) {
   const p = EYE_COLORS[primaryColor];
   const s = EYE_SECONDARY_COLORS[secondaryColor];
+  const sparkle = blendWhite(s, 0.5); // eye sparkle pixel: lighter than highlight
 
   if (style === 'closed') {
     // Single horizontal line for each eye — sleepy/inactive
@@ -74,23 +85,42 @@ export default function CatEyes({ style = 'round', primaryColor = 'dark', second
   }
 
   if (style === 'proud') {
-    // Sparkle eyes: 4-pointed star shape using primary colour
-    const GOLD = '#FFD700';
+    if (baseEyeStyle === 'button') {
+      return (
+        <G>
+          {/* Left 3×3 base with primary slit */}
+          <Rect x={10} y={10} width={3} height={3} fill={s} />
+          <Rect x={11} y={10} width={1} height={3} fill={p} />
+          {/* Left sparkle — top-right corner only */}
+          <Rect x={13} y={9}  width={1} height={1} fill={sparkle} />
+          <Rect x={12} y={10} width={1} height={1} fill={sparkle} />
+
+          {/* Right 3×3 base with primary slit */}
+          <Rect x={19} y={10} width={3} height={3} fill={s} />
+          <Rect x={20} y={10} width={1} height={3} fill={p} />
+          {/* Right sparkle — top-right corner only */}
+          <Rect x={22} y={9}  width={1} height={1} fill={sparkle} />
+          <Rect x={21} y={10} width={1} height={1} fill={sparkle} />
+        </G>
+      );
+    }
     return (
       <G>
-        {/* Left sparkle — cross shape */}
-        <Rect x={11} y={9}  width={1} height={1} fill={GOLD} />
-        <Rect x={10} y={10} width={3} height={1} fill={GOLD} />
-        <Rect x={11} y={11} width={1} height={1} fill={GOLD} />
-        {/* Left centre */}
-        <Rect x={11} y={10} width={1} height={1} fill={p} />
+        {/* Left eye — 2×2 primary base */}
+        <Rect x={10} y={11} width={2} height={2} fill={p} />
+        {/* Left highlights */}
+        <Rect x={10} y={11} width={1} height={1} fill={s} />
+        <Rect x={11} y={12} width={1} height={1} fill={s} />
+        {/* Left sparkle pixel above-right */}
+        <Rect x={12} y={10} width={1} height={1} fill={sparkle} />
 
-        {/* Right sparkle — cross shape */}
-        <Rect x={21} y={9}  width={1} height={1} fill={GOLD} />
-        <Rect x={20} y={10} width={3} height={1} fill={GOLD} />
-        <Rect x={21} y={11} width={1} height={1} fill={GOLD} />
-        {/* Right centre */}
-        <Rect x={21} y={10} width={1} height={1} fill={p} />
+        {/* Right eye — 2×2 primary base */}
+        <Rect x={20} y={11} width={2} height={2} fill={p} />
+        {/* Right highlights */}
+        <Rect x={20} y={11} width={1} height={1} fill={s} />
+        <Rect x={21} y={12} width={1} height={1} fill={s} />
+        {/* Right sparkle pixel above-right */}
+        <Rect x={22} y={10} width={1} height={1} fill={sparkle} />
       </G>
     );
   }

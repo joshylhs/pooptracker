@@ -3,7 +3,7 @@ import { Animated, Easing, View, StyleSheet } from 'react-native';
 import CatAvatar, { WALL_COLORS } from './CatAvatar';
 import { AvatarConfig } from './AvatarPicker';
 import { Mood } from '../../utils/moodUtils';
-import { AnyEyeStyle } from './CatEyes';
+import { AnyEyeStyle, EYE_SECONDARY_COLORS } from './CatEyes';
 import { MouthStyle } from './CatBody';
 
 // focal point x=16 y=12, zoom=32 → viewBox "0 -4 32 32"
@@ -34,6 +34,63 @@ const ANIM_CONFIG: Record<Mood, { amplitude: number; upMs: number; downMs: numbe
   proud:    { amplitude: 4, upMs: 800,  downMs: 600 },
   default:  null,
 };
+
+// Each sparkle fades in, drifts rightward, fades out continuously
+const SPARKLE_LANES = [
+  { x0: 0.08, y: 0.14, dx: 0.30 },
+  { x0: 0.52, y: 0.32, dx: 0.26 },
+  { x0: 0.18, y: 0.55, dx: 0.28 },
+  { x0: 0.62, y: 0.70, dx: 0.24 },
+  { x0: 0.30, y: 0.84, dx: 0.32 },
+];
+const SPARKLE_CYCLE = 2200;
+
+function Sparkle({ size, color, lane, phaseOffset }: { size: number; color: string; lane: typeof SPARKLE_LANES[0]; phaseOffset: number }) {
+  // Start at phaseOffset (0–1) so each sparkle is already mid-cycle — stagger survives every loop iteration
+  const progress = useRef(new Animated.Value(phaseOffset)).current;
+
+  useEffect(() => {
+    const remaining = (1 - phaseOffset) * SPARKLE_CYCLE;
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(progress, { toValue: 1, duration: remaining, useNativeDriver: true }),
+        Animated.timing(progress, { toValue: 0, duration: 0, useNativeDriver: true }),
+        Animated.timing(progress, { toValue: 1, duration: SPARKLE_CYCLE, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+
+  const x0 = lane.x0 * size;
+  const totalDx = lane.dx * size;
+  const y = lane.y * size;
+  const r = Math.max(3, size * 0.05);
+
+  const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [0, totalDx] });
+  const opacity = progress.interpolate({
+    inputRange: [0, 0.2, 1],
+    outputRange: [0, 0.9, 0],
+  });
+
+  return (
+    <Animated.View style={{
+      position: 'absolute',
+      left: x0,
+      top: y,
+      opacity,
+      transform: [{ translateX }],
+    }}>
+      {/* 4-pointed star: horizontal + vertical + diagonals */}
+      <View style={{ width: r * 2, height: r * 2, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ position: 'absolute', width: r * 2, height: 1.5, backgroundColor: color, borderRadius: 1 }} />
+        <View style={{ position: 'absolute', width: 1.5, height: r * 2, backgroundColor: color, borderRadius: 1 }} />
+        <View style={{ position: 'absolute', width: r * 1.1, height: 1, backgroundColor: color, borderRadius: 1, transform: [{ rotate: '45deg' }] }} />
+        <View style={{ position: 'absolute', width: r * 1.1, height: 1, backgroundColor: color, borderRadius: 1, transform: [{ rotate: '-45deg' }] }} />
+      </View>
+    </Animated.View>
+  );
+}
 
 function ZLetter({ fontSize, delay, right, top }: { fontSize: number; delay: number; right: number; top: number }) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -99,6 +156,8 @@ export default function CatAvatarCircle({ config, size, mood = 'default' }: Prop
     return () => { animRef.current?.stop(); };
   }, [mood]);
 
+  const sparkleColor = EYE_SECONDARY_COLORS[config.eyeSecondary ?? 'white'];
+
   // Scale zzz font size proportionally to avatar size
   const zSize = Math.max(8, Math.round(size * 0.18));
 
@@ -134,6 +193,14 @@ export default function CatAvatarCircle({ config, size, mood = 'default' }: Prop
           </Animated.View>
         )}
       </View>
+      {/* sparkle overlay — sits on top of circle, clipped to circle bounds */}
+      {mood === 'proud' && (
+        <View style={[styles.sparkleOverlay, { width: size, height: size, borderRadius: size / 2 }]} pointerEvents="none">
+          {SPARKLE_LANES.map((lane, i) => (
+            <Sparkle key={i} size={size} color={sparkleColor} lane={lane} phaseOffset={i / SPARKLE_LANES.length} />
+          ))}
+        </View>
+      )}
       {/* zzz overlay sits outside the circle so it isn't clipped */}
       {mood === 'inactive' && (
         <View style={[styles.zzzOverlay, { right: -zSize * 0.6, top: size * 0.05 }]} pointerEvents="none">
@@ -147,7 +214,8 @@ export default function CatAvatarCircle({ config, size, mood = 'default' }: Prop
 }
 
 const styles = StyleSheet.create({
-  circle:     { overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  zzzOverlay: { position: 'absolute', alignItems: 'flex-start' },
-  zzz:        { color: '#B0C4DE', fontWeight: '700', lineHeight: undefined },
+  circle:         { overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  sparkleOverlay: { position: 'absolute', overflow: 'hidden' },
+  zzzOverlay:     { position: 'absolute', alignItems: 'flex-start' },
+  zzz:            { color: '#B0C4DE', fontWeight: '700', lineHeight: undefined },
 });

@@ -81,7 +81,7 @@ export default function CatAvatar({
       {wall !== 'transparent' && <Rect x={0} y={0} width={32} height={32} fill={wall} />}
       <CatBody color={resolvedBodyColor} snoutColor={resolveFill(snoutColor)} mouthStyle={mouthStyle} />
       <CatShirt style={shirt} bodyColor={resolvedBodyColor} />
-      <CatEyes style={moodEyes ?? eyes} primaryColor={eyePrimary} secondaryColor={eyeSecondary} bodyColor={resolvedBodyColor} />
+      <CatEyes style={moodEyes ?? eyes} primaryColor={eyePrimary} secondaryColor={eyeSecondary} bodyColor={resolvedBodyColor} baseEyeStyle={eyes} />
       <CatBlush style={cheekStyle} />
       <CatAccessory style={accessory} />
       <CatHeaddress style={headdress} />
