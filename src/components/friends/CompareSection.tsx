@@ -227,6 +227,14 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
   const LOOP_OFFSET = cards.length > 1 ? 1 : 0;
   loopOffsetRef.current = LOOP_OFFSET;
 
+  // Re-snap to first real card whenever card count changes (e.g. friendData arrives)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (listWidth > 0 && LOOP_OFFSET > 0) {
+      setTimeout(() => flatRef.current?.scrollToIndex({ index: LOOP_OFFSET, animated: false }), 0);
+    }
+  }, [loopCards.length]);
+
   return (
     <View style={[styles.container, { backgroundColor: surface.surface, borderColor: surface.border }]}>
       {/* Header */}
@@ -286,9 +294,13 @@ export default function CompareSection({ myProfile, friends, myLogs }: Props) {
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             style={styles.flatList}
-            initialScrollIndex={LOOP_OFFSET}
+            initialScrollIndex={0}
             getItemLayout={(_, index) => ({ length: listWidth, offset: listWidth * index, index })}
-            onLayout={e => setListWidth(e.nativeEvent.layout.width)}
+            onLayout={e => {
+              const w = e.nativeEvent.layout.width;
+              setListWidth(w);
+              if (w > 0) setTimeout(() => flatRef.current?.scrollToIndex({ index: LOOP_OFFSET, animated: false }), 0);
+            }}
             onMomentumScrollEnd={e => {
               const idx = Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width);
               if (idx === 0) {

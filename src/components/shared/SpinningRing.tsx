@@ -18,10 +18,10 @@ export default function SpinningRing({
   avatarSize,
   color = '#7F77DD',
   children,
-  dashCount = 32,
-  dashRatio = 0.5,
-  rounded = false,
-  duration = 7000,
+  dashCount = 20,
+  dashRatio = 0.15,
+  rounded = true,
+  duration = 8000,
 }: Props) {
   const rotation = useRef(new Animated.Value(0)).current;
 

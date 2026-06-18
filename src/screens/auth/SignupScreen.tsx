@@ -129,7 +129,7 @@ export default function SignupScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" nestedScrollEnabled indicatorStyle="white" style={{ marginHorizontal: -24 }} scrollIndicatorInsets={{ right: 6 }}>
         <AppText variant="screenTitle" style={[styles.title, { paddingTop: 16 }]}>
           Create account
         </AppText>
@@ -260,7 +260,7 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: 24 },
+  scroll: { paddingBottom: 24, paddingHorizontal: 24 },
   title: { marginBottom: 20 },
   sectionTitle: { marginTop: 24, marginBottom: 8 },
   card: { borderWidth: 1, borderRadius: 12 },
